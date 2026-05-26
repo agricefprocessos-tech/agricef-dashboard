@@ -2114,10 +2114,8 @@ function renderAlerts(){
     }
   });
 
-  // Alert 2: Backlog — compara ABERTURAs vs pares concluídos
-  const totalAberturas = filtered.filter(r=>r.tipo==='ABERTURA').length;
-  const totalFechados  = prod.length; // pares válidos já calculados
-  const backlogCount   = Math.max(0, totalAberturas - totalFechados);
+  // Alert 2: Backlog — algoritmo two-pass sobre RAW_DATA (mesmo do painel de backlog)
+  const backlogCount = computeOpenOrders().length;
   if(backlogCount > 0){
     alerts.push({level:'warn', msg:`<b>${backlogCount}</b> ABERTURA(s) sem fechamento correspondente (backlog)`});
   }
@@ -2998,15 +2996,9 @@ function renderExtraKPIs(){
   const el_tr = document.getElementById('k-taxa-ret');
   if(el_tr) el_tr.textContent = taxaRet.toFixed(1)+'%';
 
-  // Backlog: ABERTURAs sem FECHAMENTO
-  const opens={}, backlog=[];
-  filtered.forEach(r=>{
-    const k=r.func+'||'+r.op+'||'+r.item+'||'+r.serie;
-    if(r.tipo==='ABERTURA') opens[k]=(opens[k]||0)+1;
-    else if(r.tipo==='FECHAMENTO') opens[k]=(opens[k]||0)-1;
-  });
-  let backlogCount=0;
-  Object.values(opens).forEach(v=>{if(v>0)backlogCount+=v;});
+  // Backlog: ABERTURAs sem FECHAMENTO — usa o mesmo algoritmo two-pass do painel de backlog
+  // computeOpenOrders() opera sobre RAW_DATA completo (sem filtro de período) para consistência
+  const backlogCount = computeOpenOrders().length;
   const el_bl = document.getElementById('k-backlog');
   if(el_bl) el_bl.textContent = backlogCount;
 
