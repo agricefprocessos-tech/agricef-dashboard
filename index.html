@@ -266,6 +266,8 @@ input[type="date"]{color-scheme:dark;}
 .btn-fcm-cancel:hover{color:var(--text);border-color:var(--text2);}
 .fechar-btn{background:rgba(74,222,128,.1);border:1px solid rgba(74,222,128,.3);color:var(--accent3);padding:4px 10px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Barlow Condensed',sans-serif;letter-spacing:.5px;transition:all .15s;white-space:nowrap;}
 .fechar-btn:hover{background:rgba(74,222,128,.22);border-color:var(--accent3);}
+.excluir-btn{background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);color:#f87171;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Barlow Condensed',sans-serif;letter-spacing:.5px;transition:all .15s;white-space:nowrap;margin-left:6px;}
+.excluir-btn:hover{background:rgba(248,113,113,.22);border-color:#f87171;}
 .backlog-src{font-size:11px;color:var(--text3);}
 </style>
 
@@ -3265,7 +3267,7 @@ function renderBacklog(){
       <thead><tr>
         <th>Funcionário</th><th>Operação</th><th>Cód. Item</th>
         <th>Série</th><th>Qtd Plan.</th><th>Abertura</th>
-        <th style="text-align:center">Fechar</th>
+        <th style="text-align:center">Ações</th>
       </tr></thead>
       <tbody>${_computedBacklog.map((r,idx)=>{
         const nome=r.func.split(/\s*[-—]\s*/).slice(1).join(' ')||r.func;
@@ -3278,8 +3280,9 @@ function renderBacklog(){
           <td style="font-size:12px">${serie}</td>
           <td style="color:var(--accent);font-weight:700">${r.qty||'—'}</td>
           <td style="font-size:11px;color:var(--text2)">${tsFormatted}</td>
-          <td style="text-align:center">
+          <td style="text-align:center;white-space:nowrap">
             <button class="fechar-btn" onclick="abrirModalFechar(${idx})">Fechar →</button>
+            <button class="excluir-btn" onclick="excluirApontamento(${idx})">Excluir</button>
           </td>
         </tr>`;
       }).join('')}</tbody>
@@ -3749,6 +3752,53 @@ async function confirmarFechamento(){
 document.addEventListener('keydown',e=>{
   if(e.key==='Escape'){ fecharModal(); fecharModalAbertura(); }
 });
+
+// ── EXCLUIR APONTAMENTO ──────────────────────────────────────────────────────
+// Remove PERMANENTEMENTE um apontamento — usa o abertoId (elo de pareamento, col P
+// da planilha) para apagar de uma vez ABERTURA + FECHAMENTO (ou todas as séries de
+// um lote), tanto do histórico (Respostas) quanto da aba Abertos. Protegido por
+// confirmação + senha (mesma senha de configuração do dashboard).
+async function excluirApontamento(idx){
+  if(idx>=_computedBacklog.length) return;
+  const r=_computedBacklog[idx];
+  const abertoId=r._abertoId||'';
+  if(!abertoId){
+    alert('Este registro não tem um ID de rastreamento (abertoId) — exclusão automática não está disponível para ele. Peça para remover manualmente na planilha.');
+    return;
+  }
+  const nome=funcName(r.func);
+  const serie=r.serie||r.impl||'—';
+  const confirmou=confirm(
+    'Excluir PERMANENTEMENTE este apontamento?\n\n'+
+    `Funcionário: ${nome}\nOperação: ${r.op||'—'}\nCód. Item: ${r.item||'—'}\nSérie: ${serie}\n\n`+
+    'Isso remove TODOS os registros ligados a essa abertura (abertura + fechamento, ou todas as séries do lote) da planilha. Não tem como desfazer.'
+  );
+  if(!confirmou) return;
+
+  const pwd=prompt('🔒 Senha de configuração (confirme para excluir):');
+  if(pwd!=='Agricef123'){
+    if(pwd!==null) alert('Senha incorreta — exclusão cancelada.');
+    return;
+  }
+
+  try{
+    const url=APONTAMENTO_URL+'?action=removerRegistroPorId&key=AGF2026&id='+encodeURIComponent(abertoId)+'&_='+Date.now();
+    const resp=await fetch(url);
+    const json=await resp.json();
+    if(!json.success) throw new Error(json.message||'Erro desconhecido');
+
+    // Remove da aba Abertos em memória (otimista) e recarrega o histórico completo
+    // para refletir a exclusão em todos os painéis (Feed, KPIs, Previsto x Realizado, etc.)
+    if(_abertosData){
+      _abertosData=_abertosData.filter(a=>a.abertoId!==abertoId);
+    }
+    alert(`✔ Excluído: ${json.removidosRespostas||0} linha(s) do histórico, ${json.removidosAbertos||0} da aba Abertos.`);
+    syncPanels();
+    fetchData();
+  }catch(err){
+    alert('Erro ao excluir: '+err.message);
+  }
+}
 
 // ── FIM FECHAR APONTAMENTO ────────────────────────────────────────────────────
 
