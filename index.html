@@ -793,8 +793,21 @@ input[type="date"]{color-scheme:dark;}
   </div>
 
 
+  <!-- ANÁLISE INTELIGENTE (IA) -->
+  <div class="card sec-card" id="sec-ia" style="margin-bottom:18px">
+    <div class="card-hd">
+      <div class="card-title">🤖 Análise Inteligente</div>
+      <div style="display:flex;align-items:center;gap:6px;margin-left:8px;">
+        <button class="pv-tab-btn active" id="iaTab-diario" onclick="switchIaTab('diario')">Diário</button>
+        <button class="pv-tab-btn" id="iaTab-semanal" onclick="switchIaTab('semanal')">Semanal</button>
+      </div>
+      <div class="card-badge" id="iaBadge" style="margin-left:auto;">Analista de Produção Virtual</div>
+    </div>
+    <div class="card-body" id="iaPanel"><div class="empty">Carregando...</div></div>
+  </div>
+
   <!-- Ranking + Timeline -->
-  
+
   <div class="card sec-card" id="sec-rank" style="margin-bottom:18px">
 
       <div class="card-hd">
@@ -1391,6 +1404,7 @@ async function fetchData(){
     showLoadingState(false);
     console.log('✓',records.length,'apontamentos carregados');
     fetchAbertos(); // atualiza aba Abertos em paralelo (não bloqueia o render)
+    fetchAnaliseIA(); // idem — análise de IA é independente do feed principal
   }catch(err){showLoadingState(false,err.message);console.error('Erro fetchData:',err);}
 }
 
@@ -1407,6 +1421,41 @@ async function fetchAbertos(){
       if(secBacklog && secBacklog.style.display!=='none') renderBacklog();
     }
   }catch(e){console.warn('fetchAbertos:',e.message);}
+}
+
+let _analiseIAData={diario:null,semanal:null};
+let _iaTabAtual='diario';
+
+async function fetchAnaliseIA(){
+  try{
+    const resp=await fetch(APONTAMENTO_URL+'?action=getAnaliseIA&_='+Date.now());
+    if(!resp.ok) return;
+    const json=await resp.json();
+    _analiseIAData={diario:json.diario||null, semanal:json.semanal||null};
+    renderAnaliseIA();
+  }catch(e){console.warn('fetchAnaliseIA:',e.message);}
+}
+
+function switchIaTab(tipo){
+  _iaTabAtual=tipo;
+  document.getElementById('iaTab-diario').classList.toggle('active',tipo==='diario');
+  document.getElementById('iaTab-semanal').classList.toggle('active',tipo==='semanal');
+  renderAnaliseIA();
+}
+
+function renderAnaliseIA(){
+  const panel=document.getElementById('iaPanel');
+  const badge=document.getElementById('iaBadge');
+  if(!panel) return;
+  const item=_analiseIAData[_iaTabAtual];
+  if(!item || !item.texto){
+    panel.innerHTML='<div class="empty">Nenhuma análise '+(_iaTabAtual==='diario'?'diária':'semanal')+' gerada ainda — a próxima rodará automaticamente no horário do relatório.</div>';
+    if(badge) badge.textContent='Analista de Produção Virtual';
+    return;
+  }
+  if(badge) badge.textContent='Gerado em '+item.data;
+  const paragrafos=String(item.texto).split(/\n+/).filter(p=>p.trim()!=='');
+  panel.innerHTML=paragrafos.map(p=>'<p style="margin:0 0 12px;font-size:13.5px;color:var(--text);line-height:1.65;">'+p.replace(/[<>]/g,'')+'</p>').join('');
 }
 
 function startAutoRefresh(){if(_refreshTimer)clearInterval(_refreshTimer);_refreshTimer=setInterval(fetchData,REFRESH_INTERVAL_MS);}
