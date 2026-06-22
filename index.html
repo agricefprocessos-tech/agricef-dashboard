@@ -268,6 +268,8 @@ input[type="date"]{color-scheme:dark;}
 .fechar-btn:hover{background:rgba(74,222,128,.22);border-color:var(--accent3);}
 .excluir-btn{background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);color:#f87171;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Barlow Condensed',sans-serif;letter-spacing:.5px;transition:all .15s;white-space:nowrap;margin-left:6px;}
 .excluir-btn:hover{background:rgba(248,113,113,.22);border-color:#f87171;}
+.editar-btn{background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.3);color:#fbbf24;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Barlow Condensed',sans-serif;letter-spacing:.5px;transition:all .15s;white-space:nowrap;margin-left:6px;}
+.editar-btn:hover{background:rgba(251,191,36,.22);border-color:#fbbf24;}
 .backlog-src{font-size:11px;color:var(--text3);}
 </style>
 
@@ -333,6 +335,90 @@ input[type="date"]{color-scheme:dark;}
     <div class="fcm-btns">
       <button class="btn-fcm-ok" id="abmBtnOk" style="background:var(--accent2);color:#000;" onclick="confirmarAberturaRetroativa()">📋 REGISTRAR ABERTURA</button>
       <button class="btn-fcm-cancel" onclick="fecharModalAbertura()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Editar Apontamento -->
+<div class="fcm-overlay" id="edmOverlay">
+  <div class="fcm-box">
+    <div class="fcm-title" style="color:#fbbf24">&#9999;&#65039; Editar Apontamento</div>
+    <div style="font-size:11px;color:var(--text3);margin-bottom:12px;background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.2);border-radius:6px;padding:8px 12px;">
+      Edita o registro na planilha (hist&oacute;rico + aba Abertos, se ainda em aberto) e recalcula o saldo parcial se necess&aacute;rio. N&atilde;o tem desfazer.
+    </div>
+    <div class="fcm-row" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+      <div>
+        <label>Tipo</label>
+        <select id="edmTipo" style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:6px;font-size:14px;font-family:'Barlow',sans-serif;outline:none;transition:border-color .2s;" onfocus="this.style.borderColor='#fbbf24'" onblur="this.style.borderColor='var(--border)'">
+          <option value="ABERTURA">ABERTURA</option>
+          <option value="FECHAMENTO">FECHAMENTO</option>
+          <option value="INICIO_PARADA">IN&Iacute;CIO DE PARADA</option>
+          <option value="TERMINO_PARADA">T&Eacute;RMINO DE PARADA</option>
+          <option value="INICIO_RETRABALHO">IN&Iacute;CIO DE RETRABALHO</option>
+          <option value="TERMINO_RETRABALHO">T&Eacute;RMINO DE RETRABALHO</option>
+        </select>
+      </div>
+      <div>
+        <label>Operador (c&oacute;digo)</label>
+        <input type="text" id="edmOperador" style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:6px;font-size:14px;font-family:'Barlow',sans-serif;outline:none;transition:border-color .2s;" onfocus="this.style.borderColor='#fbbf24'" onblur="this.style.borderColor='var(--border)'">
+      </div>
+    </div>
+    <div class="fcm-row">
+      <label>Nome do Operador</label>
+      <input type="text" id="edmOperadorNome" style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:6px;font-size:14px;font-family:'Barlow',sans-serif;outline:none;transition:border-color .2s;" onfocus="this.style.borderColor='#fbbf24'" onblur="this.style.borderColor='var(--border)'">
+    </div>
+    <div class="fcm-row" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+      <div>
+        <label>Opera&ccedil;&atilde;o (c&oacute;digo, ex: 0030)</label>
+        <input type="text" id="edmOperacao" maxlength="4" style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:6px;font-size:14px;font-family:'Barlow',sans-serif;outline:none;transition:border-color .2s;" onfocus="this.style.borderColor='#fbbf24'" onblur="this.style.borderColor='var(--border)'">
+      </div>
+      <div>
+        <label>C&oacute;digo do Item</label>
+        <input type="text" id="edmCodItem" style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:6px;font-size:14px;font-family:'Barlow',sans-serif;outline:none;transition:border-color .2s;" onfocus="this.style.borderColor='#fbbf24'" onblur="this.style.borderColor='var(--border)'">
+      </div>
+    </div>
+    <div class="fcm-row" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
+      <div>
+        <label>N&ordm; S&eacute;rie</label>
+        <input type="text" id="edmNrSerie" style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:6px;font-size:14px;font-family:'Barlow',sans-serif;outline:none;transition:border-color .2s;" onfocus="this.style.borderColor='#fbbf24'" onblur="this.style.borderColor='var(--border)'">
+      </div>
+      <div>
+        <label>Implemento</label>
+        <input type="text" id="edmImplemento" style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:6px;font-size:14px;font-family:'Barlow',sans-serif;outline:none;transition:border-color .2s;" onfocus="this.style.borderColor='#fbbf24'" onblur="this.style.borderColor='var(--border)'">
+      </div>
+      <div>
+        <label>Cliente</label>
+        <input type="text" id="edmCliente" style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:6px;font-size:14px;font-family:'Barlow',sans-serif;outline:none;transition:border-color .2s;" onfocus="this.style.borderColor='#fbbf24'" onblur="this.style.borderColor='var(--border)'">
+      </div>
+    </div>
+    <div class="fcm-row" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+      <div>
+        <label>Qtd Planejada</label>
+        <input type="number" id="edmQtdPlanejada" min="0" step="1" style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:6px;font-size:14px;font-family:'Barlow',sans-serif;outline:none;transition:border-color .2s;" onfocus="this.style.borderColor='#fbbf24'" onblur="this.style.borderColor='var(--border)'">
+      </div>
+      <div>
+        <label>Qtd Realizada</label>
+        <input type="number" id="edmQuantidade" min="0" step="1" style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:6px;font-size:14px;font-family:'Barlow',sans-serif;outline:none;transition:border-color .2s;" onfocus="this.style.borderColor='#fbbf24'" onblur="this.style.borderColor='var(--border)'">
+      </div>
+    </div>
+    <div class="fcm-row" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+      <div>
+        <label>Data</label>
+        <input type="date" id="edmData" style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:6px;font-size:14px;font-family:'Barlow',sans-serif;outline:none;transition:border-color .2s;" onfocus="this.style.borderColor='#fbbf24'" onblur="this.style.borderColor='var(--border)'">
+      </div>
+      <div>
+        <label>Hora</label>
+        <input type="time" id="edmHora" step="60" style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:6px;font-size:14px;font-family:'Barlow',sans-serif;outline:none;transition:border-color .2s;" onfocus="this.style.borderColor='#fbbf24'" onblur="this.style.borderColor='var(--border)'">
+      </div>
+    </div>
+    <div class="fcm-row">
+      <label>Observa&ccedil;&atilde;o</label>
+      <input type="text" id="edmObs" maxlength="120" style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:6px;font-size:14px;font-family:'Barlow',sans-serif;outline:none;transition:border-color .2s;" onfocus="this.style.borderColor='#fbbf24'" onblur="this.style.borderColor='var(--border)'">
+    </div>
+    <div class="fcm-err" id="edmErr"></div>
+    <div class="fcm-btns">
+      <button class="btn-fcm-ok" id="edmBtnOk" style="background:#fbbf24;color:#000;" onclick="confirmarEdicao()">&#9999;&#65039; SALVAR EDI&Ccedil;&Atilde;O</button>
+      <button class="btn-fcm-cancel" onclick="fecharModalEdicao()">Cancelar</button>
     </div>
   </div>
 </div>
@@ -1184,7 +1270,7 @@ const APPS_SCRIPT_URL='https://script.google.com/macros/s/AKfycbxK4tqdjFkjQxJ-sA
 // Script clasp-managed (agricef-appsscript.gs) — getAbertos + gravarApontamento
 const APONTAMENTO_URL='https://script.google.com/macros/s/AKfycbybtpUgNv_P8YkRNLmPwQVB4n3cS4XMlQQVQUFOgV7MUbjJWK5Xt8HZ8IJEUVHMJCihgA/exec';
 const REFRESH_INTERVAL_MS=2*60*1000; // 2 min — reduzido para diminuir delay de aparecimento
-let RAW_DATA=[],ABSENCES=[],PLANT_OPEN_DAYS=[],ALL_WORKDAYS=[],filtered=[];
+let RAW_DATA=[],ABSENCES=[],PLANT_OPEN_DAYS=[],ALL_WORKDAYS=[],filtered=[],_timelineItems=[];
 let _refreshTimer=null,_lastUpdate=null;
 let _fcmIdx=null;
 let _abertosData=null; // cache da aba Abertos (fonte de verdade para backlog)
@@ -1238,12 +1324,16 @@ function parseSheetJSON(rows){
   const kSetup=findCol('TIPO DE OPERA\u00c7\u00c3O DE SET-UP',['SET-UP','SETUP']);
   const kRetrab=findCol('TIPOS DE RETRABALHOS',['RETRABALHO']);
   const kOp2=findCol('TIPO DE OPERA\u00c7\u00c3O 2',['OPERACAO 2','OPERAÇÃO 2']);
+  const kQtyPlan=findCol('QTD PLANEJADA',['QTD PLANEJADA','QUANTIDADE PLANEJADA']);
+  const kObs1=findCol('OBSERVAÇÃO 1',['OBSERVACAO 1','OBSERVAÇÃO 1']);
+  const kAbertoId=findCol('Coluna 16',['COLUNA 16']);
   const records=[];
   for(const row of rows){
     function g(k){return k?String(row[k]||'').trim():'';}
     const tsRaw=g(kTS),func=g(kFunc),serieRaw=g(kSerie);
     const tipo=g(kTipo),op=g(kOp),item=g(kItem),qty=g(kQty);
     const tipoParada=g(kParada),tipoSetup=g(kSetup),tipoRet=g(kRetrab),op2=g(kOp2);
+    const qtyPlan=g(kQtyPlan),obs1=g(kObs1),abertoId=g(kAbertoId);
     if(!tsRaw||!func||func==='NOME DO OPERADOR') continue;
     let tsNorm=tsRaw;
     if(tsRaw.includes('T')&&(tsRaw.includes('Z')||tsRaw.includes('+'))){
@@ -1256,7 +1346,8 @@ function parseSheetJSON(rows){
     const parts=serieRaw.split(' | ');
     records.push({ts:tsNorm,func,serie_raw:serieRaw,serie:(parts[0]||'').trim(),
       impl:(parts[1]||'').trim(),client:(parts[2]||'').trim(),
-      tipo,op,item,qty,obs1:'',tipoParada,tipoSetup,tipoRetrabalho:tipoRet,op2});
+      tipo,op,item,qty,qtyPlan,obs1,tipoParada,tipoSetup,tipoRetrabalho:tipoRet,op2,
+      _abertoId:abertoId});
   }
   console.log('Parsed:',records.length,'|Tipos:',[...new Set(records.map(r=>r.tipo))]);
   return records;
@@ -1983,19 +2074,21 @@ function renderRanking(){
 // ── RENDER TIMELINE ───────────────────────────────────────────────────────────
 function renderTimeline(){
   const items=[...filtered].sort((a,b)=>tsToDate(b.ts)-tsToDate(a.ts)).slice(0,20);
+  _timelineItems=items; // referência paralela usada por abrirModalEdicao('timeline', idx)
   const colors={'ABERTURA':'#4ade80','FECHAMENTO':'#38bdf8','INÍCIO DE PARADA':'#f87171','TÉRMINO DE PARADA':'#f0b429','INÍCIO DE RETRABALHO':'#fb923c','TÉRMINO DE RETRABALHO':'#a78bfa'};
   let html='<div class="tl">';
-  items.forEach(r=>{
+  items.forEach((r,idx)=>{
     const c=colors[r.tipo]||'#8b949e';
     const ts=tsToDate(r.ts);
     const time=ts.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
     const date=ts.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
     const name=funcName(r.func);
     const detail=[r.op,r.item,r.serie&&r.serie[0]>='0'?r.serie:''].filter(Boolean).join(' · ');
+    const btnEditar=r._abertoId?`<button class="editar-btn" style="padding:2px 8px;font-size:10px;margin-left:8px" onclick="abrirModalEdicao('timeline',${idx})">Editar</button>`:'';
     html+=`<div class="tl-item">
       <div class="tl-dot" style="background:${c}"></div>
       <div style="flex:1">
-        <div class="tl-main">${name} <span style="color:${c};font-size:11px">${r.tipo}</span></div>
+        <div class="tl-main">${name} <span style="color:${c};font-size:11px">${r.tipo}</span>${btnEditar}</div>
         <div class="tl-sub">${detail||r.tipoParada||r.tipoSetup||'—'}</div>
       </div>
       <div class="tl-time">${date} ${time}</div>
@@ -3242,6 +3335,7 @@ function renderBacklog(){
         qty:    a.qtdPlanejada||'',
         serie:  a.nrSerie     ||'',
         impl:   a.implemento  ||'',
+        implNome: a.implementoNome ||'',
         client: a.cliente     ||'',
         ts:     tsConv,
         _abertoId: a.abertoId ||'',
@@ -3283,6 +3377,7 @@ function renderBacklog(){
           <td style="text-align:center;white-space:nowrap">
             <button class="fechar-btn" onclick="abrirModalFechar(${idx})">Fechar →</button>
             <button class="excluir-btn" onclick="excluirApontamento(${idx})">Excluir</button>
+            <button class="editar-btn" onclick="abrirModalEdicao('backlog',${idx})">Editar</button>
           </td>
         </tr>`;
       }).join('')}</tbody>
@@ -3799,6 +3894,134 @@ async function excluirApontamento(idx){
     alert('Erro ao excluir: '+err.message);
   }
 }
+
+// ── EDITAR APONTAMENTO ───────────────────────────────────────────────────────
+// Edita qualquer campo de um apontamento (aberto ou já fechado). Usa abertoId +
+// tipo + série pra identificar a linha exata no backend (editarApontamento),
+// que sincroniza a aba Abertos (se em aberto) e recalcula Saldo_Parcial (se for
+// um FECHAMENTO). Protegido por confirmação + senha, igual ao Excluir.
+const TIPO_RAW_MAP = {
+  'ABERTURA':'ABERTURA','FECHAMENTO':'FECHAMENTO',
+  'INÍCIO DE RETRABALHO':'INICIO_RETRABALHO','TÉRMINO DE RETRABALHO':'TERMINO_RETRABALHO',
+  'INÍCIO DE PARADA':'INICIO_PARADA','TÉRMINO DE PARADA':'TERMINO_PARADA',
+};
+let _edmContext = null;
+
+function abrirModalEdicao(origem, idx){
+  const r = origem==='backlog' ? _computedBacklog[idx] : _timelineItems[idx];
+  if(!r) return;
+  if(!r._abertoId){
+    alert('Este registro não tem um ID de rastreamento (abertoId) — edição direta não está disponível para ele.');
+    return;
+  }
+
+  // Backlog (aba Abertos) sempre representa o lado ABERTURA/INÍCIO_* em aberto.
+  // Timeline traz o tipo formatado direto da planilha — mapeia pra chave bruta do backend.
+  const tipoFormatado = origem==='backlog' ? (r.tipo||'ABERTURA') : r.tipo;
+  const tipoAlvo = TIPO_RAW_MAP[tipoFormatado] || 'ABERTURA';
+
+  _edmContext = { abertoId: r._abertoId, tipoAlvo, nrSerieAlvo: (r.serie||'').trim(), origem, idx };
+
+  document.getElementById('edmTipo').value = tipoAlvo;
+  document.getElementById('edmOperador').value = funcCodeNorm(r.func) || '';
+  document.getElementById('edmOperadorNome').value = r.func || '';
+  document.getElementById('edmOperacao').value = (r.op||'').substring(0,4);
+  document.getElementById('edmCodItem').value = r.item || '';
+  document.getElementById('edmNrSerie').value = r.serie || '';
+  document.getElementById('edmImplemento').value = (r.implNome!==undefined?r.implNome:r.impl) || '';
+  document.getElementById('edmCliente').value = r.client || '';
+  document.getElementById('edmQtdPlanejada').value = (origem==='backlog' ? r.qty : r.qtyPlan) || '';
+  document.getElementById('edmQuantidade').value = (origem==='backlog' ? '' : r.qty) || '';
+  document.getElementById('edmObs').value = r.obs1 || '';
+
+  const ts = tsToDate(r.ts);
+  const p = n => String(n).padStart(2,'0');
+  document.getElementById('edmData').value = ts.getFullYear()+'-'+p(ts.getMonth()+1)+'-'+p(ts.getDate());
+  document.getElementById('edmHora').value = p(ts.getHours())+':'+p(ts.getMinutes());
+
+  document.getElementById('edmErr').textContent = '';
+  document.getElementById('edmBtnOk').disabled = false;
+  document.getElementById('edmOverlay').classList.add('open');
+}
+
+function fecharModalEdicao(){
+  document.getElementById('edmOverlay').classList.remove('open');
+  _edmContext = null;
+}
+
+async function confirmarEdicao(){
+  if(!_edmContext) return;
+  const errEl = document.getElementById('edmErr');
+  const btnOk = document.getElementById('edmBtnOk');
+
+  const dataVal = document.getElementById('edmData').value;
+  const horaVal = document.getElementById('edmHora').value;
+  let carimbo;
+  if(dataVal && horaVal){
+    const partes = dataVal.split('-');
+    carimbo = partes[2]+'/'+partes[1]+'/'+partes[0]+' '+horaVal+':00';
+  }
+
+  const qtdPlVal = document.getElementById('edmQtdPlanejada').value;
+  const qtdVal = document.getElementById('edmQuantidade').value;
+
+  const novosValores = {
+    carimbo: carimbo,
+    operador: document.getElementById('edmOperador').value.trim(),
+    operadorNome: document.getElementById('edmOperadorNome').value.trim(),
+    tipo: document.getElementById('edmTipo').value,
+    operacao: document.getElementById('edmOperacao').value.trim(),
+    codItem: document.getElementById('edmCodItem').value.trim(),
+    nrSerie: document.getElementById('edmNrSerie').value.trim(),
+    implemento: document.getElementById('edmImplemento').value.trim(),
+    cliente: document.getElementById('edmCliente').value.trim(),
+    qtdPlanejada: qtdPlVal===''?'':Number(qtdPlVal),
+    quantidade: qtdVal===''?'':Number(qtdVal),
+    obs1: document.getElementById('edmObs').value.trim(),
+  };
+
+  const confirmou = confirm('Confirma a edição deste apontamento? A mudança será aplicada na planilha (histórico + Abertos, se em aberto) e não tem desfazer.');
+  if(!confirmou) return;
+
+  const pwd = prompt('🔒 Senha de configuração (confirme para editar):');
+  if(pwd!=='Agricef123'){
+    if(pwd!==null) alert('Senha incorreta — edição cancelada.');
+    return;
+  }
+
+  btnOk.disabled = true;
+  errEl.style.color = '';
+  errEl.textContent = 'Salvando…';
+
+  try{
+    const payload = {
+      action: 'editarApontamento', key: 'AGF2026',
+      abertoId: _edmContext.abertoId,
+      tipoAlvo: _edmContext.tipoAlvo,
+      nrSerieAlvo: _edmContext.nrSerieAlvo,
+      novosValores: novosValores,
+    };
+    const url = APONTAMENTO_URL+'?payload='+encodeURIComponent(JSON.stringify(payload))+'&_='+Date.now();
+    const resp = await fetch(url);
+    const json = await resp.json();
+    if(!json.success) throw new Error(json.message||'Erro desconhecido');
+
+    errEl.style.color = 'var(--accent3)';
+    errEl.textContent = '✔ Apontamento atualizado!';
+    setTimeout(()=>{
+      errEl.style.color = '';
+      fecharModalEdicao();
+      fetchAbertos();
+      fetchData();
+      syncPanels();
+    }, 900);
+  }catch(err){
+    errEl.textContent = 'Erro: '+err.message;
+    btnOk.disabled = false;
+  }
+}
+
+
 
 // ── FIM FECHAR APONTAMENTO ────────────────────────────────────────────────────
 
