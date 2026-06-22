@@ -3876,6 +3876,14 @@ async function excluirApontamento(idx){
     return;
   }
 
+  // Feedback visual: sem isso, o admin não vê nada acontecer durante a espera (pode levar
+  // até ~20s em horários de pico, já que o backend usa um lock compartilhado por todas as
+  // operações de escrita). Desabilita o botão clicado e escalona a mensagem após 5s.
+  const btn=event && event.target;
+  const textoOriginal=btn?btn.textContent:'';
+  if(btn){ btn.disabled=true; btn.textContent='Excluindo…'; }
+  const avisoDemora=setTimeout(()=>{ if(btn) btn.textContent='Ainda excluindo… (até 20s)'; }, 5000);
+
   try{
     const url=APONTAMENTO_URL+'?action=removerRegistroPorId&key=AGF2026&id='+encodeURIComponent(abertoId)+'&_='+Date.now();
     const resp=await fetch(url);
@@ -3892,8 +3900,12 @@ async function excluirApontamento(idx){
     fetchData();
   }catch(err){
     alert('Erro ao excluir: '+err.message);
+  }finally{
+    clearTimeout(avisoDemora);
+    if(btn){ btn.disabled=false; btn.textContent=textoOriginal||'Excluir'; }
   }
 }
+
 
 // ── EDITAR APONTAMENTO ───────────────────────────────────────────────────────
 // Edita qualquer campo de um apontamento (aberto ou já fechado). Usa abertoId +
@@ -3992,6 +4004,7 @@ async function confirmarEdicao(){
   btnOk.disabled = true;
   errEl.style.color = '';
   errEl.textContent = 'Salvando…';
+  const avisoDemoraEdicao = setTimeout(()=>{ errEl.textContent = 'Ainda salvando… (pode levar até 20s)'; }, 5000);
 
   try{
     const payload = {
@@ -4018,6 +4031,8 @@ async function confirmarEdicao(){
   }catch(err){
     errEl.textContent = 'Erro: '+err.message;
     btnOk.disabled = false;
+  }finally{
+    clearTimeout(avisoDemoraEdicao);
   }
 }
 
