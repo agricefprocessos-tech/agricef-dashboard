@@ -35,10 +35,23 @@ select:focus,input[type=date]:focus{border-color:var(--accent);}
 .filter-info{margin-left:auto;font-size:12px;color:var(--text2);}
 .filter-info span{color:var(--accent);font-weight:600;}
 
-main{padding:18px 24px;display:grid;grid-template-columns:1fr 1fr;gap:18px;}
+main{padding:18px 24px;}
 .sec-card{grid-column:span 2;}
 .sec-card.half-width{grid-column:span 1;}
-#sec-kpis{grid-column:span 2;}
+
+.subpag-nav{display:none;align-items:center;justify-content:center;gap:14px;padding:6px 0 12px;}
+.subpag-nav.show{display:flex;}
+.subpag-nav button{background:var(--surface2);border:1px solid var(--border);color:var(--text);width:30px;height:30px;border-radius:50%;font-size:16px;cursor:pointer;transition:all .15s;}
+.subpag-nav button:hover{border-color:var(--accent);color:var(--accent);}
+.subpag-nav span{font-size:12px;color:var(--text2);font-weight:600;min-width:32px;text-align:center;}
+
+.page-grid{display:none;gap:14px;}
+.page-grid.active{display:grid;}
+.page-grid .sec-card{grid-column:auto;grid-row:auto;display:flex;flex-direction:column;height:100%;overflow:hidden;margin-bottom:0!important;}
+.page-grid .card-body{flex:1;overflow-y:auto;min-height:0;}
+.page-grid .card-hd{flex-shrink:0;flex-wrap:wrap;row-gap:6px;}
+.page-grid .card-title{white-space:nowrap;font-size:12.5px;}
+.page-grid .card-badge{white-space:nowrap;}
 
 .kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;}
 .kpi{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 16px;position:relative;overflow:hidden;transition:transform .2s,border-color .2s;}
@@ -731,6 +744,19 @@ input[type="date"]{color-scheme:dark;}
     <div class="kpi kpi-extra" style="--kc:#4ade80" id="kpi-leadtime2" data-page="eficiencia"><div class="kpi-lbl">Lead Time Médio</div><div class="kpi-val" id="k-leadtime2">—</div><div class="kpi-sub">Horas abertura→fechamento</div><div class="kpi-ico">⏳</div></div>
   </div>
 
+  <div class="subpag-nav" id="subpagNav">
+    <button onclick="subpaginaAnterior()">‹</button>
+    <span id="subpagLabel">1/2</span>
+    <button onclick="subpaginaProxima()">›</button>
+  </div>
+
+  <div class="page-grid" data-page-grid="visao-geral"></div>
+  <div class="page-grid" data-page-grid="pessoas"></div>
+  <div class="page-grid" data-page-grid="eficiencia"></div>
+  <div class="page-grid" data-page-grid="planejamento"></div>
+  <div class="page-grid" data-page-grid="qualidade"></div>
+  <div class="page-grid" data-page-grid="cruzados"></div>
+
   <!-- Funcionários -->
   <div class="card sec-card" id="sec-func" data-page="pessoas">
     <div class="card-hd">
@@ -748,7 +774,7 @@ input[type="date"]{color-scheme:dark;}
 
   <!-- Operações + Itens -->
   
-  <div class="card sec-card" id="sec-ops-op" data-page="eficiencia" style="margin-bottom:18px">
+  <div class="card sec-card" id="sec-ops-op" data-page="eficiencia" data-subpage="0" style="margin-bottom:18px">
 
       <div class="card-hd">
         <div class="card-title">⚙️ Tempo por Operação <button class="help-btn" onclick="abrirAjuda('sec-ops-op')">ℹ️</button></div>
@@ -764,7 +790,7 @@ input[type="date"]{color-scheme:dark;}
     
   </div>
 
-  <div class="card sec-card" id="sec-ops-item" data-page="eficiencia" style="margin-bottom:18px">
+  <div class="card sec-card" id="sec-ops-item" data-page="eficiencia" data-subpage="0" style="margin-bottom:18px">
 
       <div class="card-hd">
         <div class="card-title">🏷️ Top Códigos de Item <button class="help-btn" onclick="abrirAjuda('sec-ops-item')">ℹ️</button></div>
@@ -783,7 +809,7 @@ input[type="date"]{color-scheme:dark;}
 
   <!-- Série + Operação×Item -->
   
-  <div class="card sec-card" id="sec-serie" data-page="eficiencia" style="margin-bottom:18px">
+  <div class="card sec-card" id="sec-serie" data-page="eficiencia" data-subpage="0" style="margin-bottom:18px">
 
       <div class="card-hd">
         <div class="card-title">🔩 Produção por Nº de Série <button class="help-btn" onclick="abrirAjuda('sec-serie')">ℹ️</button></div>
@@ -911,7 +937,7 @@ input[type="date"]{color-scheme:dark;}
   </div>
 
   <!-- OEE / CICLO POR SÉRIE -->
-  <div class="card sec-card" id="sec-oee" data-page="eficiencia" style="display:none">
+  <div class="card sec-card" id="sec-oee" data-page="eficiencia" data-subpage="0" style="display:none">
     <div class="card-hd">
       <div class="card-title">🏭 Lead Time & Gargalo por Série <button class="help-btn" onclick="abrirAjuda('sec-oee')">ℹ️</button></div>
       <div style="display:flex;align-items:center;gap:8px;margin-left:auto;">
@@ -929,7 +955,7 @@ input[type="date"]{color-scheme:dark;}
   </div>
 
   <!-- TENDÊNCIA TEMPORAL -->
-  <div class="card sec-card" id="sec-trend" data-page="eficiencia" style="display:none">
+  <div class="card sec-card" id="sec-trend" data-page="eficiencia" data-subpage="1" style="display:none">
     <div class="card-hd">
       <div class="card-title">📈 Tendência de Eficiência ao Longo do Tempo <button class="help-btn" onclick="abrirAjuda('sec-trend')">ℹ️</button></div>
       <div class="card-badge">Evolução semanal</div>
@@ -938,7 +964,7 @@ input[type="date"]{color-scheme:dark;}
   </div>
 
   <!-- HEATMAP HORA DO DIA -->
-  <div class="card sec-card" id="sec-heatmap" data-page="eficiencia" style="display:none">
+  <div class="card sec-card" id="sec-heatmap" data-page="eficiencia" data-subpage="1" style="display:none">
     <div class="card-hd">
       <div class="card-title">🕐 Produção por Hora do Dia <button class="help-btn" onclick="abrirAjuda('sec-heatmap')">ℹ️</button></div>
       <div class="card-badge">Intensidade de apontamentos</div>
@@ -1036,7 +1062,7 @@ input[type="date"]{color-scheme:dark;}
   </div>
 
   <!-- FLUXO DE PRODUÇÃO: Panorama Anual + CFD -->
-  <div class="card sec-card" id="sec-flow" data-page="eficiencia" style="display:none">
+  <div class="card sec-card" id="sec-flow" data-page="eficiencia" data-subpage="1" style="display:none">
     <div class="card-hd">
       <div class="card-title">📈 Panorama de Produção ao Longo do Ano <button class="help-btn" onclick="abrirAjuda('sec-flow')">ℹ️</button></div>
       <div class="card-badge">Throughput mensal vs Entradas — visão de fluxo</div>
@@ -1441,6 +1467,18 @@ function rerenderizarSecoesVisiveis(){
   });
 }
 
+// Move cada seção para o wrapper .page-grid da sua categoria — uma vez, na inicialização.
+// Mais seguro que reescrever o HTML manualmente: reaproveita o padrão já usado em
+// applySettings() para reordenar seções via appendChild().
+function moverSecoesParaGrids(){
+  document.querySelectorAll('.sec-card[data-page]').forEach(el=>{
+    const wrapper = document.querySelector('.page-grid[data-page-grid="'+el.dataset.page+'"]');
+    if(wrapper) wrapper.appendChild(el);
+  });
+}
+
+let _subpaginaAtual = {}; // ex: {eficiencia: 0} — só categorias com data-subpage usam isto
+
 function mudarPagina(pagina){
   _paginaAtual = pagina;
   localStorage.setItem('agricef-pagina-atual', pagina);
@@ -1450,16 +1488,106 @@ function mudarPagina(pagina){
   if(pagina === 'cruzados' && typeof renderInsightsCruzados === 'function') renderInsightsCruzados();
 }
 
-// Visibilidade final = habilitado nas Configurações E pertence à página atual.
+// Visibilidade final = habilitado nas Configurações E pertence à página atual E (se a
+// seção tiver data-subpage) pertence à sub-página atual daquela categoria.
 // Chamada por applySettings() (em vez de aplicar display direto) e por mudarPagina().
 function renderVisibilidade(){
   const s = loadSettings();
   document.querySelectorAll('.sec-card[data-page], .kpi[data-page]').forEach(el=>{
     const habilitado = el.classList.contains('sec-card') ? (s.sections[el.id] !== false) : (s.kpis[el.id] !== false);
     const naPagina = el.dataset.page === _paginaAtual;
-    el.style.display = (habilitado && naPagina) ? '' : 'none';
+    let naSubpagina = true;
+    if(el.dataset.subpage !== undefined){
+      const sub = _subpaginaAtual[el.dataset.page] || 0;
+      naSubpagina = Number(el.dataset.subpage) === sub;
+    }
+    el.style.display = (habilitado && naPagina && naSubpagina) ? '' : 'none';
+  });
+  atualizarSubpagNav();
+  aplicarGridTelaCheia();
+}
+
+function contarSubpaginas(categoria){
+  const subs = new Set();
+  document.querySelectorAll('.sec-card[data-page="'+categoria+'"][data-subpage]').forEach(el=>subs.add(el.dataset.subpage));
+  return subs.size || 1;
+}
+function atualizarSubpagNav(){
+  const total = contarSubpaginas(_paginaAtual);
+  const nav = document.getElementById('subpagNav');
+  if(!nav) return;
+  if(total <= 1){ nav.classList.remove('show'); return; }
+  nav.classList.add('show');
+  const atual = (_subpaginaAtual[_paginaAtual]||0) + 1;
+  document.getElementById('subpagLabel').textContent = atual + '/' + total;
+}
+function subpaginaAnterior(){
+  const total = contarSubpaginas(_paginaAtual);
+  const atual = _subpaginaAtual[_paginaAtual] || 0;
+  _subpaginaAtual[_paginaAtual] = (atual - 1 + total) % total;
+  renderVisibilidade();
+  rerenderizarSecoesVisiveis();
+}
+function subpaginaProxima(){
+  const total = contarSubpaginas(_paginaAtual);
+  const atual = _subpaginaAtual[_paginaAtual] || 0;
+  _subpaginaAtual[_paginaAtual] = (atual + 1) % total;
+  renderVisibilidade();
+  rerenderizarSecoesVisiveis();
+}
+
+// Mede o espaço real ocupado por header/filtros/nav (em vez de chumbar valores fixos)
+// e devolve quanto resta de altura de viewport para o grid de seções da página atual.
+function calcularAlturaDisponivel(){
+  // Mede a posição real do wrapper ativo (em vez de somar alturas individuais dos
+  // elementos acima) — captura corretamente gaps/margins/paddings que uma soma manual
+  // poderia perder, evitando o acúmulo de poucos pixels que ainda gera scroll de página.
+  const wrapperAtivo = document.querySelector('.page-grid[data-page-grid="'+_paginaAtual+'"]');
+  const top = wrapperAtivo ? wrapperAtivo.getBoundingClientRect().top : 200;
+  const margemInferior = 20; // padding-bottom de main
+  return Math.max(200, window.innerHeight - top - margemInferior);
+}
+
+function decidirGridDims(n){
+  if(n<=1) return {cols:1, rows:1};
+  if(n===2) return {cols:2, rows:1};
+  if(n===3) return {cols:3, rows:1};
+  if(n===4) return {cols:2, rows:2};
+  const cols = Math.ceil(Math.sqrt(n));
+  return {cols, rows: Math.ceil(n/cols)};
+}
+
+// Aplica o grid dinâmico na página atual e redimensiona os gráficos Chart.js dela —
+// chamado por renderVisibilidade() (que já roda em toda troca de página/sub-página/settings).
+function aplicarGridTelaCheia(){
+  document.querySelectorAll('.page-grid').forEach(g=>g.classList.remove('active'));
+  const wrapperAtivo = document.querySelector('.page-grid[data-page-grid="'+_paginaAtual+'"]');
+  if(!wrapperAtivo) return;
+  wrapperAtivo.classList.add('active');
+  const visiveis = [...wrapperAtivo.querySelectorAll('.sec-card')].filter(el=>el.style.display!=='none');
+  const {cols, rows} = decidirGridDims(visiveis.length);
+  wrapperAtivo.style.gridTemplateColumns = 'repeat('+cols+', 1fr)';
+  wrapperAtivo.style.gridTemplateRows = 'repeat('+rows+', 1fr)';
+  wrapperAtivo.style.height = calcularAlturaDisponivel()+'px';
+
+  requestAnimationFrame(()=>{
+    Object.values(chartInstances).forEach(c=>{ if(c && typeof c.resize==='function') c.resize(); });
+    // _prazoChart/_flowBarChart/_flowCfdChart são `let` no escopo léxico deste script (não em
+    // window) — referenciadas pelo nome direto; window._trendChart/_wdChart usam window explícito.
+    [window._trendChart, window._wdChart,
+     (typeof _prazoChart!=='undefined'?_prazoChart:null),
+     (typeof _flowBarChart!=='undefined'?_flowBarChart:null),
+     (typeof _flowCfdChart!=='undefined'?_flowCfdChart:null)].forEach(c=>{
+      if(c && typeof c.resize==='function') c.resize();
+    });
   });
 }
+
+let _resizeDebounce=null;
+window.addEventListener('resize', ()=>{
+  clearTimeout(_resizeDebounce);
+  _resizeDebounce = setTimeout(aplicarGridTelaCheia, 150);
+});
 
 // ── FETCH & PARSE ─────────────────────────────────────────────────────────────
 function parseSheetJSON(rows){
@@ -2643,6 +2771,7 @@ document.addEventListener('DOMContentLoaded',()=>{
 
   document.getElementById('dateLbl').textContent=new Date().toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'long',year:'numeric'});
   document.querySelectorAll('.page-tab').forEach(b=>b.classList.toggle('active', b.dataset.page===_paginaAtual));
+  moverSecoesParaGrids();
   applySettings();
   renderSettingsItems();
   ['fFunc','fSerie','fOp','fItem','fFrom','fTo'].forEach(id=>{
