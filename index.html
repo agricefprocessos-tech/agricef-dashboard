@@ -1407,11 +1407,46 @@ function fecharAjuda(){
   document.getElementById('helpOverlay').classList.remove('open');
 }
 
+// Várias seções têm renderização condicionada a "se estiver visível agora" (guarda
+// `if(el.style.display==='none') return`) — herdada de quando só existia o toggle de
+// Configurações. Com páginas, uma seção fica oculta sempre que não é a página atual, então
+// sua função de render precisa ser rechamada quando ela volta a ficar visível, ou o
+// gráfico/tabela nunca é desenhado (ficou em branco até a primeira vez que essa seção
+// aparecer durante o fetchData() inicial).
+const RENDER_POR_SECAO = {
+  'sec-oee': ['renderLeadTime','renderOEE'],
+  'sec-trend': ['renderTrend'],
+  'sec-heatmap': ['renderHeatmap'],
+  'sec-backlog': ['renderBacklog'],
+  'sec-flow': ['renderFlow'],
+  'sec-prazo': ['renderPrazo'],
+  'sec-projects': ['renderProjects'],
+  'sec-weekday': ['renderWeekday'],
+  'sec-audit': ['renderAudit'],
+  'sec-perf': ['renderPerformance'],
+};
+// Algumas dessas seções são genuinamente lentas de calcular (ex: renderProjects ~5s em
+// produção, varrendo todo o histórico). Esse cache evita refazer o cálculo ao trocar de
+// página repetidas vezes sem os dados/filtros terem mudado — é invalidado em applyFilters().
+let _secoesJaRenderizadas = new Set();
+function rerenderizarSecoesVisiveis(){
+  Object.entries(RENDER_POR_SECAO).forEach(([secId, fns]) => {
+    const el = document.getElementById(secId);
+    if(!el || el.style.display === 'none' || _secoesJaRenderizadas.has(secId)) return;
+    _secoesJaRenderizadas.add(secId);
+    // setTimeout libera a thread para a troca de aba/visibilidade renderizar primeiro —
+    // o usuário vê a navegação responder na hora, com "Carregando..." nas seções pesadas
+    // enquanto o cálculo roda, em vez da UI parecer travada no clique do botão.
+    setTimeout(() => { fns.forEach(fnName => { if(typeof window[fnName] === 'function') window[fnName](); }); }, 0);
+  });
+}
+
 function mudarPagina(pagina){
   _paginaAtual = pagina;
   localStorage.setItem('agricef-pagina-atual', pagina);
   document.querySelectorAll('.page-tab').forEach(b=>b.classList.toggle('active', b.dataset.page===pagina));
   renderVisibilidade();
+  rerenderizarSecoesVisiveis();
   if(pagina === 'cruzados' && typeof renderInsightsCruzados === 'function') renderInsightsCruzados();
 }
 
@@ -1761,7 +1796,16 @@ function applyFilters(){
     return true;
   });
   document.getElementById('recCount').textContent = filtered.length;
+  if(typeof _secoesJaRenderizadas !== 'undefined') _secoesJaRenderizadas.clear();
   renderAll();
+  // renderAll() já processou (de forma síncrona) todas as seções visíveis na página atual —
+  // marca essas como "feitas" para que mudarPagina() não as recalcule de novo ao navegar.
+  if(typeof RENDER_POR_SECAO !== 'undefined'){
+    Object.keys(RENDER_POR_SECAO).forEach(secId=>{
+      const el=document.getElementById(secId);
+      if(el && el.style.display!=='none') _secoesJaRenderizadas.add(secId);
+    });
+  }
 
   saveFilters();
 }
