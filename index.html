@@ -238,6 +238,13 @@ main{padding:18px 24px;display:grid;grid-template-columns:1fr 1fr;gap:18px;}
 .pv-tab-btn.active{background:var(--accent);color:#000;border-color:var(--accent);}
 .pv-tab-btn:hover:not(.active){border-color:var(--accent);color:var(--accent);}
 
+.page-nav{display:flex;gap:8px;flex-wrap:wrap;background:var(--surface);border-bottom:1px solid var(--border);padding:10px 24px;position:sticky;top:122px;z-index:198;}
+.page-tab{background:var(--surface2);border:1px solid var(--border);color:var(--text2);padding:8px 16px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Barlow',sans-serif;transition:all .15s;}
+.page-tab.active{background:var(--accent);color:#000;border-color:var(--accent);}
+.page-tab:hover:not(.active){border-color:var(--accent);color:var(--accent);}
+.help-btn{background:transparent;border:1px solid var(--border);color:var(--text2);width:22px;height:22px;border-radius:50%;font-size:12px;cursor:pointer;line-height:1;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s;}
+.help-btn:hover{border-color:var(--accent2);color:var(--accent2);}
+
 
 
 
@@ -420,6 +427,14 @@ input[type="date"]{color-scheme:dark;}
       <button class="btn-fcm-ok" id="edmBtnOk" style="background:#fbbf24;color:#000;" onclick="confirmarEdicao()">&#9999;&#65039; SALVAR EDI&Ccedil;&Atilde;O</button>
       <button class="btn-fcm-cancel" onclick="fecharModalEdicao()">Cancelar</button>
     </div>
+  </div>
+</div>
+
+<div class="fcm-overlay" id="helpOverlay">
+  <div class="fcm-box" style="width:480px">
+    <div class="fcm-title" id="helpTitulo" style="color:var(--accent2)"></div>
+    <div id="helpTexto" style="color:var(--text2);font-size:13px;line-height:1.6;margin:0 0 16px"></div>
+    <button class="btn-fcm-cancel" onclick="fecharAjuda()" style="width:100%">Fechar</button>
   </div>
 </div>
 
@@ -685,32 +700,41 @@ input[type="date"]{color-scheme:dark;}
   <div class="filter-info">Exibindo <span id="recCount">0</span> registros</div>
 </div>
 
+<div class="page-nav" id="pageNav">
+  <button class="page-tab active" data-page="visao-geral" onclick="mudarPagina('visao-geral')">🏠 Visão Geral</button>
+  <button class="page-tab" data-page="pessoas" onclick="mudarPagina('pessoas')">👷 Pessoas &amp; Produtividade</button>
+  <button class="page-tab" data-page="eficiencia" onclick="mudarPagina('eficiencia')">🏭 Eficiência Operacional</button>
+  <button class="page-tab" data-page="planejamento" onclick="mudarPagina('planejamento')">📊 Planejamento</button>
+  <button class="page-tab" data-page="qualidade" onclick="mudarPagina('qualidade')">⛔ Qualidade</button>
+  <button class="page-tab" data-page="cruzados" onclick="mudarPagina('cruzados')">🔀 Insights Cruzados</button>
+</div>
+
 <main style="padding-top:4px">
   <!-- KPIs -->
   <div class="kpi-row" id="sec-kpis">
-    <div class="kpi" style="--kc:#f0b429"><div class="kpi-lbl">Apontamentos</div><div class="kpi-val" id="k1">—</div><div class="kpi-sub">Total no período</div><div class="kpi-ico">📋</div></div>
-    <div class="kpi" style="--kc:#38bdf8"><div class="kpi-lbl">Funcionários</div><div class="kpi-val" id="k2">—</div><div class="kpi-sub">Ativos no período</div><div class="kpi-ico">👷</div></div>
-    <div class="kpi" style="--kc:#4ade80"><div class="kpi-lbl">Séries</div><div class="kpi-val" id="k3">—</div><div class="kpi-sub">Em produção</div><div class="kpi-ico">🔩</div></div>
-    <div class="kpi" style="--kc:#a78bfa"><div class="kpi-lbl">Horas Produtivas</div><div class="kpi-val" id="k4">—</div><div class="kpi-sub">Tempo efetivo</div><div class="kpi-ico">⏱️</div></div>
-    <div class="kpi" style="--kc:#f87171"><div class="kpi-lbl">Horas Parada</div><div class="kpi-val" id="k5">—</div><div class="kpi-sub">Set-up + outros</div><div class="kpi-ico">⛔</div></div>
-    <div class="kpi" style="--kc:#fb923c"><div class="kpi-lbl">Horas Retrabalho</div><div class="kpi-val" id="k6">—</div><div class="kpi-sub">Reprocessamento</div><div class="kpi-ico">🔄</div></div>
-    <div class="kpi" style="--kc:#f0b429"><div class="kpi-lbl">Eficiência Geral</div><div class="kpi-val" id="k7">—</div><div class="kpi-sub">% tempo produtivo</div><div class="kpi-ico">📈</div></div>
-    <div class="kpi" style="--kc:#4ade80"><div class="kpi-lbl">Itens Produzidos</div><div class="kpi-val" id="k8">—</div><div class="kpi-sub">Qtd. total apontada</div><div class="kpi-ico">📦</div></div>
-    <div class="kpi" style="--kc:#f87171"><div class="kpi-lbl">Horas Ausência</div><div class="kpi-val" id="k9">—</div><div class="kpi-sub">8h × dias sem apont.</div><div class="kpi-ico">📅</div></div>
-    <div class="kpi kpi-extra" style="--kc:#67e8f9" id="kpi-oee"><div class="kpi-lbl">OEE</div><div class="kpi-val" id="k-oee">—</div><div class="kpi-sub">Disponib. × Perf. × Qual.</div><div class="kpi-ico">🏭</div></div>
-    <div class="kpi kpi-extra" style="--kc:#86efac" id="kpi-taxa-ret"><div class="kpi-lbl">Taxa Retrabalho</div><div class="kpi-val" id="k-taxa-ret">—</div><div class="kpi-sub">% ops com retrabalho</div><div class="kpi-ico">🔄</div></div>
-    <div class="kpi kpi-extra" style="--kc:#fca5a5" id="kpi-backlog"><div class="kpi-lbl">Backlog Aberto</div><div class="kpi-val" id="k-backlog">—</div><div class="kpi-sub">Aberturas s/ fechamento · todos os períodos</div><div class="kpi-ico">⏳</div></div>
-    <div class="kpi kpi-extra" style="--kc:#c084fc" id="kpi-custo"><div class="kpi-lbl">Improdutividade</div><div class="kpi-val" id="k-custo">—</div><div class="kpi-sub">% horas não produtivas</div><div class="kpi-ico">💸</div></div>
-    <div class="kpi kpi-extra" style="--kc:#22d3ee" id="kpi-wip"><div class="kpi-lbl">WIP Médio</div><div class="kpi-val" id="k-wip">—</div><div class="kpi-sub">Ordens em paralelo (Lei de Little)</div><div class="kpi-ico">🔄</div></div>
-    <div class="kpi kpi-extra" style="--kc:#fb923c" id="kpi-throughput"><div class="kpi-lbl">Throughput Médio</div><div class="kpi-val" id="k-throughput">—</div><div class="kpi-sub">Operações fechadas/mês</div><div class="kpi-ico">🚀</div></div>
-    <div class="kpi kpi-extra" style="--kc:#a78bfa" id="kpi-cv"><div class="kpi-lbl">Coef. Variação</div><div class="kpi-val" id="k-cv">—</div><div class="kpi-sub">Variabilidade do throughput</div><div class="kpi-ico">📉</div></div>
-    <div class="kpi kpi-extra" style="--kc:#4ade80" id="kpi-leadtime2"><div class="kpi-lbl">Lead Time Médio</div><div class="kpi-val" id="k-leadtime2">—</div><div class="kpi-sub">Horas abertura→fechamento</div><div class="kpi-ico">⏳</div></div>
+    <div class="kpi" id="kpi-apontamentos" data-page="visao-geral" style="--kc:#f0b429"><div class="kpi-lbl">Apontamentos</div><div class="kpi-val" id="k1">—</div><div class="kpi-sub">Total no período</div><div class="kpi-ico">📋</div></div>
+    <div class="kpi" id="kpi-funcionarios" data-page="visao-geral" style="--kc:#38bdf8"><div class="kpi-lbl">Funcionários</div><div class="kpi-val" id="k2">—</div><div class="kpi-sub">Ativos no período</div><div class="kpi-ico">👷</div></div>
+    <div class="kpi" id="kpi-series" data-page="eficiencia" style="--kc:#4ade80"><div class="kpi-lbl">Séries</div><div class="kpi-val" id="k3">—</div><div class="kpi-sub">Em produção</div><div class="kpi-ico">🔩</div></div>
+    <div class="kpi" id="kpi-horas-prod" data-page="pessoas" style="--kc:#a78bfa"><div class="kpi-lbl">Horas Produtivas</div><div class="kpi-val" id="k4">—</div><div class="kpi-sub">Tempo efetivo</div><div class="kpi-ico">⏱️</div></div>
+    <div class="kpi" id="kpi-horas-parada" data-page="qualidade" style="--kc:#f87171"><div class="kpi-lbl">Horas Parada</div><div class="kpi-val" id="k5">—</div><div class="kpi-sub">Set-up + outros</div><div class="kpi-ico">⛔</div></div>
+    <div class="kpi" id="kpi-horas-retrabalho" data-page="qualidade" style="--kc:#fb923c"><div class="kpi-lbl">Horas Retrabalho</div><div class="kpi-val" id="k6">—</div><div class="kpi-sub">Reprocessamento</div><div class="kpi-ico">🔄</div></div>
+    <div class="kpi" id="kpi-eficiencia" data-page="visao-geral" style="--kc:#f0b429"><div class="kpi-lbl">Eficiência Geral</div><div class="kpi-val" id="k7">—</div><div class="kpi-sub">% tempo produtivo</div><div class="kpi-ico">📈</div></div>
+    <div class="kpi" id="kpi-itens" data-page="planejamento" style="--kc:#4ade80"><div class="kpi-lbl">Itens Produzidos</div><div class="kpi-val" id="k8">—</div><div class="kpi-sub">Qtd. total apontada</div><div class="kpi-ico">📦</div></div>
+    <div class="kpi" id="kpi-ausencia" data-page="pessoas" style="--kc:#f87171"><div class="kpi-lbl">Horas Ausência</div><div class="kpi-val" id="k9">—</div><div class="kpi-sub">8h × dias sem apont.</div><div class="kpi-ico">📅</div></div>
+    <div class="kpi kpi-extra" style="--kc:#67e8f9" id="kpi-oee" data-page="eficiencia"><div class="kpi-lbl">OEE</div><div class="kpi-val" id="k-oee">—</div><div class="kpi-sub">Disponib. × Perf. × Qual.</div><div class="kpi-ico">🏭</div></div>
+    <div class="kpi kpi-extra" style="--kc:#86efac" id="kpi-taxa-ret" data-page="qualidade"><div class="kpi-lbl">Taxa Retrabalho</div><div class="kpi-val" id="k-taxa-ret">—</div><div class="kpi-sub">% ops com retrabalho</div><div class="kpi-ico">🔄</div></div>
+    <div class="kpi kpi-extra" style="--kc:#fca5a5" id="kpi-backlog" data-page="visao-geral"><div class="kpi-lbl">Backlog Aberto</div><div class="kpi-val" id="k-backlog">—</div><div class="kpi-sub">Aberturas s/ fechamento · todos os períodos</div><div class="kpi-ico">⏳</div></div>
+    <div class="kpi kpi-extra" style="--kc:#c084fc" id="kpi-custo" data-page="qualidade"><div class="kpi-lbl">Improdutividade</div><div class="kpi-val" id="k-custo">—</div><div class="kpi-sub">% horas não produtivas</div><div class="kpi-ico">💸</div></div>
+    <div class="kpi kpi-extra" style="--kc:#22d3ee" id="kpi-wip" data-page="pessoas"><div class="kpi-lbl">WIP Médio</div><div class="kpi-val" id="k-wip">—</div><div class="kpi-sub">Ordens em paralelo (Lei de Little)</div><div class="kpi-ico">🔄</div></div>
+    <div class="kpi kpi-extra" style="--kc:#fb923c" id="kpi-throughput" data-page="eficiencia"><div class="kpi-lbl">Throughput Médio</div><div class="kpi-val" id="k-throughput">—</div><div class="kpi-sub">Operações fechadas/mês</div><div class="kpi-ico">🚀</div></div>
+    <div class="kpi kpi-extra" style="--kc:#a78bfa" id="kpi-cv" data-page="eficiencia"><div class="kpi-lbl">Coef. Variação</div><div class="kpi-val" id="k-cv">—</div><div class="kpi-sub">Variabilidade do throughput</div><div class="kpi-ico">📉</div></div>
+    <div class="kpi kpi-extra" style="--kc:#4ade80" id="kpi-leadtime2" data-page="eficiencia"><div class="kpi-lbl">Lead Time Médio</div><div class="kpi-val" id="k-leadtime2">—</div><div class="kpi-sub">Horas abertura→fechamento</div><div class="kpi-ico">⏳</div></div>
   </div>
 
   <!-- Funcionários -->
-  <div class="card sec-card" id="sec-func">
+  <div class="card sec-card" id="sec-func" data-page="pessoas">
     <div class="card-hd">
-      <div class="card-title">👷 Eficiência por Funcionário</div>
+      <div class="card-title">👷 Eficiência por Funcionário <button class="help-btn" onclick="abrirAjuda('sec-func')">ℹ️</button></div>
       <div style="display:flex;align-items:center;gap:8px;margin-left:auto;">
         <div class="view-toggle" id="toggle-func">
           <button class="vt-btn active" onclick="setView('func','table')" title="Tabela">☰</button>
@@ -724,10 +748,10 @@ input[type="date"]{color-scheme:dark;}
 
   <!-- Operações + Itens -->
   
-  <div class="card sec-card" id="sec-ops-op" style="margin-bottom:18px">
+  <div class="card sec-card" id="sec-ops-op" data-page="eficiencia" style="margin-bottom:18px">
 
       <div class="card-hd">
-        <div class="card-title">⚙️ Tempo por Operação</div>
+        <div class="card-title">⚙️ Tempo por Operação <button class="help-btn" onclick="abrirAjuda('sec-ops-op')">ℹ️</button></div>
       <div style="display:flex;align-items:center;gap:8px;margin-left:auto;">
         <div class="view-toggle" id="toggle-op">
           <button class="vt-btn active" onclick="setView('op','table')" title="Tabela">☰</button>
@@ -740,10 +764,10 @@ input[type="date"]{color-scheme:dark;}
     
   </div>
 
-  <div class="card sec-card" id="sec-ops-item" style="margin-bottom:18px">
+  <div class="card sec-card" id="sec-ops-item" data-page="eficiencia" style="margin-bottom:18px">
 
       <div class="card-hd">
-        <div class="card-title">🏷️ Top Códigos de Item</div>
+        <div class="card-title">🏷️ Top Códigos de Item <button class="help-btn" onclick="abrirAjuda('sec-ops-item')">ℹ️</button></div>
       <div style="display:flex;align-items:center;gap:8px;margin-left:auto;">
         <div class="view-toggle" id="toggle-item">
           <button class="vt-btn active" onclick="setView('item','table')" title="Tabela">☰</button>
@@ -759,20 +783,20 @@ input[type="date"]{color-scheme:dark;}
 
   <!-- Série + Operação×Item -->
   
-  <div class="card sec-card" id="sec-serie" style="margin-bottom:18px">
+  <div class="card sec-card" id="sec-serie" data-page="eficiencia" style="margin-bottom:18px">
 
       <div class="card-hd">
-        <div class="card-title">🔩 Produção por Nº de Série</div>
+        <div class="card-title">🔩 Produção por Nº de Série <button class="help-btn" onclick="abrirAjuda('sec-serie')">ℹ️</button></div>
         <div class="card-badge">Horas acumuladas + detalhamento por operação/item</div>
       </div>
       <div class="card-body scrollable" id="seriePanel"><div class="empty">Carregando...</div></div>
     
   </div>
 
-  <div class="card sec-card" id="sec-paradas" style="margin-bottom:18px">
+  <div class="card sec-card" id="sec-paradas" data-page="qualidade" style="margin-bottom:18px">
 
       <div class="card-hd">
-        <div class="card-title">⛔ Paradas & Retrabalhos</div>
+        <div class="card-title">⛔ Paradas & Retrabalhos <button class="help-btn" onclick="abrirAjuda('sec-paradas')">ℹ️</button></div>
       <div style="display:flex;align-items:center;gap:8px;margin-left:auto;">
         <div class="view-toggle" id="toggle-parada">
           <button class="vt-btn active" onclick="setView('parada','table')" title="Tabela">☰</button>
@@ -794,9 +818,9 @@ input[type="date"]{color-scheme:dark;}
 
 
   <!-- ANÁLISE INTELIGENTE (IA) -->
-  <div class="card sec-card" id="sec-ia" style="margin-bottom:18px">
+  <div class="card sec-card" id="sec-ia" data-page="visao-geral" style="margin-bottom:18px">
     <div class="card-hd">
-      <div class="card-title">🤖 Análise Inteligente</div>
+      <div class="card-title">🤖 Análise Inteligente <button class="help-btn" onclick="abrirAjuda('sec-ia')">ℹ️</button></div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:8px;">
         <button class="pv-tab-btn active" id="iaTab-diario" onclick="switchIaTab('diario')">Diário</button>
         <button class="pv-tab-btn" id="iaTab-semanal" onclick="switchIaTab('semanal')">Semanal</button>
@@ -808,10 +832,10 @@ input[type="date"]{color-scheme:dark;}
 
   <!-- Ranking + Timeline -->
 
-  <div class="card sec-card" id="sec-rank" style="margin-bottom:18px">
+  <div class="card sec-card" id="sec-rank" data-page="visao-geral" style="margin-bottom:18px">
 
       <div class="card-hd">
-        <div class="card-title">🏆 Ranking de Produtividade</div>
+        <div class="card-title">🏆 Ranking de Produtividade <button class="help-btn" onclick="abrirAjuda('sec-rank')">ℹ️</button></div>
       <div style="display:flex;align-items:center;gap:8px;margin-left:auto;">
         <div class="view-toggle" id="toggle-rank">
           <button class="vt-btn active" onclick="setView('rank','table')" title="Tabela">☰</button>
@@ -824,10 +848,10 @@ input[type="date"]{color-scheme:dark;}
     
   </div>
 
-  <div class="card sec-card" id="sec-timeline" style="margin-bottom:18px">
+  <div class="card sec-card" id="sec-timeline" data-page="visao-geral" style="margin-bottom:18px">
 
       <div class="card-hd">
-        <div class="card-title">📋 Últimos Apontamentos</div>
+        <div class="card-title">📋 Últimos Apontamentos <button class="help-btn" onclick="abrirAjuda('sec-timeline')">ℹ️</button></div>
         <div class="card-badge">Feed recente</div>
       </div>
       <div class="card-body scrollable" id="tlPanel"><div class="empty">Carregando...</div></div>
@@ -836,9 +860,9 @@ input[type="date"]{color-scheme:dark;}
 
 
   <!-- PREVISTO vs REALIZADO -->
-  <div class="card sec-card" id="sec-pv">
+  <div class="card sec-card" id="sec-pv" data-page="planejamento">
     <div class="card-hd">
-      <div class="card-title">📊 Previsto × Realizado</div>
+      <div class="card-title">📊 Previsto × Realizado <button class="help-btn" onclick="abrirAjuda('sec-pv')">ℹ️</button></div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:8px;">
         <button class="pv-tab-btn active" id="pvTab-item" onclick="switchPvTab('item')">Por Item</button>
         <button class="pv-tab-btn" id="pvTab-func" onclick="switchPvTab('func')">Por Funcionário</button>
@@ -869,9 +893,9 @@ input[type="date"]{color-scheme:dark;}
   </div>
 
   <!-- ASSIDUIDADE / AUSÊNCIAS -->
-  <div class="card sec-card" id="sec-att">
+  <div class="card sec-card" id="sec-att" data-page="pessoas">
     <div class="card-hd">
-      <div class="card-title">📅 Assiduidade & Ausências por Funcionário</div>
+      <div class="card-title">📅 Assiduidade & Ausências por Funcionário <button class="help-btn" onclick="abrirAjuda('sec-att')">ℹ️</button></div>
       <div style="display:flex;align-items:center;gap:8px;margin-left:auto;">
         <div class="view-toggle" id="toggle-att">
           <button class="vt-btn active" onclick="setView('att','table')" title="Tabela">☰</button>
@@ -887,9 +911,9 @@ input[type="date"]{color-scheme:dark;}
   </div>
 
   <!-- OEE / CICLO POR SÉRIE -->
-  <div class="card sec-card" id="sec-oee" style="display:none">
+  <div class="card sec-card" id="sec-oee" data-page="eficiencia" style="display:none">
     <div class="card-hd">
-      <div class="card-title">🏭 Lead Time & Gargalo por Série</div>
+      <div class="card-title">🏭 Lead Time & Gargalo por Série <button class="help-btn" onclick="abrirAjuda('sec-oee')">ℹ️</button></div>
       <div style="display:flex;align-items:center;gap:8px;margin-left:auto;">
         <div class="view-toggle" id="toggle-oee">
           <button class="vt-btn active" onclick="setView('oee','table')" title="Tabela">☰</button>
@@ -905,28 +929,28 @@ input[type="date"]{color-scheme:dark;}
   </div>
 
   <!-- TENDÊNCIA TEMPORAL -->
-  <div class="card sec-card" id="sec-trend" style="display:none">
+  <div class="card sec-card" id="sec-trend" data-page="eficiencia" style="display:none">
     <div class="card-hd">
-      <div class="card-title">📈 Tendência de Eficiência ao Longo do Tempo</div>
+      <div class="card-title">📈 Tendência de Eficiência ao Longo do Tempo <button class="help-btn" onclick="abrirAjuda('sec-trend')">ℹ️</button></div>
       <div class="card-badge">Evolução semanal</div>
     </div>
     <div class="card-body" id="trendPanel"><div class="empty">Carregando...</div></div>
   </div>
 
   <!-- HEATMAP HORA DO DIA -->
-  <div class="card sec-card" id="sec-heatmap" style="display:none">
+  <div class="card sec-card" id="sec-heatmap" data-page="eficiencia" style="display:none">
     <div class="card-hd">
-      <div class="card-title">🕐 Produção por Hora do Dia</div>
+      <div class="card-title">🕐 Produção por Hora do Dia <button class="help-btn" onclick="abrirAjuda('sec-heatmap')">ℹ️</button></div>
       <div class="card-badge">Intensidade de apontamentos</div>
     </div>
     <div class="card-body" id="heatmapPanel"><div class="empty">Carregando...</div></div>
   </div>
 
   <!-- BACKLOG -->
-  <div class="card sec-card" id="sec-backlog" style="display:none">
+  <div class="card sec-card" id="sec-backlog" data-page="planejamento" style="display:none">
     <div class="card-hd">
       <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0">
-        <div class="card-title">⏳ Backlog — Ordens em Aberto</div>
+        <div class="card-title">⏳ Backlog — Ordens em Aberto <button class="help-btn" onclick="abrirAjuda('sec-backlog')">ℹ️</button></div>
         <div class="card-badge" id="backlogBadge">Aba Abertos em tempo real</div>
         <span class="backlog-src" id="backlogSrc"></span>
       </div>
@@ -936,18 +960,18 @@ input[type="date"]{color-scheme:dark;}
   </div>
 
   <!-- DIA DA SEMANA -->
-  <div class="card sec-card" id="sec-weekday" style="display:none">
+  <div class="card sec-card" id="sec-weekday" data-page="pessoas" style="display:none">
     <div class="card-hd">
-      <div class="card-title">📅 Produtividade por Dia da Semana</div>
+      <div class="card-title">📅 Produtividade por Dia da Semana <button class="help-btn" onclick="abrirAjuda('sec-weekday')">ℹ️</button></div>
       <div class="card-badge">Média de horas produtivas</div>
     </div>
     <div class="card-body" id="weekdayPanel"><div class="empty">Carregando...</div></div>
   </div>
 
   <!-- AUDITORIA -->
-  <div class="card sec-card" id="sec-audit" style="display:none">
+  <div class="card sec-card" id="sec-audit" data-page="qualidade" style="display:none">
     <div class="card-hd">
-      <div class="card-title">🔍 Painel de Auditoria & Validação</div>
+      <div class="card-title">🔍 Painel de Auditoria & Validação <button class="help-btn" onclick="abrirAjuda('sec-audit')">ℹ️</button></div>
       <div class="card-badge">Valide os cálculos do dashboard</div>
     </div>
     <div class="card-body">
@@ -983,9 +1007,9 @@ input[type="date"]{color-scheme:dark;}
 
 
   <!-- DESEMPENHO INDIVIDUAL -->
-  <div class="card sec-card" id="sec-perf" style="display:none">
+  <div class="card sec-card" id="sec-perf" data-page="pessoas" style="display:none">
     <div class="card-hd">
-      <div class="card-title">🏅 Análise de Desempenho Individual</div>
+      <div class="card-title">🏅 Análise de Desempenho Individual <button class="help-btn" onclick="abrirAjuda('sec-perf')">ℹ️</button></div>
       <div class="card-badge">EE · Velocidade vs Peers · Consistência · Retrabalho</div>
     </div>
     <div class="card-body">
@@ -1012,9 +1036,9 @@ input[type="date"]{color-scheme:dark;}
   </div>
 
   <!-- FLUXO DE PRODUÇÃO: Panorama Anual + CFD -->
-  <div class="card sec-card" id="sec-flow" style="display:none">
+  <div class="card sec-card" id="sec-flow" data-page="eficiencia" style="display:none">
     <div class="card-hd">
-      <div class="card-title">📈 Panorama de Produção ao Longo do Ano</div>
+      <div class="card-title">📈 Panorama de Produção ao Longo do Ano <button class="help-btn" onclick="abrirAjuda('sec-flow')">ℹ️</button></div>
       <div class="card-badge">Throughput mensal vs Entradas — visão de fluxo</div>
     </div>
     <div class="card-body">
@@ -1034,9 +1058,9 @@ input[type="date"]{color-scheme:dark;}
   </div>
 
   <!-- D/F PRAZO POR OPERAÇÃO -->
-  <div class="card sec-card" id="sec-prazo" style="display:none">
+  <div class="card sec-card" id="sec-prazo" data-page="planejamento" style="display:none">
     <div class="card-hd">
-      <div class="card-title">🎯 Dentro/Fora do Prazo por Operação</div>
+      <div class="card-title">🎯 Dentro/Fora do Prazo por Operação <button class="help-btn" onclick="abrirAjuda('sec-prazo')">ℹ️</button></div>
       <div class="card-badge">Horas reais vs estimadas por código de item · tolerância 15%</div>
     </div>
     <div class="card-body">
@@ -1048,12 +1072,37 @@ input[type="date"]{color-scheme:dark;}
   </div>
 
   <!-- TABELA DE PROJETOS (por Nº Série) -->
-  <div class="card sec-card" id="sec-projects" style="display:none">
+  <div class="card sec-card" id="sec-projects" data-page="planejamento" style="display:none">
     <div class="card-hd">
-      <div class="card-title">🔩 Tabela de Projetos — Visão por Série</div>
+      <div class="card-title">🔩 Tabela de Projetos — Visão por Série <button class="help-btn" onclick="abrirAjuda('sec-projects')">ℹ️</button></div>
       <div class="card-badge">Status · datas · horas totais · operações</div>
     </div>
     <div class="card-body scrollable" id="projectsPanel"><div class="empty">Carregando...</div></div>
+  </div>
+
+  <!-- INSIGHTS CRUZADOS -->
+  <div class="card sec-card" id="sec-cross-abs" data-page="cruzados">
+    <div class="card-hd">
+      <div class="card-title">🔀 Assiduidade × Produtividade <button class="help-btn" onclick="abrirAjuda('sec-cross-abs')">ℹ️</button></div>
+      <div class="card-badge">1 ponto por funcionário</div>
+    </div>
+    <div class="card-body" style="height:340px"><canvas id="chartCrossAbsProd"></canvas></div>
+  </div>
+
+  <div class="card sec-card" id="sec-cross-ret" data-page="cruzados">
+    <div class="card-hd">
+      <div class="card-title">🔀 Retrabalho × Eficiência <button class="help-btn" onclick="abrirAjuda('sec-cross-ret')">ℹ️</button></div>
+      <div class="card-badge">1 ponto por funcionário</div>
+    </div>
+    <div class="card-body" style="height:340px"><canvas id="chartCrossRetEff"></canvas></div>
+  </div>
+
+  <div class="card sec-card" id="sec-cross-paradas" data-page="cruzados">
+    <div class="card-hd">
+      <div class="card-title">🔀 Paradas por Hora do Dia <button class="help-btn" onclick="abrirAjuda('sec-cross-paradas')">ℹ️</button></div>
+      <div class="card-badge">Concentração de paradas ao longo do turno</div>
+    </div>
+    <div class="card-body" style="height:340px"><canvas id="chartCrossParadasHora"></canvas></div>
   </div>
 
 </main>
@@ -1317,6 +1366,66 @@ function loadSettings(){
 }
 function saveSettings(){const s=loadSettings();s.costPerHour=parseFloat(document.getElementById('costPerHour')?.value||45);s._v=SETTINGS_VERSION;localStorage.setItem('agricef-settings',JSON.stringify(s));}
 
+let _paginaAtual = localStorage.getItem('agricef-pagina-atual') || 'visao-geral';
+
+const AJUDA_TEXTOS = {
+  'sec-func': 'Mostra, por funcionário, quantas horas foram produtivas, paradas e de retrabalho, e a eficiência (% das horas do dia ativo que foram produtivas). Eficiência baixa (abaixo de 60%) pode indicar sobrecarga de paradas/retrabalho, falta de material ou subutilização. Ação: investigue os casos "Baixo" primeiro — confira se o problema é de processo (gargalo, falta de peça) ou individual antes de cobrar produtividade.',
+  'sec-ops-op': 'Soma o tempo total dedicado a cada tipo de operação (Cortar, Furar, Soldar, etc.). Operações com tempo muito acima das demais podem ser gargalos estruturais da linha. Ação: se uma operação concentra desproporcionalmente o tempo, avalie redistribuir mão de obra ou revisar o método de trabalho dela.',
+  'sec-ops-item': 'Ranking dos códigos de item que mais consomem tempo de produção. Itens no topo merecem atenção redobrada em precisão de apontamento e padronização de processo, já que erros ali têm maior impacto no total. Ação: padronize o processo dos itens do topo antes dos demais — o ganho de eficiência ali se multiplica.',
+  'sec-serie': 'Detalha as horas de produção por número de série, com a quebra por operação e item dentro de cada série. Série com tempo muito alto pode indicar retrabalho oculto ou um produto mais complexo que o normal. Ação: ao identificar uma série com tempo destoante, abra o detalhamento por operação para achar onde o tempo está concentrado.',
+  'sec-paradas': 'Tempo perdido por tipo de parada (setup, falta de material, manutenção etc.) e por tipo de retrabalho. Paradas recorrentes do mesmo tipo indicam causa raiz não resolvida, não eventos isolados. Ação: ataque primeiro o tipo de parada com maior volume acumulado — é onde uma única melhoria gera o maior retorno.',
+  'sec-ia': 'Análise gerada automaticamente (Claude API) a partir dos mesmos dados que alimentam os relatórios diário/semanal por e-mail — interpreta causas, aponta quem/o que merece atenção e sugere ações. É atualizada automaticamente nos horários dos relatórios (diário seg-sex 07h, semanal segunda 07h); qualquer projeção de tendência nela é uma extrapolação dos dados recentes, não uma previsão estatística validada.',
+  'sec-rank': 'Ranking de horas produtivas por funcionário no período filtrado — mede volume de produção, não eficiência (um funcionário pode produzir muito mas também ter muitas horas extras ou paradas). Ação: use junto com "Eficiência por Funcionário" antes de tirar conclusões — volume alto com eficiência baixa pode significar jornada longa, não desempenho.',
+  'sec-timeline': 'Feed cronológico dos apontamentos mais recentes — é o "o que está acontecendo agora" da fábrica. Útil para detectar rapidamente um apontamento incomum (quantidade fora do padrão, série errada) recém-lançado. Ação: revise este feed no início do turno para pegar erros de apontamento do dia anterior antes que afetem os relatórios.',
+  'sec-pv': 'Compara o tempo/quantidade estimado (planejado) com o realmente apontado, por item, funcionário ou série. Valores muito acima do previsto indicam estimativa errada OU execução ineficiente — os dois exigem ações diferentes. Ação: para itens recorrentes acima do previsto, revise a estimativa; para itens pontuais, investigue a execução.',
+  'sec-att': 'Calendário de presença por funcionário — dias sem nenhum apontamento contam como ausência (8h imputadas). Padrões concentrados (mesmo funcionário, mesmo dia da semana) sugerem causa específica, não acaso. Ação: ausências recorrentes no mesmo padrão merecem conversa direta antes de afetar o planejamento de capacidade.',
+  'sec-oee': 'OEE = Disponibilidade × Performance × Qualidade — a métrica clássica de eficiência industrial, aqui calculada por série. Lead time alto numa série específica aponta exatamente onde o gargalo do processo está. Ação: priorize melhorias nas séries com OEE mais baixo — é onde a perda combinada (parada+performance+retrabalho) é maior.',
+  'sec-trend': 'Evolução da eficiência geral semana a semana. Queda sustentada (não um pico isolado) é o sinal mais confiável de que algo estrutural mudou — equipe, processo ou mix de produtos. Ação: se a queda persistir por 2+ semanas, investigue mudanças de equipe/processo no período, não trate como variação normal.',
+  'sec-heatmap': 'Intensidade de apontamentos por hora do dia e dia da semana — mostra quando a fábrica realmente produz. Horários com baixa intensidade dentro do turno normal podem indicar gargalo de início/fim de turno ou parada recorrente não capturada como tal. Ação: cruze horários "frios" do heatmap com a aba de Insights Cruzados (Paradas por Hora) para achar a causa.',
+  'sec-backlog': 'Ordens com ABERTURA registrada mas sem FECHAMENTO — trabalho que já começou e ainda não terminou, em qualquer período. Backlog crescente sem novas entregas é o sinal mais direto de gargalo real na produção. Ação: ordens com mais dias em aberto devem ser tratadas primeiro — risco de atraso cresce com o tempo parado.',
+  'sec-weekday': 'Média de horas produtivas por dia da semana. Quedas sistemáticas em dias específicos (ex: segunda ou sexta) indicam um padrão de equipe, não um fato isolado. Ação: se um dia da semana é consistentemente mais fraco, investigue causas de calendário (entressafra, escalas, manutenção programada) antes de agir sobre pessoas.',
+  'sec-audit': 'Ferramentas para validar a consistência dos próprios dados do dashboard — pares ABERTURA/FECHAMENTO órfãos, duplicados, inconsistências de cálculo. Use isso quando um número parecer "estranho" antes de desconfiar da produção real. Ação: rode a auditoria antes de tomar decisões baseadas em um KPI que pareça fora do padrão.',
+  'sec-perf': 'Compara cada operador com a velocidade média dos pares na mesma operação, junto com consistência e taxa de retrabalho individual. Mede desempenho relativo, não absoluto — bom para identificar quem pode treinar quem. Ação: operadores consistentemente abaixo dos pares na mesma operação são candidatos a treinamento direcionado, não advertência.',
+  'sec-flow': 'Visão de fluxo completo do ano — throughput mensal, novas entradas e diagrama de fluxo cumulativo (CFD). A distância entre a curva de entradas e a de saídas é o backlog acumulado visualmente. Ação: se as curvas estão se afastando ao longo do ano, a capacidade instalada está abaixo da demanda — decisão de investimento, não de gestão do dia a dia.',
+  'sec-prazo': 'Classifica operações como dentro ou fora do prazo estimado, por tipo de operação. Um tipo específico concentrando os atrasos aponta uma etapa do processo mal dimensionada, não atraso aleatório. Ação: se um tipo de operação domina os atrasos, revise o tempo padrão dela ou a capacidade alocada para ela.',
+  'sec-projects': 'Tabela consolidada por número de série — status, datas, horas totais e operações, tudo num só lugar. É o relatório "imprimível" para reunião de status de um projeto específico. Ação: use esta tabela como checklist em reuniões de acompanhamento de série/projeto, em vez de cruzar múltiplas seções manualmente.',
+  'sec-cross-abs': 'Cruza horas de ausência com horas produtivas por funcionário — cada ponto é uma pessoa. Pontos no canto inferior direito (muita ausência, pouca produção) merecem atenção combinada de RH e produção. Ação: se vários pontos formam esse padrão simultaneamente, é uma questão de equipe/processo, não de indivíduos isolados.',
+  'sec-cross-ret': 'Cruza horas de retrabalho com a eficiência de cada funcionário — testa a hipótese de que quem retrabalha mais rende menos. Se a correlação for clara (pontos formando uma diagonal descendente), o retrabalho é a causa principal da baixa eficiência, não outros fatores. Ação: reduzir retrabalho nesses casos deve subir a eficiência diretamente — priorize a causa do retrabalho, não a cobrança de produtividade.',
+  'sec-cross-paradas': 'Concentração de paradas por hora do dia, somando todos os funcionários e tipos de parada. Picos em horários específicos (início de turno, pós-almoço) indicam um padrão estrutural recorrente, não acaso. Ação: se há um pico claro, investigue o que acontece naquele horário (troca de turno, intervalo, abastecimento de material) — resolver isso reduz paradas todos os dias, não só uma vez.',
+};
+
+function abrirAjuda(secId){
+  const item = AJUDA_TEXTOS[secId];
+  if(!item) return;
+  const tituloEl = document.querySelector('#'+secId+' .card-title');
+  const titulo = tituloEl ? tituloEl.childNodes[0].textContent.trim() : 'Ajuda';
+  document.getElementById('helpTitulo').textContent = 'ℹ️ ' + titulo;
+  document.getElementById('helpTexto').textContent = item;
+  document.getElementById('helpOverlay').classList.add('open');
+}
+function fecharAjuda(){
+  document.getElementById('helpOverlay').classList.remove('open');
+}
+
+function mudarPagina(pagina){
+  _paginaAtual = pagina;
+  localStorage.setItem('agricef-pagina-atual', pagina);
+  document.querySelectorAll('.page-tab').forEach(b=>b.classList.toggle('active', b.dataset.page===pagina));
+  renderVisibilidade();
+  if(pagina === 'cruzados' && typeof renderInsightsCruzados === 'function') renderInsightsCruzados();
+}
+
+// Visibilidade final = habilitado nas Configurações E pertence à página atual.
+// Chamada por applySettings() (em vez de aplicar display direto) e por mudarPagina().
+function renderVisibilidade(){
+  const s = loadSettings();
+  document.querySelectorAll('.sec-card[data-page], .kpi[data-page]').forEach(el=>{
+    const habilitado = el.classList.contains('sec-card') ? (s.sections[el.id] !== false) : (s.kpis[el.id] !== false);
+    const naPagina = el.dataset.page === _paginaAtual;
+    el.style.display = (habilitado && naPagina) ? '' : 'none';
+  });
+}
+
 // ── FETCH & PARSE ─────────────────────────────────────────────────────────────
 function parseSheetJSON(rows){
   if(!Array.isArray(rows)||!rows.length) return [];
@@ -1405,6 +1514,7 @@ async function fetchData(){
     console.log('✓',records.length,'apontamentos carregados');
     fetchAbertos(); // atualiza aba Abertos em paralelo (não bloqueia o render)
     fetchAnaliseIA(); // idem — análise de IA é independente do feed principal
+    if(typeof renderInsightsCruzados==='function') renderInsightsCruzados(); // só tem efeito se a página atual for 'cruzados'
   }catch(err){showLoadingState(false,err.message);console.error('Erro fetchData:',err);}
 }
 
@@ -2488,6 +2598,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   } catch(e) { localStorage.removeItem('agricef-settings'); }
 
   document.getElementById('dateLbl').textContent=new Date().toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'long',year:'numeric'});
+  document.querySelectorAll('.page-tab').forEach(b=>b.classList.toggle('active', b.dataset.page===_paginaAtual));
   applySettings();
   renderSettingsItems();
   ['fFunc','fSerie','fOp','fItem','fFrom','fTo'].forEach(id=>{
@@ -3168,8 +3279,7 @@ function renderChart(cardId) {
 
 function applySettings(){
   const s=loadSettings();
-  Object.entries(s.sections).forEach(([id,v])=>{const el=document.getElementById(id);if(el)el.style.display=v?'':'none';});
-  Object.entries(s.kpis).forEach(([id,v])=>{const el=document.getElementById(id);if(el)el.style.display=v?'':'none';});
+  renderVisibilidade(); // habilitado nas Configurações × pertence à página atual
   const main=document.querySelector('main');
   if(main)(s.sectionOrder||SECTIONS_META.map(x=>x.id)).forEach(id=>{const el=document.getElementById(id);if(el&&el.parentNode===main)main.appendChild(el);});
   const kpiRow=document.getElementById('sec-kpis');
@@ -3359,6 +3469,78 @@ function renderHeatmap(){
   </div>`;
 
   panel.innerHTML = out;
+}
+
+// ── INSIGHTS CRUZADOS — combina indicadores já calculados em outras seções ──
+function renderInsightsCruzados(){
+  if(_paginaAtual !== 'cruzados') return;
+  const c1=document.getElementById('chartCrossAbsProd'), c2=document.getElementById('chartCrossRetEff'), c3=document.getElementById('chartCrossParadasHora');
+  if(!c1 || !c2 || !c3) return;
+
+  Chart.defaults.color = '#8b949e';
+  Chart.defaults.borderColor = '#2a3245';
+  Chart.defaults.font.family = 'Barlow, sans-serif';
+
+  // Agregação por funcionário — mesmo padrão usado em renderFuncs()
+  const prod   = pairRows(filtered,'ABERTURA','FECHAMENTO');
+  const retrab = pairRows(filtered,'INÍCIO DE RETRABALHO','TÉRMINO DE RETRABALHO');
+  const fm = {};
+  prod.forEach(p=>{
+    if(!fm[p.func]) fm[p.func]={name:funcName(p.func),prod:0,ret:0,abs:0,days:new Set()};
+    fm[p.func].prod+=p.dur;
+    if(p.openTs) fm[p.func].days.add(p.openTs.slice(0,10));
+  });
+  retrab.forEach(p=>{
+    if(!fm[p.func]){const r=RAW_DATA.find(r=>r.func===p.func);fm[p.func]={name:funcName(r?.func||p.func),prod:0,ret:0,abs:0,days:new Set()};}
+    fm[p.func].ret+=p.dur;
+  });
+  ABSENCES.forEach(a=>{
+    if(!fm[a.func]){const r=RAW_DATA.find(r=>r.func===a.func);fm[a.func]={name:funcName(r?.func||a.func),prod:0,ret:0,abs:0,days:new Set()};}
+    fm[a.func].abs+=8;
+  });
+  const pessoas = Object.values(fm).map(p=>{
+    const indivCap = p.days.size*8*60;
+    const eff = indivCap>0 ? Math.min(100, Math.round(p.prod/indivCap*100)) : 0;
+    return {...p, eff};
+  });
+
+  // 1. Assiduidade × Produtividade
+  if(chartInstances['crossAbs']){chartInstances['crossAbs'].destroy();delete chartInstances['crossAbs'];}
+  chartInstances['crossAbs'] = new Chart(c1.getContext('2d'), {
+    type:'scatter',
+    data:{datasets:[{label:'Funcionários',data:pessoas.map(p=>({x:p.abs,y:+(p.prod/60).toFixed(1)})),backgroundColor:'#38bdf8',pointRadius:6,pointHoverRadius:8}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>{const p=pessoas[ctx.dataIndex];return `${p.name}: ${p.abs}h ausência, ${(p.prod/60).toFixed(1)}h produtivas`;}}}},
+      scales:{x:{title:{display:true,text:'Horas de Ausência'},grid:{color:'#2a3245'}},y:{title:{display:true,text:'Horas Produtivas'},grid:{color:'#2a3245'}}}}
+  });
+
+  // 2. Retrabalho × Eficiência
+  if(chartInstances['crossRet']){chartInstances['crossRet'].destroy();delete chartInstances['crossRet'];}
+  chartInstances['crossRet'] = new Chart(c2.getContext('2d'), {
+    type:'scatter',
+    data:{datasets:[{label:'Funcionários',data:pessoas.map(p=>({x:+(p.ret/60).toFixed(1),y:p.eff})),backgroundColor:'#fb923c',pointRadius:6,pointHoverRadius:8}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>{const p=pessoas[ctx.dataIndex];return `${p.name}: ${(p.ret/60).toFixed(1)}h retrabalho, ${p.eff}% eficiência`;}}}},
+      scales:{x:{title:{display:true,text:'Horas de Retrabalho'},grid:{color:'#2a3245'}},y:{title:{display:true,text:'Eficiência (%)'},grid:{color:'#2a3245'}}}}
+  });
+
+  // 3. Paradas por Hora do Dia
+  if(chartInstances['crossParadas']){chartInstances['crossParadas'].destroy();delete chartInstances['crossParadas'];}
+  const horaCount = Array(24).fill(0);
+  filtered.forEach(r=>{
+    if(r.tipo !== 'INÍCIO DE PARADA') return;
+    const d = tsToDate(r.ts);
+    if(d.getTime()===0) return;
+    horaCount[d.getHours()]++;
+  });
+  const labelsHora = Array.from({length:13},(_,i)=>(i+6)+'h');
+  const dataHora = labelsHora.map((_,i)=>horaCount[i+6]);
+  chartInstances['crossParadas'] = new Chart(c3.getContext('2d'), {
+    type:'bar',
+    data:{labels:labelsHora,datasets:[{label:'Paradas iniciadas',data:dataHora,backgroundColor:'#f87171',borderRadius:4}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{x:{grid:{color:'#2a3245'}},y:{grid:{color:'#2a3245'},title:{display:true,text:'Qtd. de paradas'}}}}
+  });
 }
 
 
@@ -4615,8 +4797,7 @@ function renderAudit() {
 // ── SETTINGS & DnD ───────────────────────────────────────────────────────────
 function applySettings(){
   const s=loadSettings();
-  Object.entries(s.sections).forEach(([id,v])=>{const el=document.getElementById(id);if(el)el.style.display=v?'':'none';});
-  Object.entries(s.kpis).forEach(([id,v])=>{const el=document.getElementById(id);if(el)el.style.display=v?'':'none';});
+  renderVisibilidade(); // habilitado nas Configurações × pertence à página atual
   const main=document.querySelector('main');
   if(main)(s.sectionOrder||SECTIONS_META.map(x=>x.id)).forEach(id=>{const el=document.getElementById(id);if(el&&el.parentNode===main)main.appendChild(el);});
   const kpiRow=document.getElementById('sec-kpis');
