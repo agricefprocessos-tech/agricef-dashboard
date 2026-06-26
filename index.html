@@ -15,19 +15,20 @@
 *{margin:0;padding:0;box-sizing:border-box;}
 body{background:var(--bg);color:var(--text);font-family:'Barlow',sans-serif;font-size:14px;min-height:100vh;}
 
-header{background:linear-gradient(135deg,#0d1117,#1a2235);border-bottom:2px solid var(--accent);padding:14px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200;}
+header{background:linear-gradient(135deg,#0d1117,#1a2235);border-bottom:2px solid var(--accent);padding:6px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200;}
+header img{height:30px!important;}
 .logo{display:flex;align-items:center;gap:12px;}
-.logo-text p{font-size:11px;color:var(--text2);letter-spacing:1px;text-transform:uppercase;}
-.header-right{display:flex;align-items:center;gap:16px;}
-.live-badge{background:#1a2a1a;border:1px solid var(--accent3);color:var(--accent3);padding:4px 10px;border-radius:20px;font-size:11px;font-weight:600;display:flex;align-items:center;gap:5px;}
+.logo-text p{font-size:10px;color:var(--text2);letter-spacing:1px;text-transform:uppercase;}
+.header-right{display:flex;align-items:center;gap:14px;}
+.live-badge{background:#1a2a1a;border:1px solid var(--accent3);color:var(--accent3);padding:3px 9px;border-radius:20px;font-size:10px;font-weight:600;display:flex;align-items:center;gap:5px;}
 .live-dot{width:6px;height:6px;background:var(--accent3);border-radius:50%;animation:pulse 1.5s infinite;}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
-.date-lbl{color:var(--text2);font-size:12px;}
+.date-lbl{color:var(--text2);font-size:11px;}
 
-.filters-bar{background:var(--surface);border-bottom:1px solid var(--border);padding:10px 24px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;position:sticky;top:70px;z-index:199;box-shadow:0 2px 8px rgba(0,0,0,.3);}
-.fg{display:flex;align-items:center;gap:6px;}
-.fg label{font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:1px;white-space:nowrap;}
-select,input[type=date]{background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:5px 8px;border-radius:6px;font-size:12px;font-family:'Barlow',sans-serif;cursor:pointer;outline:none;transition:border-color .2s;max-width:180px;}
+.filters-bar{background:var(--surface);border-bottom:1px solid var(--border);padding:6px 24px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;position:sticky;top:42px;z-index:199;box-shadow:0 2px 8px rgba(0,0,0,.3);}
+.fg{display:flex;align-items:center;gap:5px;}
+.fg label{font-size:9px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;white-space:nowrap;}
+select,input[type=date]{background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:4px 6px;border-radius:6px;font-size:11px;font-family:'Barlow',sans-serif;cursor:pointer;outline:none;transition:border-color .2s;max-width:130px;}
 select:focus,input[type=date]:focus{border-color:var(--accent);}
 .btn{border:none;padding:6px 14px;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Barlow Condensed',sans-serif;letter-spacing:1px;transition:opacity .2s;}
 .btn-reset{background:var(--surface2);color:var(--text2);border:1px solid var(--border);}
@@ -35,19 +36,32 @@ select:focus,input[type=date]:focus{border-color:var(--accent);}
 .filter-info{margin-left:auto;font-size:12px;color:var(--text2);}
 .filter-info span{color:var(--accent);font-weight:600;}
 
-main{padding:18px 24px;display:grid;grid-template-columns:1fr 1fr;gap:18px;}
+main{padding:18px 24px;}
 .sec-card{grid-column:span 2;}
 .sec-card.half-width{grid-column:span 1;}
-#sec-kpis{grid-column:span 2;}
 
-.kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;}
-.kpi{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 16px;position:relative;overflow:hidden;transition:transform .2s,border-color .2s;}
+.subpag-nav{display:none;align-items:center;justify-content:center;gap:14px;padding:6px 0 12px;}
+.subpag-nav.show{display:flex;}
+.subpag-nav button{background:var(--surface2);border:1px solid var(--border);color:var(--text);width:30px;height:30px;border-radius:50%;font-size:16px;cursor:pointer;transition:all .15s;}
+.subpag-nav button:hover{border-color:var(--accent);color:var(--accent);}
+.subpag-nav span{font-size:12px;color:var(--text2);font-weight:600;min-width:32px;text-align:center;}
+
+.page-grid{display:none;gap:14px;}
+.page-grid.active{display:grid;}
+.page-grid .sec-card{grid-column:auto;grid-row:auto;display:flex;flex-direction:column;height:100%;overflow:hidden;margin-bottom:0!important;}
+.page-grid .card-body{flex:1;overflow-y:auto;min-height:0;}
+.page-grid .card-hd{flex-shrink:0;flex-wrap:wrap;row-gap:6px;}
+.page-grid .card-title{white-space:nowrap;font-size:12.5px;}
+.page-grid .card-badge{white-space:nowrap;}
+
+.kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin-bottom:8px;}
+.kpi{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 12px;position:relative;overflow:hidden;transition:transform .2s,border-color .2s;min-width:0;}
 .kpi:hover{transform:translateY(-2px);border-color:var(--kc,var(--accent));}
 .kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--kc,var(--accent));}
-.kpi-lbl{font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--text2);margin-bottom:6px;}
-.kpi-val{font-family:'Barlow Condensed',sans-serif;font-size:30px;font-weight:800;color:var(--kc,var(--accent));line-height:1;}
-.kpi-sub{font-size:11px;color:var(--text3);margin-top:3px;}
-.kpi-ico{position:absolute;right:14px;top:50%;transform:translateY(-50%);font-size:32px;opacity:.07;}
+.kpi-lbl{font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--text2);margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.kpi-val{font-family:'Barlow Condensed',sans-serif;font-size:21px;font-weight:800;color:var(--kc,var(--accent));line-height:1;}
+.kpi-sub{font-size:10px;color:var(--text3);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.kpi-ico{position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:24px;opacity:.07;}
 
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
 .grid3{display:grid;grid-template-columns:3fr 2fr;gap:18px;}
@@ -238,6 +252,13 @@ main{padding:18px 24px;display:grid;grid-template-columns:1fr 1fr;gap:18px;}
 .pv-tab-btn.active{background:var(--accent);color:#000;border-color:var(--accent);}
 .pv-tab-btn:hover:not(.active){border-color:var(--accent);color:var(--accent);}
 
+.page-nav{display:flex;gap:8px;flex-wrap:wrap;background:var(--surface);border-bottom:1px solid var(--border);padding:6px 24px;position:sticky;top:80px;z-index:198;}
+.page-tab{background:var(--surface2);border:1px solid var(--border);color:var(--text2);padding:8px 16px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Barlow',sans-serif;transition:all .15s;}
+.page-tab.active{background:var(--accent);color:#000;border-color:var(--accent);}
+.page-tab:hover:not(.active){border-color:var(--accent);color:var(--accent);}
+.help-btn{background:transparent;border:1px solid var(--border);color:var(--text2);width:22px;height:22px;border-radius:50%;font-size:12px;cursor:pointer;line-height:1;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s;}
+.help-btn:hover{border-color:var(--accent2);color:var(--accent2);}
+
 
 
 
@@ -266,6 +287,10 @@ input[type="date"]{color-scheme:dark;}
 .btn-fcm-cancel:hover{color:var(--text);border-color:var(--text2);}
 .fechar-btn{background:rgba(74,222,128,.1);border:1px solid rgba(74,222,128,.3);color:var(--accent3);padding:4px 10px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Barlow Condensed',sans-serif;letter-spacing:.5px;transition:all .15s;white-space:nowrap;}
 .fechar-btn:hover{background:rgba(74,222,128,.22);border-color:var(--accent3);}
+.excluir-btn{background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);color:#f87171;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Barlow Condensed',sans-serif;letter-spacing:.5px;transition:all .15s;white-space:nowrap;margin-left:6px;}
+.excluir-btn:hover{background:rgba(248,113,113,.22);border-color:#f87171;}
+.editar-btn{background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.3);color:#fbbf24;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Barlow Condensed',sans-serif;letter-spacing:.5px;transition:all .15s;white-space:nowrap;margin-left:6px;}
+.editar-btn:hover{background:rgba(251,191,36,.22);border-color:#fbbf24;}
 .backlog-src{font-size:11px;color:var(--text3);}
 </style>
 
@@ -357,6 +382,98 @@ input[type="date"]{color-scheme:dark;}
       <button class="btn-fcm-ok" id="justBtnOk" style="background:#a78bfa;color:#000;" onclick="confirmarJustificativa()">📝 SALVAR JUSTIFICATIVA</button>
       <button class="btn-fcm-cancel" onclick="fecharModalJustificativa()">Cancelar</button>
     </div>
+  </div>
+</div>
+
+<!-- MODAL: Editar Apontamento -->
+<div class="fcm-overlay" id="edmOverlay">
+  <div class="fcm-box">
+    <div class="fcm-title" style="color:#fbbf24">&#9999;&#65039; Editar Apontamento</div>
+    <div style="font-size:11px;color:var(--text3);margin-bottom:12px;background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.2);border-radius:6px;padding:8px 12px;">
+      Edita o registro na planilha (hist&oacute;rico + aba Abertos, se ainda em aberto) e recalcula o saldo parcial se necess&aacute;rio. N&atilde;o tem desfazer.
+    </div>
+    <div class="fcm-row" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+      <div>
+        <label>Tipo</label>
+        <select id="edmTipo" style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:6px;font-size:14px;font-family:'Barlow',sans-serif;outline:none;transition:border-color .2s;" onfocus="this.style.borderColor='#fbbf24'" onblur="this.style.borderColor='var(--border)'">
+          <option value="ABERTURA">ABERTURA</option>
+          <option value="FECHAMENTO">FECHAMENTO</option>
+          <option value="INICIO_PARADA">IN&Iacute;CIO DE PARADA</option>
+          <option value="TERMINO_PARADA">T&Eacute;RMINO DE PARADA</option>
+          <option value="INICIO_RETRABALHO">IN&Iacute;CIO DE RETRABALHO</option>
+          <option value="TERMINO_RETRABALHO">T&Eacute;RMINO DE RETRABALHO</option>
+        </select>
+      </div>
+      <div>
+        <label>Operador (c&oacute;digo)</label>
+        <input type="text" id="edmOperador" style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:6px;font-size:14px;font-family:'Barlow',sans-serif;outline:none;transition:border-color .2s;" onfocus="this.style.borderColor='#fbbf24'" onblur="this.style.borderColor='var(--border)'">
+      </div>
+    </div>
+    <div class="fcm-row">
+      <label>Nome do Operador</label>
+      <input type="text" id="edmOperadorNome" style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:6px;font-size:14px;font-family:'Barlow',sans-serif;outline:none;transition:border-color .2s;" onfocus="this.style.borderColor='#fbbf24'" onblur="this.style.borderColor='var(--border)'">
+    </div>
+    <div class="fcm-row" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+      <div>
+        <label>Opera&ccedil;&atilde;o (c&oacute;digo, ex: 0030)</label>
+        <input type="text" id="edmOperacao" maxlength="4" style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:6px;font-size:14px;font-family:'Barlow',sans-serif;outline:none;transition:border-color .2s;" onfocus="this.style.borderColor='#fbbf24'" onblur="this.style.borderColor='var(--border)'">
+      </div>
+      <div>
+        <label>C&oacute;digo do Item</label>
+        <input type="text" id="edmCodItem" style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:6px;font-size:14px;font-family:'Barlow',sans-serif;outline:none;transition:border-color .2s;" onfocus="this.style.borderColor='#fbbf24'" onblur="this.style.borderColor='var(--border)'">
+      </div>
+    </div>
+    <div class="fcm-row" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
+      <div>
+        <label>N&ordm; S&eacute;rie</label>
+        <input type="text" id="edmNrSerie" style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:6px;font-size:14px;font-family:'Barlow',sans-serif;outline:none;transition:border-color .2s;" onfocus="this.style.borderColor='#fbbf24'" onblur="this.style.borderColor='var(--border)'">
+      </div>
+      <div>
+        <label>Implemento</label>
+        <input type="text" id="edmImplemento" style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:6px;font-size:14px;font-family:'Barlow',sans-serif;outline:none;transition:border-color .2s;" onfocus="this.style.borderColor='#fbbf24'" onblur="this.style.borderColor='var(--border)'">
+      </div>
+      <div>
+        <label>Cliente</label>
+        <input type="text" id="edmCliente" style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:6px;font-size:14px;font-family:'Barlow',sans-serif;outline:none;transition:border-color .2s;" onfocus="this.style.borderColor='#fbbf24'" onblur="this.style.borderColor='var(--border)'">
+      </div>
+    </div>
+    <div class="fcm-row" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+      <div>
+        <label>Qtd Planejada</label>
+        <input type="number" id="edmQtdPlanejada" min="0" step="1" style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:6px;font-size:14px;font-family:'Barlow',sans-serif;outline:none;transition:border-color .2s;" onfocus="this.style.borderColor='#fbbf24'" onblur="this.style.borderColor='var(--border)'">
+      </div>
+      <div>
+        <label>Qtd Realizada</label>
+        <input type="number" id="edmQuantidade" min="0" step="1" style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:6px;font-size:14px;font-family:'Barlow',sans-serif;outline:none;transition:border-color .2s;" onfocus="this.style.borderColor='#fbbf24'" onblur="this.style.borderColor='var(--border)'">
+      </div>
+    </div>
+    <div class="fcm-row" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+      <div>
+        <label>Data</label>
+        <input type="date" id="edmData" style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:6px;font-size:14px;font-family:'Barlow',sans-serif;outline:none;transition:border-color .2s;" onfocus="this.style.borderColor='#fbbf24'" onblur="this.style.borderColor='var(--border)'">
+      </div>
+      <div>
+        <label>Hora</label>
+        <input type="time" id="edmHora" step="60" style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:6px;font-size:14px;font-family:'Barlow',sans-serif;outline:none;transition:border-color .2s;" onfocus="this.style.borderColor='#fbbf24'" onblur="this.style.borderColor='var(--border)'">
+      </div>
+    </div>
+    <div class="fcm-row">
+      <label>Observa&ccedil;&atilde;o</label>
+      <input type="text" id="edmObs" maxlength="120" style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:6px;font-size:14px;font-family:'Barlow',sans-serif;outline:none;transition:border-color .2s;" onfocus="this.style.borderColor='#fbbf24'" onblur="this.style.borderColor='var(--border)'">
+    </div>
+    <div class="fcm-err" id="edmErr"></div>
+    <div class="fcm-btns">
+      <button class="btn-fcm-ok" id="edmBtnOk" style="background:#fbbf24;color:#000;" onclick="confirmarEdicao()">&#9999;&#65039; SALVAR EDI&Ccedil;&Atilde;O</button>
+      <button class="btn-fcm-cancel" onclick="fecharModalEdicao()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<div class="fcm-overlay" id="helpOverlay">
+  <div class="fcm-box" style="width:480px">
+    <div class="fcm-title" id="helpTitulo" style="color:var(--accent2)"></div>
+    <div id="helpTexto" style="color:var(--text2);font-size:13px;line-height:1.6;margin:0 0 16px"></div>
+    <button class="btn-fcm-cancel" onclick="fecharAjuda()" style="width:100%">Fechar</button>
   </div>
 </div>
 
@@ -622,32 +739,54 @@ input[type="date"]{color-scheme:dark;}
   <div class="filter-info">Exibindo <span id="recCount">0</span> registros</div>
 </div>
 
+<div class="page-nav" id="pageNav">
+  <button class="page-tab active" data-page="visao-geral" onclick="mudarPagina('visao-geral')">🏠 Visão Geral</button>
+  <button class="page-tab" data-page="pessoas" onclick="mudarPagina('pessoas')">👷 Pessoas &amp; Produtividade</button>
+  <button class="page-tab" data-page="eficiencia" onclick="mudarPagina('eficiencia')">🏭 Eficiência Operacional</button>
+  <button class="page-tab" data-page="planejamento" onclick="mudarPagina('planejamento')">📊 Planejamento</button>
+  <button class="page-tab" data-page="qualidade" onclick="mudarPagina('qualidade')">⛔ Qualidade</button>
+  <button class="page-tab" data-page="cruzados" onclick="mudarPagina('cruzados')">🔀 Insights Cruzados</button>
+</div>
+
 <main style="padding-top:4px">
   <!-- KPIs -->
   <div class="kpi-row" id="sec-kpis">
-    <div class="kpi" style="--kc:#f0b429"><div class="kpi-lbl">Apontamentos</div><div class="kpi-val" id="k1">—</div><div class="kpi-sub">Total no período</div><div class="kpi-ico">📋</div></div>
-    <div class="kpi" style="--kc:#38bdf8"><div class="kpi-lbl">Funcionários</div><div class="kpi-val" id="k2">—</div><div class="kpi-sub">Ativos no período</div><div class="kpi-ico">👷</div></div>
-    <div class="kpi" style="--kc:#4ade80"><div class="kpi-lbl">Séries</div><div class="kpi-val" id="k3">—</div><div class="kpi-sub">Em produção</div><div class="kpi-ico">🔩</div></div>
-    <div class="kpi" style="--kc:#a78bfa"><div class="kpi-lbl">Horas Produtivas</div><div class="kpi-val" id="k4">—</div><div class="kpi-sub">Tempo efetivo</div><div class="kpi-ico">⏱️</div></div>
-    <div class="kpi" style="--kc:#f87171"><div class="kpi-lbl">Horas Parada</div><div class="kpi-val" id="k5">—</div><div class="kpi-sub">Set-up + outros</div><div class="kpi-ico">⛔</div></div>
-    <div class="kpi" style="--kc:#fb923c"><div class="kpi-lbl">Horas Retrabalho</div><div class="kpi-val" id="k6">—</div><div class="kpi-sub">Reprocessamento</div><div class="kpi-ico">🔄</div></div>
-    <div class="kpi" style="--kc:#f0b429"><div class="kpi-lbl">Eficiência Geral</div><div class="kpi-val" id="k7">—</div><div class="kpi-sub">% tempo produtivo</div><div class="kpi-ico">📈</div></div>
-    <div class="kpi" style="--kc:#4ade80"><div class="kpi-lbl">Itens Produzidos</div><div class="kpi-val" id="k8">—</div><div class="kpi-sub">Qtd. total apontada</div><div class="kpi-ico">📦</div></div>
-    <div class="kpi" style="--kc:#f87171"><div class="kpi-lbl">Horas Ausência</div><div class="kpi-val" id="k9">—</div><div class="kpi-sub">8h × dias sem apont.</div><div class="kpi-ico">📅</div></div>
-    <div class="kpi kpi-extra" style="--kc:#67e8f9" id="kpi-oee"><div class="kpi-lbl">OEE</div><div class="kpi-val" id="k-oee">—</div><div class="kpi-sub">Disponib. × Perf. × Qual.</div><div class="kpi-ico">🏭</div></div>
-    <div class="kpi kpi-extra" style="--kc:#86efac" id="kpi-taxa-ret"><div class="kpi-lbl">Taxa Retrabalho</div><div class="kpi-val" id="k-taxa-ret">—</div><div class="kpi-sub">% ops com retrabalho</div><div class="kpi-ico">🔄</div></div>
-    <div class="kpi kpi-extra" style="--kc:#fca5a5" id="kpi-backlog"><div class="kpi-lbl">Backlog Aberto</div><div class="kpi-val" id="k-backlog">—</div><div class="kpi-sub">Aberturas s/ fechamento · todos os períodos</div><div class="kpi-ico">⏳</div></div>
-    <div class="kpi kpi-extra" style="--kc:#c084fc" id="kpi-custo"><div class="kpi-lbl">Improdutividade</div><div class="kpi-val" id="k-custo">—</div><div class="kpi-sub">% horas não produtivas</div><div class="kpi-ico">💸</div></div>
-    <div class="kpi kpi-extra" style="--kc:#22d3ee" id="kpi-wip"><div class="kpi-lbl">WIP Médio</div><div class="kpi-val" id="k-wip">—</div><div class="kpi-sub">Ordens em paralelo (Lei de Little)</div><div class="kpi-ico">🔄</div></div>
-    <div class="kpi kpi-extra" style="--kc:#fb923c" id="kpi-throughput"><div class="kpi-lbl">Throughput Médio</div><div class="kpi-val" id="k-throughput">—</div><div class="kpi-sub">Operações fechadas/mês</div><div class="kpi-ico">🚀</div></div>
-    <div class="kpi kpi-extra" style="--kc:#a78bfa" id="kpi-cv"><div class="kpi-lbl">Coef. Variação</div><div class="kpi-val" id="k-cv">—</div><div class="kpi-sub">Variabilidade do throughput</div><div class="kpi-ico">📉</div></div>
-    <div class="kpi kpi-extra" style="--kc:#4ade80" id="kpi-leadtime2"><div class="kpi-lbl">Lead Time Médio</div><div class="kpi-val" id="k-leadtime2">—</div><div class="kpi-sub">Horas abertura→fechamento</div><div class="kpi-ico">⏳</div></div>
+    <div class="kpi" id="kpi-apontamentos" data-page="visao-geral" style="--kc:#f0b429"><div class="kpi-lbl">Apontamentos</div><div class="kpi-val" id="k1">—</div><div class="kpi-sub">Total no período</div><div class="kpi-ico">📋</div></div>
+    <div class="kpi" id="kpi-funcionarios" data-page="visao-geral" style="--kc:#38bdf8"><div class="kpi-lbl">Funcionários</div><div class="kpi-val" id="k2">—</div><div class="kpi-sub">Ativos no período</div><div class="kpi-ico">👷</div></div>
+    <div class="kpi" id="kpi-series" data-page="eficiencia" style="--kc:#4ade80"><div class="kpi-lbl">Séries</div><div class="kpi-val" id="k3">—</div><div class="kpi-sub">Em produção</div><div class="kpi-ico">🔩</div></div>
+    <div class="kpi" id="kpi-horas-prod" data-page="pessoas" style="--kc:#a78bfa"><div class="kpi-lbl">Horas Produtivas</div><div class="kpi-val" id="k4">—</div><div class="kpi-sub">Tempo efetivo</div><div class="kpi-ico">⏱️</div></div>
+    <div class="kpi" id="kpi-horas-parada" data-page="qualidade" style="--kc:#f87171"><div class="kpi-lbl">Horas Parada</div><div class="kpi-val" id="k5">—</div><div class="kpi-sub">Set-up + outros</div><div class="kpi-ico">⛔</div></div>
+    <div class="kpi" id="kpi-horas-retrabalho" data-page="qualidade" style="--kc:#fb923c"><div class="kpi-lbl">Horas Retrabalho</div><div class="kpi-val" id="k6">—</div><div class="kpi-sub">Reprocessamento</div><div class="kpi-ico">🔄</div></div>
+    <div class="kpi" id="kpi-eficiencia" data-page="visao-geral" style="--kc:#f0b429"><div class="kpi-lbl">Eficiência Geral</div><div class="kpi-val" id="k7">—</div><div class="kpi-sub">% tempo produtivo</div><div class="kpi-ico">📈</div></div>
+    <div class="kpi" id="kpi-itens" data-page="planejamento" style="--kc:#4ade80"><div class="kpi-lbl">Itens Produzidos</div><div class="kpi-val" id="k8">—</div><div class="kpi-sub">Qtd. total apontada</div><div class="kpi-ico">📦</div></div>
+    <div class="kpi" id="kpi-ausencia" data-page="pessoas" style="--kc:#f87171"><div class="kpi-lbl">Horas Ausência</div><div class="kpi-val" id="k9">—</div><div class="kpi-sub">8h × dias sem apont.</div><div class="kpi-ico">📅</div></div>
+    <div class="kpi kpi-extra" style="--kc:#67e8f9" id="kpi-oee" data-page="eficiencia"><div class="kpi-lbl">OEE</div><div class="kpi-val" id="k-oee">—</div><div class="kpi-sub">Disponib. × Perf. × Qual.</div><div class="kpi-ico">🏭</div></div>
+    <div class="kpi kpi-extra" style="--kc:#86efac" id="kpi-taxa-ret" data-page="qualidade"><div class="kpi-lbl">Taxa Retrabalho</div><div class="kpi-val" id="k-taxa-ret">—</div><div class="kpi-sub">% ops com retrabalho</div><div class="kpi-ico">🔄</div></div>
+    <div class="kpi kpi-extra" style="--kc:#fca5a5" id="kpi-backlog" data-page="visao-geral"><div class="kpi-lbl">Backlog Aberto</div><div class="kpi-val" id="k-backlog">—</div><div class="kpi-sub">Aberturas s/ fechamento · todos os períodos</div><div class="kpi-ico">⏳</div></div>
+    <div class="kpi kpi-extra" style="--kc:#c084fc" id="kpi-custo" data-page="qualidade"><div class="kpi-lbl">Improdutividade</div><div class="kpi-val" id="k-custo">—</div><div class="kpi-sub">% horas não produtivas</div><div class="kpi-ico">💸</div></div>
+    <div class="kpi kpi-extra" style="--kc:#22d3ee" id="kpi-wip" data-page="pessoas"><div class="kpi-lbl">WIP Médio</div><div class="kpi-val" id="k-wip">—</div><div class="kpi-sub">Ordens em paralelo (Lei de Little)</div><div class="kpi-ico">🔄</div></div>
+    <div class="kpi kpi-extra" style="--kc:#fb923c" id="kpi-throughput" data-page="eficiencia"><div class="kpi-lbl">Throughput Médio</div><div class="kpi-val" id="k-throughput">—</div><div class="kpi-sub">Operações fechadas/mês</div><div class="kpi-ico">🚀</div></div>
+    <div class="kpi kpi-extra" style="--kc:#a78bfa" id="kpi-cv" data-page="eficiencia"><div class="kpi-lbl">Coef. Variação</div><div class="kpi-val" id="k-cv">—</div><div class="kpi-sub">Variabilidade do throughput</div><div class="kpi-ico">📉</div></div>
+    <div class="kpi kpi-extra" style="--kc:#4ade80" id="kpi-leadtime2" data-page="eficiencia"><div class="kpi-lbl">Lead Time Médio</div><div class="kpi-val" id="k-leadtime2">—</div><div class="kpi-sub">Horas abertura→fechamento</div><div class="kpi-ico">⏳</div></div>
   </div>
 
+  <div class="subpag-nav" id="subpagNav">
+    <button onclick="subpaginaAnterior()">‹</button>
+    <span id="subpagLabel">1/2</span>
+    <button onclick="subpaginaProxima()">›</button>
+  </div>
+
+  <div class="page-grid" data-page-grid="visao-geral"></div>
+  <div class="page-grid" data-page-grid="pessoas"></div>
+  <div class="page-grid" data-page-grid="eficiencia"></div>
+  <div class="page-grid" data-page-grid="planejamento"></div>
+  <div class="page-grid" data-page-grid="qualidade"></div>
+  <div class="page-grid" data-page-grid="cruzados"></div>
+
   <!-- Funcionários -->
-  <div class="card sec-card" id="sec-func">
+  <div class="card sec-card" id="sec-func" data-page="pessoas">
     <div class="card-hd">
-      <div class="card-title">👷 Eficiência por Funcionário</div>
+      <div class="card-title">👷 Eficiência por Funcionário <button class="help-btn" onclick="abrirAjuda('sec-func')">ℹ️</button></div>
       <div style="display:flex;align-items:center;gap:8px;margin-left:auto;">
         <div class="view-toggle" id="toggle-func">
           <button class="vt-btn active" onclick="setView('func','table')" title="Tabela">☰</button>
@@ -661,10 +800,10 @@ input[type="date"]{color-scheme:dark;}
 
   <!-- Operações + Itens -->
   
-  <div class="card sec-card" id="sec-ops-op" style="margin-bottom:18px">
+  <div class="card sec-card" id="sec-ops-op" data-page="eficiencia" data-subpage="0" style="margin-bottom:18px">
 
       <div class="card-hd">
-        <div class="card-title">⚙️ Tempo por Operação</div>
+        <div class="card-title">⚙️ Tempo por Operação <button class="help-btn" onclick="abrirAjuda('sec-ops-op')">ℹ️</button></div>
       <div style="display:flex;align-items:center;gap:8px;margin-left:auto;">
         <div class="view-toggle" id="toggle-op">
           <button class="vt-btn active" onclick="setView('op','table')" title="Tabela">☰</button>
@@ -677,10 +816,10 @@ input[type="date"]{color-scheme:dark;}
     
   </div>
 
-  <div class="card sec-card" id="sec-ops-item" style="margin-bottom:18px">
+  <div class="card sec-card" id="sec-ops-item" data-page="eficiencia" data-subpage="0" style="margin-bottom:18px">
 
       <div class="card-hd">
-        <div class="card-title">🏷️ Top Códigos de Item</div>
+        <div class="card-title">🏷️ Top Códigos de Item <button class="help-btn" onclick="abrirAjuda('sec-ops-item')">ℹ️</button></div>
       <div style="display:flex;align-items:center;gap:8px;margin-left:auto;">
         <div class="view-toggle" id="toggle-item">
           <button class="vt-btn active" onclick="setView('item','table')" title="Tabela">☰</button>
@@ -696,20 +835,20 @@ input[type="date"]{color-scheme:dark;}
 
   <!-- Série + Operação×Item -->
   
-  <div class="card sec-card" id="sec-serie" style="margin-bottom:18px">
+  <div class="card sec-card" id="sec-serie" data-page="eficiencia" data-subpage="0" style="margin-bottom:18px">
 
       <div class="card-hd">
-        <div class="card-title">🔩 Produção por Nº de Série</div>
+        <div class="card-title">🔩 Produção por Nº de Série <button class="help-btn" onclick="abrirAjuda('sec-serie')">ℹ️</button></div>
         <div class="card-badge">Horas acumuladas + detalhamento por operação/item</div>
       </div>
       <div class="card-body scrollable" id="seriePanel"><div class="empty">Carregando...</div></div>
     
   </div>
 
-  <div class="card sec-card" id="sec-paradas" style="margin-bottom:18px">
+  <div class="card sec-card" id="sec-paradas" data-page="qualidade" style="margin-bottom:18px">
 
       <div class="card-hd">
-        <div class="card-title">⛔ Paradas & Retrabalhos</div>
+        <div class="card-title">⛔ Paradas & Retrabalhos <button class="help-btn" onclick="abrirAjuda('sec-paradas')">ℹ️</button></div>
       <div style="display:flex;align-items:center;gap:8px;margin-left:auto;">
         <div class="view-toggle" id="toggle-parada">
           <button class="vt-btn active" onclick="setView('parada','table')" title="Tabela">☰</button>
@@ -730,12 +869,25 @@ input[type="date"]{color-scheme:dark;}
   </div>
 
 
+  <!-- ANÁLISE INTELIGENTE (IA) -->
+  <div class="card sec-card" id="sec-ia" data-page="visao-geral" style="margin-bottom:18px">
+    <div class="card-hd">
+      <div class="card-title">🤖 Análise Inteligente <button class="help-btn" onclick="abrirAjuda('sec-ia')">ℹ️</button></div>
+      <div style="display:flex;align-items:center;gap:6px;margin-left:8px;">
+        <button class="pv-tab-btn active" id="iaTab-diario" onclick="switchIaTab('diario')">Diário</button>
+        <button class="pv-tab-btn" id="iaTab-semanal" onclick="switchIaTab('semanal')">Semanal</button>
+      </div>
+      <div class="card-badge" id="iaBadge" style="margin-left:auto;">Analista de Produção Virtual</div>
+    </div>
+    <div class="card-body" id="iaPanel"><div class="empty">Carregando...</div></div>
+  </div>
+
   <!-- Ranking + Timeline -->
-  
-  <div class="card sec-card" id="sec-rank" style="margin-bottom:18px">
+
+  <div class="card sec-card" id="sec-rank" data-page="visao-geral" style="margin-bottom:18px">
 
       <div class="card-hd">
-        <div class="card-title">🏆 Ranking de Produtividade</div>
+        <div class="card-title">🏆 Ranking de Produtividade <button class="help-btn" onclick="abrirAjuda('sec-rank')">ℹ️</button></div>
       <div style="display:flex;align-items:center;gap:8px;margin-left:auto;">
         <div class="view-toggle" id="toggle-rank">
           <button class="vt-btn active" onclick="setView('rank','table')" title="Tabela">☰</button>
@@ -748,10 +900,10 @@ input[type="date"]{color-scheme:dark;}
     
   </div>
 
-  <div class="card sec-card" id="sec-timeline" style="margin-bottom:18px">
+  <div class="card sec-card" id="sec-timeline" data-page="visao-geral" style="margin-bottom:18px">
 
       <div class="card-hd">
-        <div class="card-title">📋 Últimos Apontamentos</div>
+        <div class="card-title">📋 Últimos Apontamentos <button class="help-btn" onclick="abrirAjuda('sec-timeline')">ℹ️</button></div>
         <div class="card-badge">Feed recente</div>
       </div>
       <div class="card-body scrollable" id="tlPanel"><div class="empty">Carregando...</div></div>
@@ -760,9 +912,9 @@ input[type="date"]{color-scheme:dark;}
 
 
   <!-- PREVISTO vs REALIZADO -->
-  <div class="card sec-card" id="sec-pv">
+  <div class="card sec-card" id="sec-pv" data-page="planejamento">
     <div class="card-hd">
-      <div class="card-title">📊 Previsto × Realizado</div>
+      <div class="card-title">📊 Previsto × Realizado <button class="help-btn" onclick="abrirAjuda('sec-pv')">ℹ️</button></div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:8px;">
         <button class="pv-tab-btn active" id="pvTab-item" onclick="switchPvTab('item')">Por Item</button>
         <button class="pv-tab-btn" id="pvTab-func" onclick="switchPvTab('func')">Por Funcionário</button>
@@ -793,9 +945,9 @@ input[type="date"]{color-scheme:dark;}
   </div>
 
   <!-- ASSIDUIDADE / AUSÊNCIAS -->
-  <div class="card sec-card" id="sec-att">
+  <div class="card sec-card" id="sec-att" data-page="pessoas">
     <div class="card-hd">
-      <div class="card-title">📅 Assiduidade & Ausências por Funcionário</div>
+      <div class="card-title">📅 Assiduidade & Ausências por Funcionário <button class="help-btn" onclick="abrirAjuda('sec-att')">ℹ️</button></div>
       <div style="display:flex;align-items:center;gap:8px;margin-left:auto;">
         <div class="view-toggle" id="toggle-att">
           <button class="vt-btn active" onclick="setView('att','table')" title="Tabela">☰</button>
@@ -811,9 +963,9 @@ input[type="date"]{color-scheme:dark;}
   </div>
 
   <!-- OEE / CICLO POR SÉRIE -->
-  <div class="card sec-card" id="sec-oee" style="display:none">
+  <div class="card sec-card" id="sec-oee" data-page="eficiencia" data-subpage="0" style="display:none">
     <div class="card-hd">
-      <div class="card-title">🏭 Lead Time & Gargalo por Série</div>
+      <div class="card-title">🏭 Lead Time & Gargalo por Série <button class="help-btn" onclick="abrirAjuda('sec-oee')">ℹ️</button></div>
       <div style="display:flex;align-items:center;gap:8px;margin-left:auto;">
         <div class="view-toggle" id="toggle-oee">
           <button class="vt-btn active" onclick="setView('oee','table')" title="Tabela">☰</button>
@@ -829,28 +981,28 @@ input[type="date"]{color-scheme:dark;}
   </div>
 
   <!-- TENDÊNCIA TEMPORAL -->
-  <div class="card sec-card" id="sec-trend" style="display:none">
+  <div class="card sec-card" id="sec-trend" data-page="eficiencia" data-subpage="1" style="display:none">
     <div class="card-hd">
-      <div class="card-title">📈 Tendência de Eficiência ao Longo do Tempo</div>
+      <div class="card-title">📈 Tendência de Eficiência ao Longo do Tempo <button class="help-btn" onclick="abrirAjuda('sec-trend')">ℹ️</button></div>
       <div class="card-badge">Evolução semanal</div>
     </div>
     <div class="card-body" id="trendPanel"><div class="empty">Carregando...</div></div>
   </div>
 
   <!-- HEATMAP HORA DO DIA -->
-  <div class="card sec-card" id="sec-heatmap" style="display:none">
+  <div class="card sec-card" id="sec-heatmap" data-page="eficiencia" data-subpage="1" style="display:none">
     <div class="card-hd">
-      <div class="card-title">🕐 Produção por Hora do Dia</div>
+      <div class="card-title">🕐 Produção por Hora do Dia <button class="help-btn" onclick="abrirAjuda('sec-heatmap')">ℹ️</button></div>
       <div class="card-badge">Intensidade de apontamentos</div>
     </div>
     <div class="card-body" id="heatmapPanel"><div class="empty">Carregando...</div></div>
   </div>
 
   <!-- BACKLOG -->
-  <div class="card sec-card" id="sec-backlog" style="display:none">
+  <div class="card sec-card" id="sec-backlog" data-page="planejamento" style="display:none">
     <div class="card-hd">
       <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0">
-        <div class="card-title">⏳ Backlog — Ordens em Aberto</div>
+        <div class="card-title">⏳ Backlog — Ordens em Aberto <button class="help-btn" onclick="abrirAjuda('sec-backlog')">ℹ️</button></div>
         <div class="card-badge" id="backlogBadge">Aba Abertos em tempo real</div>
         <span class="backlog-src" id="backlogSrc"></span>
       </div>
@@ -860,18 +1012,18 @@ input[type="date"]{color-scheme:dark;}
   </div>
 
   <!-- DIA DA SEMANA -->
-  <div class="card sec-card" id="sec-weekday" style="display:none">
+  <div class="card sec-card" id="sec-weekday" data-page="pessoas" style="display:none">
     <div class="card-hd">
-      <div class="card-title">📅 Produtividade por Dia da Semana</div>
+      <div class="card-title">📅 Produtividade por Dia da Semana <button class="help-btn" onclick="abrirAjuda('sec-weekday')">ℹ️</button></div>
       <div class="card-badge">Média de horas produtivas</div>
     </div>
     <div class="card-body" id="weekdayPanel"><div class="empty">Carregando...</div></div>
   </div>
 
   <!-- AUDITORIA -->
-  <div class="card sec-card" id="sec-audit" style="display:none">
+  <div class="card sec-card" id="sec-audit" data-page="qualidade" style="display:none">
     <div class="card-hd">
-      <div class="card-title">🔍 Painel de Auditoria & Validação</div>
+      <div class="card-title">🔍 Painel de Auditoria & Validação <button class="help-btn" onclick="abrirAjuda('sec-audit')">ℹ️</button></div>
       <div class="card-badge">Valide os cálculos do dashboard</div>
     </div>
     <div class="card-body">
@@ -907,9 +1059,9 @@ input[type="date"]{color-scheme:dark;}
 
 
   <!-- DESEMPENHO INDIVIDUAL -->
-  <div class="card sec-card" id="sec-perf" style="display:none">
+  <div class="card sec-card" id="sec-perf" data-page="pessoas" style="display:none">
     <div class="card-hd">
-      <div class="card-title">🏅 Análise de Desempenho Individual</div>
+      <div class="card-title">🏅 Análise de Desempenho Individual <button class="help-btn" onclick="abrirAjuda('sec-perf')">ℹ️</button></div>
       <div class="card-badge">EE · Velocidade vs Peers · Consistência · Retrabalho</div>
     </div>
     <div class="card-body">
@@ -936,9 +1088,9 @@ input[type="date"]{color-scheme:dark;}
   </div>
 
   <!-- FLUXO DE PRODUÇÃO: Panorama Anual + CFD -->
-  <div class="card sec-card" id="sec-flow" style="display:none">
+  <div class="card sec-card" id="sec-flow" data-page="eficiencia" data-subpage="1" style="display:none">
     <div class="card-hd">
-      <div class="card-title">📈 Panorama de Produção ao Longo do Ano</div>
+      <div class="card-title">📈 Panorama de Produção ao Longo do Ano <button class="help-btn" onclick="abrirAjuda('sec-flow')">ℹ️</button></div>
       <div class="card-badge">Throughput mensal vs Entradas — visão de fluxo</div>
     </div>
     <div class="card-body">
@@ -958,9 +1110,9 @@ input[type="date"]{color-scheme:dark;}
   </div>
 
   <!-- D/F PRAZO POR OPERAÇÃO -->
-  <div class="card sec-card" id="sec-prazo" style="display:none">
+  <div class="card sec-card" id="sec-prazo" data-page="planejamento" style="display:none">
     <div class="card-hd">
-      <div class="card-title">🎯 Dentro/Fora do Prazo por Operação</div>
+      <div class="card-title">🎯 Dentro/Fora do Prazo por Operação <button class="help-btn" onclick="abrirAjuda('sec-prazo')">ℹ️</button></div>
       <div class="card-badge">Horas reais vs estimadas por código de item · tolerância 15%</div>
     </div>
     <div class="card-body">
@@ -972,12 +1124,37 @@ input[type="date"]{color-scheme:dark;}
   </div>
 
   <!-- TABELA DE PROJETOS (por Nº Série) -->
-  <div class="card sec-card" id="sec-projects" style="display:none">
+  <div class="card sec-card" id="sec-projects" data-page="planejamento" style="display:none">
     <div class="card-hd">
-      <div class="card-title">🔩 Tabela de Projetos — Visão por Série</div>
+      <div class="card-title">🔩 Tabela de Projetos — Visão por Série <button class="help-btn" onclick="abrirAjuda('sec-projects')">ℹ️</button></div>
       <div class="card-badge">Status · datas · horas totais · operações</div>
     </div>
     <div class="card-body scrollable" id="projectsPanel"><div class="empty">Carregando...</div></div>
+  </div>
+
+  <!-- INSIGHTS CRUZADOS -->
+  <div class="card sec-card" id="sec-cross-abs" data-page="cruzados">
+    <div class="card-hd">
+      <div class="card-title">🔀 Assiduidade × Produtividade <button class="help-btn" onclick="abrirAjuda('sec-cross-abs')">ℹ️</button></div>
+      <div class="card-badge">1 ponto por funcionário</div>
+    </div>
+    <div class="card-body" style="height:340px"><canvas id="chartCrossAbsProd"></canvas></div>
+  </div>
+
+  <div class="card sec-card" id="sec-cross-ret" data-page="cruzados">
+    <div class="card-hd">
+      <div class="card-title">🔀 Retrabalho × Eficiência <button class="help-btn" onclick="abrirAjuda('sec-cross-ret')">ℹ️</button></div>
+      <div class="card-badge">1 ponto por funcionário</div>
+    </div>
+    <div class="card-body" style="height:340px"><canvas id="chartCrossRetEff"></canvas></div>
+  </div>
+
+  <div class="card sec-card" id="sec-cross-paradas" data-page="cruzados">
+    <div class="card-hd">
+      <div class="card-title">🔀 Paradas por Hora do Dia <button class="help-btn" onclick="abrirAjuda('sec-cross-paradas')">ℹ️</button></div>
+      <div class="card-badge">Concentração de paradas ao longo do turno</div>
+    </div>
+    <div class="card-body" style="height:340px"><canvas id="chartCrossParadasHora"></canvas></div>
   </div>
 
 </main>
@@ -1207,7 +1384,7 @@ const APPS_SCRIPT_URL='https://script.google.com/macros/s/AKfycbxK4tqdjFkjQxJ-sA
 // Script clasp-managed (agricef-appsscript.gs) — getAbertos + gravarApontamento
 const APONTAMENTO_URL='https://script.google.com/macros/s/AKfycbybtpUgNv_P8YkRNLmPwQVB4n3cS4XMlQQVQUFOgV7MUbjJWK5Xt8HZ8IJEUVHMJCihgA/exec';
 const REFRESH_INTERVAL_MS=2*60*1000; // 2 min — reduzido para diminuir delay de aparecimento
-let RAW_DATA=[],ABSENCES=[],PLANT_OPEN_DAYS=[],ALL_WORKDAYS=[],filtered=[];
+let RAW_DATA=[],ABSENCES=[],PLANT_OPEN_DAYS=[],ALL_WORKDAYS=[],filtered=[],_timelineItems=[];
 let _refreshTimer=null,_lastUpdate=null;
 let _fcmIdx=null;
 let _abertosData=null; // cache da aba Abertos (fonte de verdade para backlog)
@@ -1242,6 +1419,203 @@ function loadSettings(){
 }
 function saveSettings(){const s=loadSettings();s.costPerHour=parseFloat(document.getElementById('costPerHour')?.value||45);s._v=SETTINGS_VERSION;localStorage.setItem('agricef-settings',JSON.stringify(s));}
 
+let _paginaAtual = localStorage.getItem('agricef-pagina-atual') || 'visao-geral';
+
+const AJUDA_TEXTOS = {
+  'sec-func': 'Mostra, por funcionário, quantas horas foram produtivas, paradas e de retrabalho, e a eficiência (% das horas do dia ativo que foram produtivas). Eficiência baixa (abaixo de 60%) pode indicar sobrecarga de paradas/retrabalho, falta de material ou subutilização. Ação: investigue os casos "Baixo" primeiro — confira se o problema é de processo (gargalo, falta de peça) ou individual antes de cobrar produtividade.',
+  'sec-ops-op': 'Soma o tempo total dedicado a cada tipo de operação (Cortar, Furar, Soldar, etc.). Operações com tempo muito acima das demais podem ser gargalos estruturais da linha. Ação: se uma operação concentra desproporcionalmente o tempo, avalie redistribuir mão de obra ou revisar o método de trabalho dela.',
+  'sec-ops-item': 'Ranking dos códigos de item que mais consomem tempo de produção. Itens no topo merecem atenção redobrada em precisão de apontamento e padronização de processo, já que erros ali têm maior impacto no total. Ação: padronize o processo dos itens do topo antes dos demais — o ganho de eficiência ali se multiplica.',
+  'sec-serie': 'Detalha as horas de produção por número de série, com a quebra por operação e item dentro de cada série. Série com tempo muito alto pode indicar retrabalho oculto ou um produto mais complexo que o normal. Ação: ao identificar uma série com tempo destoante, abra o detalhamento por operação para achar onde o tempo está concentrado.',
+  'sec-paradas': 'Tempo perdido por tipo de parada (setup, falta de material, manutenção etc.) e por tipo de retrabalho. Paradas recorrentes do mesmo tipo indicam causa raiz não resolvida, não eventos isolados. Ação: ataque primeiro o tipo de parada com maior volume acumulado — é onde uma única melhoria gera o maior retorno.',
+  'sec-ia': 'Análise gerada automaticamente (Claude API) a partir dos mesmos dados que alimentam os relatórios diário/semanal por e-mail — interpreta causas, aponta quem/o que merece atenção e sugere ações. É atualizada automaticamente nos horários dos relatórios (diário seg-sex 07h, semanal segunda 07h); qualquer projeção de tendência nela é uma extrapolação dos dados recentes, não uma previsão estatística validada.',
+  'sec-rank': 'Ranking de horas produtivas por funcionário no período filtrado — mede volume de produção, não eficiência (um funcionário pode produzir muito mas também ter muitas horas extras ou paradas). Ação: use junto com "Eficiência por Funcionário" antes de tirar conclusões — volume alto com eficiência baixa pode significar jornada longa, não desempenho.',
+  'sec-timeline': 'Feed cronológico dos apontamentos mais recentes — é o "o que está acontecendo agora" da fábrica. Útil para detectar rapidamente um apontamento incomum (quantidade fora do padrão, série errada) recém-lançado. Ação: revise este feed no início do turno para pegar erros de apontamento do dia anterior antes que afetem os relatórios.',
+  'sec-pv': 'Compara o tempo/quantidade estimado (planejado) com o realmente apontado, por item, funcionário ou série. Valores muito acima do previsto indicam estimativa errada OU execução ineficiente — os dois exigem ações diferentes. Ação: para itens recorrentes acima do previsto, revise a estimativa; para itens pontuais, investigue a execução.',
+  'sec-att': 'Calendário de presença por funcionário — dias sem nenhum apontamento contam como ausência (8h imputadas). Padrões concentrados (mesmo funcionário, mesmo dia da semana) sugerem causa específica, não acaso. Ação: ausências recorrentes no mesmo padrão merecem conversa direta antes de afetar o planejamento de capacidade.',
+  'sec-oee': 'OEE = Disponibilidade × Performance × Qualidade — a métrica clássica de eficiência industrial, aqui calculada por série. Lead time alto numa série específica aponta exatamente onde o gargalo do processo está. Ação: priorize melhorias nas séries com OEE mais baixo — é onde a perda combinada (parada+performance+retrabalho) é maior.',
+  'sec-trend': 'Evolução da eficiência geral semana a semana. Queda sustentada (não um pico isolado) é o sinal mais confiável de que algo estrutural mudou — equipe, processo ou mix de produtos. Ação: se a queda persistir por 2+ semanas, investigue mudanças de equipe/processo no período, não trate como variação normal.',
+  'sec-heatmap': 'Intensidade de apontamentos por hora do dia e dia da semana — mostra quando a fábrica realmente produz. Horários com baixa intensidade dentro do turno normal podem indicar gargalo de início/fim de turno ou parada recorrente não capturada como tal. Ação: cruze horários "frios" do heatmap com a aba de Insights Cruzados (Paradas por Hora) para achar a causa.',
+  'sec-backlog': 'Ordens com ABERTURA registrada mas sem FECHAMENTO — trabalho que já começou e ainda não terminou, em qualquer período. Backlog crescente sem novas entregas é o sinal mais direto de gargalo real na produção. Ação: ordens com mais dias em aberto devem ser tratadas primeiro — risco de atraso cresce com o tempo parado.',
+  'sec-weekday': 'Média de horas produtivas por dia da semana. Quedas sistemáticas em dias específicos (ex: segunda ou sexta) indicam um padrão de equipe, não um fato isolado. Ação: se um dia da semana é consistentemente mais fraco, investigue causas de calendário (entressafra, escalas, manutenção programada) antes de agir sobre pessoas.',
+  'sec-audit': 'Ferramentas para validar a consistência dos próprios dados do dashboard — pares ABERTURA/FECHAMENTO órfãos, duplicados, inconsistências de cálculo. Use isso quando um número parecer "estranho" antes de desconfiar da produção real. Ação: rode a auditoria antes de tomar decisões baseadas em um KPI que pareça fora do padrão.',
+  'sec-perf': 'Compara cada operador com a velocidade média dos pares na mesma operação, junto com consistência e taxa de retrabalho individual. Mede desempenho relativo, não absoluto — bom para identificar quem pode treinar quem. Ação: operadores consistentemente abaixo dos pares na mesma operação são candidatos a treinamento direcionado, não advertência.',
+  'sec-flow': 'Visão de fluxo completo do ano — throughput mensal, novas entradas e diagrama de fluxo cumulativo (CFD). A distância entre a curva de entradas e a de saídas é o backlog acumulado visualmente. Ação: se as curvas estão se afastando ao longo do ano, a capacidade instalada está abaixo da demanda — decisão de investimento, não de gestão do dia a dia.',
+  'sec-prazo': 'Classifica operações como dentro ou fora do prazo estimado, por tipo de operação. Um tipo específico concentrando os atrasos aponta uma etapa do processo mal dimensionada, não atraso aleatório. Ação: se um tipo de operação domina os atrasos, revise o tempo padrão dela ou a capacidade alocada para ela.',
+  'sec-projects': 'Tabela consolidada por número de série — status, datas, horas totais e operações, tudo num só lugar. É o relatório "imprimível" para reunião de status de um projeto específico. Ação: use esta tabela como checklist em reuniões de acompanhamento de série/projeto, em vez de cruzar múltiplas seções manualmente.',
+  'sec-cross-abs': 'Cruza horas de ausência com horas produtivas por funcionário — cada ponto é uma pessoa. Pontos no canto inferior direito (muita ausência, pouca produção) merecem atenção combinada de RH e produção. Ação: se vários pontos formam esse padrão simultaneamente, é uma questão de equipe/processo, não de indivíduos isolados.',
+  'sec-cross-ret': 'Cruza horas de retrabalho com a eficiência de cada funcionário — testa a hipótese de que quem retrabalha mais rende menos. Se a correlação for clara (pontos formando uma diagonal descendente), o retrabalho é a causa principal da baixa eficiência, não outros fatores. Ação: reduzir retrabalho nesses casos deve subir a eficiência diretamente — priorize a causa do retrabalho, não a cobrança de produtividade.',
+  'sec-cross-paradas': 'Concentração de paradas por hora do dia, somando todos os funcionários e tipos de parada. Picos em horários específicos (início de turno, pós-almoço) indicam um padrão estrutural recorrente, não acaso. Ação: se há um pico claro, investigue o que acontece naquele horário (troca de turno, intervalo, abastecimento de material) — resolver isso reduz paradas todos os dias, não só uma vez.',
+};
+
+function abrirAjuda(secId){
+  const item = AJUDA_TEXTOS[secId];
+  if(!item) return;
+  const tituloEl = document.querySelector('#'+secId+' .card-title');
+  const titulo = tituloEl ? tituloEl.childNodes[0].textContent.trim() : 'Ajuda';
+  document.getElementById('helpTitulo').textContent = 'ℹ️ ' + titulo;
+  document.getElementById('helpTexto').textContent = item;
+  document.getElementById('helpOverlay').classList.add('open');
+}
+function fecharAjuda(){
+  document.getElementById('helpOverlay').classList.remove('open');
+}
+
+// Várias seções têm renderização condicionada a "se estiver visível agora" (guarda
+// `if(el.style.display==='none') return`) — herdada de quando só existia o toggle de
+// Configurações. Com páginas, uma seção fica oculta sempre que não é a página atual, então
+// sua função de render precisa ser rechamada quando ela volta a ficar visível, ou o
+// gráfico/tabela nunca é desenhado (ficou em branco até a primeira vez que essa seção
+// aparecer durante o fetchData() inicial).
+const RENDER_POR_SECAO = {
+  'sec-oee': ['renderLeadTime','renderOEE'],
+  'sec-trend': ['renderTrend'],
+  'sec-heatmap': ['renderHeatmap'],
+  'sec-backlog': ['renderBacklog'],
+  'sec-flow': ['renderFlow'],
+  'sec-prazo': ['renderPrazo'],
+  'sec-projects': ['renderProjects'],
+  'sec-weekday': ['renderWeekday'],
+  'sec-audit': ['renderAudit'],
+  'sec-perf': ['renderPerformance'],
+};
+// Algumas dessas seções são genuinamente lentas de calcular (ex: renderProjects ~5s em
+// produção, varrendo todo o histórico). Esse cache evita refazer o cálculo ao trocar de
+// página repetidas vezes sem os dados/filtros terem mudado — é invalidado em applyFilters().
+let _secoesJaRenderizadas = new Set();
+function rerenderizarSecoesVisiveis(){
+  Object.entries(RENDER_POR_SECAO).forEach(([secId, fns]) => {
+    const el = document.getElementById(secId);
+    if(!el || el.style.display === 'none' || _secoesJaRenderizadas.has(secId)) return;
+    _secoesJaRenderizadas.add(secId);
+    // setTimeout libera a thread para a troca de aba/visibilidade renderizar primeiro —
+    // o usuário vê a navegação responder na hora, com "Carregando..." nas seções pesadas
+    // enquanto o cálculo roda, em vez da UI parecer travada no clique do botão.
+    setTimeout(() => { fns.forEach(fnName => { if(typeof window[fnName] === 'function') window[fnName](); }); }, 0);
+  });
+}
+
+// Move cada seção para o wrapper .page-grid da sua categoria — uma vez, na inicialização.
+// Mais seguro que reescrever o HTML manualmente: reaproveita o padrão já usado em
+// applySettings() para reordenar seções via appendChild().
+function moverSecoesParaGrids(){
+  document.querySelectorAll('.sec-card[data-page]').forEach(el=>{
+    const wrapper = document.querySelector('.page-grid[data-page-grid="'+el.dataset.page+'"]');
+    if(wrapper) wrapper.appendChild(el);
+  });
+}
+
+let _subpaginaAtual = {}; // ex: {eficiencia: 0} — só categorias com data-subpage usam isto
+
+function mudarPagina(pagina){
+  _paginaAtual = pagina;
+  localStorage.setItem('agricef-pagina-atual', pagina);
+  document.querySelectorAll('.page-tab').forEach(b=>b.classList.toggle('active', b.dataset.page===pagina));
+  renderVisibilidade();
+  rerenderizarSecoesVisiveis();
+  if(pagina === 'cruzados' && typeof renderInsightsCruzados === 'function') renderInsightsCruzados();
+}
+
+// Visibilidade final = habilitado nas Configurações E pertence à página atual E (se a
+// seção tiver data-subpage) pertence à sub-página atual daquela categoria.
+// Chamada por applySettings() (em vez de aplicar display direto) e por mudarPagina().
+function renderVisibilidade(){
+  const s = loadSettings();
+  document.querySelectorAll('.sec-card[data-page], .kpi[data-page]').forEach(el=>{
+    const habilitado = el.classList.contains('sec-card') ? (s.sections[el.id] !== false) : (s.kpis[el.id] !== false);
+    const naPagina = el.dataset.page === _paginaAtual;
+    let naSubpagina = true;
+    if(el.dataset.subpage !== undefined){
+      const sub = _subpaginaAtual[el.dataset.page] || 0;
+      naSubpagina = Number(el.dataset.subpage) === sub;
+    }
+    el.style.display = (habilitado && naPagina && naSubpagina) ? '' : 'none';
+  });
+  atualizarSubpagNav();
+  aplicarGridTelaCheia();
+}
+
+function contarSubpaginas(categoria){
+  const subs = new Set();
+  document.querySelectorAll('.sec-card[data-page="'+categoria+'"][data-subpage]').forEach(el=>subs.add(el.dataset.subpage));
+  return subs.size || 1;
+}
+function atualizarSubpagNav(){
+  const total = contarSubpaginas(_paginaAtual);
+  const nav = document.getElementById('subpagNav');
+  if(!nav) return;
+  if(total <= 1){ nav.classList.remove('show'); return; }
+  nav.classList.add('show');
+  const atual = (_subpaginaAtual[_paginaAtual]||0) + 1;
+  document.getElementById('subpagLabel').textContent = atual + '/' + total;
+}
+function subpaginaAnterior(){
+  const total = contarSubpaginas(_paginaAtual);
+  const atual = _subpaginaAtual[_paginaAtual] || 0;
+  _subpaginaAtual[_paginaAtual] = (atual - 1 + total) % total;
+  renderVisibilidade();
+  rerenderizarSecoesVisiveis();
+}
+function subpaginaProxima(){
+  const total = contarSubpaginas(_paginaAtual);
+  const atual = _subpaginaAtual[_paginaAtual] || 0;
+  _subpaginaAtual[_paginaAtual] = (atual + 1) % total;
+  renderVisibilidade();
+  rerenderizarSecoesVisiveis();
+}
+
+// Mede o espaço real ocupado por header/filtros/nav (em vez de chumbar valores fixos)
+// e devolve quanto resta de altura de viewport para o grid de seções da página atual.
+function calcularAlturaDisponivel(){
+  // Mede a posição real do wrapper ativo (em vez de somar alturas individuais dos
+  // elementos acima) — captura corretamente gaps/margins/paddings que uma soma manual
+  // poderia perder, evitando o acúmulo de poucos pixels que ainda gera scroll de página.
+  const wrapperAtivo = document.querySelector('.page-grid[data-page-grid="'+_paginaAtual+'"]');
+  const top = wrapperAtivo ? wrapperAtivo.getBoundingClientRect().top : 200;
+  const margemInferior = 20; // padding-bottom de main
+  return Math.max(200, window.innerHeight - top - margemInferior);
+}
+
+function decidirGridDims(n){
+  if(n<=1) return {cols:1, rows:1};
+  if(n===2) return {cols:2, rows:1};
+  if(n===3) return {cols:3, rows:1};
+  if(n===4) return {cols:2, rows:2};
+  const cols = Math.ceil(Math.sqrt(n));
+  return {cols, rows: Math.ceil(n/cols)};
+}
+
+// Aplica o grid dinâmico na página atual e redimensiona os gráficos Chart.js dela —
+// chamado por renderVisibilidade() (que já roda em toda troca de página/sub-página/settings).
+function aplicarGridTelaCheia(){
+  document.querySelectorAll('.page-grid').forEach(g=>g.classList.remove('active'));
+  const wrapperAtivo = document.querySelector('.page-grid[data-page-grid="'+_paginaAtual+'"]');
+  if(!wrapperAtivo) return;
+  wrapperAtivo.classList.add('active');
+  const visiveis = [...wrapperAtivo.querySelectorAll('.sec-card')].filter(el=>el.style.display!=='none');
+  const {cols, rows} = decidirGridDims(visiveis.length);
+  wrapperAtivo.style.gridTemplateColumns = 'repeat('+cols+', 1fr)';
+  wrapperAtivo.style.gridTemplateRows = 'repeat('+rows+', 1fr)';
+  wrapperAtivo.style.height = calcularAlturaDisponivel()+'px';
+
+  requestAnimationFrame(()=>{
+    Object.values(chartInstances).forEach(c=>{ if(c && typeof c.resize==='function') c.resize(); });
+    // _prazoChart/_flowBarChart/_flowCfdChart são `let` no escopo léxico deste script (não em
+    // window) — referenciadas pelo nome direto; window._trendChart/_wdChart usam window explícito.
+    [window._trendChart, window._wdChart,
+     (typeof _prazoChart!=='undefined'?_prazoChart:null),
+     (typeof _flowBarChart!=='undefined'?_flowBarChart:null),
+     (typeof _flowCfdChart!=='undefined'?_flowCfdChart:null)].forEach(c=>{
+      if(c && typeof c.resize==='function') c.resize();
+    });
+  });
+}
+
+let _resizeDebounce=null;
+window.addEventListener('resize', ()=>{
+  clearTimeout(_resizeDebounce);
+  _resizeDebounce = setTimeout(aplicarGridTelaCheia, 150);
+});
+
 // ── FETCH & PARSE ─────────────────────────────────────────────────────────────
 function parseSheetJSON(rows){
   if(!Array.isArray(rows)||!rows.length) return [];
@@ -1262,12 +1636,16 @@ function parseSheetJSON(rows){
   const kSetup=findCol('TIPO DE OPERA\u00c7\u00c3O DE SET-UP',['SET-UP','SETUP']);
   const kRetrab=findCol('TIPOS DE RETRABALHOS',['RETRABALHO']);
   const kOp2=findCol('TIPO DE OPERA\u00c7\u00c3O 2',['OPERACAO 2','OPERAÇÃO 2']);
+  const kQtyPlan=findCol('QTD PLANEJADA',['QTD PLANEJADA','QUANTIDADE PLANEJADA']);
+  const kObs1=findCol('OBSERVAÇÃO 1',['OBSERVACAO 1','OBSERVAÇÃO 1']);
+  const kAbertoId=findCol('Coluna 16',['COLUNA 16']);
   const records=[];
   for(const row of rows){
     function g(k){return k?String(row[k]||'').trim():'';}
     const tsRaw=g(kTS),func=g(kFunc),serieRaw=g(kSerie);
     const tipo=g(kTipo),op=g(kOp),item=g(kItem),qty=g(kQty);
     const tipoParada=g(kParada),tipoSetup=g(kSetup),tipoRet=g(kRetrab),op2=g(kOp2);
+    const qtyPlan=g(kQtyPlan),obs1=g(kObs1),abertoId=g(kAbertoId);
     if(!tsRaw||!func||func==='NOME DO OPERADOR') continue;
     let tsNorm=tsRaw;
     if(tsRaw.includes('T')&&(tsRaw.includes('Z')||tsRaw.includes('+'))){
@@ -1280,7 +1658,8 @@ function parseSheetJSON(rows){
     const parts=serieRaw.split(' | ');
     records.push({ts:tsNorm,func,serie_raw:serieRaw,serie:(parts[0]||'').trim(),
       impl:(parts[1]||'').trim(),client:(parts[2]||'').trim(),
-      tipo,op,item,qty,obs1:'',tipoParada,tipoSetup,tipoRetrabalho:tipoRet,op2});
+      tipo,op,item,qty,qtyPlan,obs1,tipoParada,tipoSetup,tipoRetrabalho:tipoRet,op2,
+      _abertoId:abertoId});
   }
   console.log('Parsed:',records.length,'|Tipos:',[...new Set(records.map(r=>r.tipo))]);
   return records;
@@ -1325,6 +1704,8 @@ async function fetchData(){
     console.log('✓',records.length,'apontamentos carregados');
     fetchAbertos(); // atualiza aba Abertos em paralelo (não bloqueia o render)
     fetchJustificativasAuditoria(); // idem, justificativas de duração suspeita
+    fetchAnaliseIA(); // idem — análise de IA é independente do feed principal
+    if(typeof renderInsightsCruzados==='function') renderInsightsCruzados(); // só tem efeito se a página atual for 'cruzados'
   }catch(err){showLoadingState(false,err.message);console.error('Erro fetchData:',err);}
 }
 
@@ -1355,6 +1736,41 @@ async function fetchJustificativasAuditoria(){
       if(secAudit && secAudit.style.display!=='none') renderAudit();
     }
   }catch(e){console.warn('fetchJustificativasAuditoria:',e.message);}
+}
+
+let _analiseIAData={diario:null,semanal:null};
+let _iaTabAtual='diario';
+
+async function fetchAnaliseIA(){
+  try{
+    const resp=await fetch(APONTAMENTO_URL+'?action=getAnaliseIA&_='+Date.now());
+    if(!resp.ok) return;
+    const json=await resp.json();
+    _analiseIAData={diario:json.diario||null, semanal:json.semanal||null};
+    renderAnaliseIA();
+  }catch(e){console.warn('fetchAnaliseIA:',e.message);}
+}
+
+function switchIaTab(tipo){
+  _iaTabAtual=tipo;
+  document.getElementById('iaTab-diario').classList.toggle('active',tipo==='diario');
+  document.getElementById('iaTab-semanal').classList.toggle('active',tipo==='semanal');
+  renderAnaliseIA();
+}
+
+function renderAnaliseIA(){
+  const panel=document.getElementById('iaPanel');
+  const badge=document.getElementById('iaBadge');
+  if(!panel) return;
+  const item=_analiseIAData[_iaTabAtual];
+  if(!item || !item.texto){
+    panel.innerHTML='<div class="empty">Nenhuma análise '+(_iaTabAtual==='diario'?'diária':'semanal')+' gerada ainda — a próxima rodará automaticamente no horário do relatório.</div>';
+    if(badge) badge.textContent='Analista de Produção Virtual';
+    return;
+  }
+  if(badge) badge.textContent='Gerado em '+item.data;
+  const paragrafos=String(item.texto).split(/\n+/).filter(p=>p.trim()!=='');
+  panel.innerHTML=paragrafos.map(p=>'<p style="margin:0 0 12px;font-size:13.5px;color:var(--text);line-height:1.65;">'+p.replace(/[<>]/g,'')+'</p>').join('');
 }
 
 function startAutoRefresh(){if(_refreshTimer)clearInterval(_refreshTimer);_refreshTimer=setInterval(fetchData,REFRESH_INTERVAL_MS);}
@@ -1550,7 +1966,16 @@ function applyFilters(){
     return true;
   });
   document.getElementById('recCount').textContent = filtered.length;
+  if(typeof _secoesJaRenderizadas !== 'undefined') _secoesJaRenderizadas.clear();
   renderAll();
+  // renderAll() já processou (de forma síncrona) todas as seções visíveis na página atual —
+  // marca essas como "feitas" para que mudarPagina() não as recalcule de novo ao navegar.
+  if(typeof RENDER_POR_SECAO !== 'undefined'){
+    Object.keys(RENDER_POR_SECAO).forEach(secId=>{
+      const el=document.getElementById(secId);
+      if(el && el.style.display!=='none') _secoesJaRenderizadas.add(secId);
+    });
+  }
 
   saveFilters();
 }
@@ -2022,19 +2447,21 @@ function renderRanking(){
 // ── RENDER TIMELINE ───────────────────────────────────────────────────────────
 function renderTimeline(){
   const items=[...filtered].sort((a,b)=>tsToDate(b.ts)-tsToDate(a.ts)).slice(0,20);
+  _timelineItems=items; // referência paralela usada por abrirModalEdicao('timeline', idx)
   const colors={'ABERTURA':'#4ade80','FECHAMENTO':'#38bdf8','INÍCIO DE PARADA':'#f87171','TÉRMINO DE PARADA':'#f0b429','INÍCIO DE RETRABALHO':'#fb923c','TÉRMINO DE RETRABALHO':'#a78bfa'};
   let html='<div class="tl">';
-  items.forEach(r=>{
+  items.forEach((r,idx)=>{
     const c=colors[r.tipo]||'#8b949e';
     const ts=tsToDate(r.ts);
     const time=ts.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
     const date=ts.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
     const name=funcName(r.func);
     const detail=[r.op,r.item,r.serie&&r.serie[0]>='0'?r.serie:''].filter(Boolean).join(' · ');
+    const btnEditar=r._abertoId?`<button class="editar-btn" style="padding:2px 8px;font-size:10px;margin-left:8px" onclick="abrirModalEdicao('timeline',${idx})">Editar</button>`:'';
     html+=`<div class="tl-item">
       <div class="tl-dot" style="background:${c}"></div>
       <div style="flex:1">
-        <div class="tl-main">${name} <span style="color:${c};font-size:11px">${r.tipo}</span></div>
+        <div class="tl-main">${name} <span style="color:${c};font-size:11px">${r.tipo}</span>${btnEditar}</div>
         <div class="tl-sub">${detail||r.tipoParada||r.tipoSetup||'—'}</div>
       </div>
       <div class="tl-time">${date} ${time}</div>
@@ -2385,6 +2812,8 @@ document.addEventListener('DOMContentLoaded',()=>{
   } catch(e) { localStorage.removeItem('agricef-settings'); }
 
   document.getElementById('dateLbl').textContent=new Date().toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'long',year:'numeric'});
+  document.querySelectorAll('.page-tab').forEach(b=>b.classList.toggle('active', b.dataset.page===_paginaAtual));
+  moverSecoesParaGrids();
   applySettings();
   renderSettingsItems();
   ['fFunc','fSerie','fOp','fItem','fFrom','fTo'].forEach(id=>{
@@ -3065,8 +3494,7 @@ function renderChart(cardId) {
 
 function applySettings(){
   const s=loadSettings();
-  Object.entries(s.sections).forEach(([id,v])=>{const el=document.getElementById(id);if(el)el.style.display=v?'':'none';});
-  Object.entries(s.kpis).forEach(([id,v])=>{const el=document.getElementById(id);if(el)el.style.display=v?'':'none';});
+  renderVisibilidade(); // habilitado nas Configurações × pertence à página atual
   const main=document.querySelector('main');
   if(main)(s.sectionOrder||SECTIONS_META.map(x=>x.id)).forEach(id=>{const el=document.getElementById(id);if(el&&el.parentNode===main)main.appendChild(el);});
   const kpiRow=document.getElementById('sec-kpis');
@@ -3258,6 +3686,78 @@ function renderHeatmap(){
   panel.innerHTML = out;
 }
 
+// ── INSIGHTS CRUZADOS — combina indicadores já calculados em outras seções ──
+function renderInsightsCruzados(){
+  if(_paginaAtual !== 'cruzados') return;
+  const c1=document.getElementById('chartCrossAbsProd'), c2=document.getElementById('chartCrossRetEff'), c3=document.getElementById('chartCrossParadasHora');
+  if(!c1 || !c2 || !c3) return;
+
+  Chart.defaults.color = '#8b949e';
+  Chart.defaults.borderColor = '#2a3245';
+  Chart.defaults.font.family = 'Barlow, sans-serif';
+
+  // Agregação por funcionário — mesmo padrão usado em renderFuncs()
+  const prod   = pairRows(filtered,'ABERTURA','FECHAMENTO');
+  const retrab = pairRows(filtered,'INÍCIO DE RETRABALHO','TÉRMINO DE RETRABALHO');
+  const fm = {};
+  prod.forEach(p=>{
+    if(!fm[p.func]) fm[p.func]={name:funcName(p.func),prod:0,ret:0,abs:0,days:new Set()};
+    fm[p.func].prod+=p.dur;
+    if(p.openTs) fm[p.func].days.add(p.openTs.slice(0,10));
+  });
+  retrab.forEach(p=>{
+    if(!fm[p.func]){const r=RAW_DATA.find(r=>r.func===p.func);fm[p.func]={name:funcName(r?.func||p.func),prod:0,ret:0,abs:0,days:new Set()};}
+    fm[p.func].ret+=p.dur;
+  });
+  ABSENCES.forEach(a=>{
+    if(!fm[a.func]){const r=RAW_DATA.find(r=>r.func===a.func);fm[a.func]={name:funcName(r?.func||a.func),prod:0,ret:0,abs:0,days:new Set()};}
+    fm[a.func].abs+=8;
+  });
+  const pessoas = Object.values(fm).map(p=>{
+    const indivCap = p.days.size*8*60;
+    const eff = indivCap>0 ? Math.min(100, Math.round(p.prod/indivCap*100)) : 0;
+    return {...p, eff};
+  });
+
+  // 1. Assiduidade × Produtividade
+  if(chartInstances['crossAbs']){chartInstances['crossAbs'].destroy();delete chartInstances['crossAbs'];}
+  chartInstances['crossAbs'] = new Chart(c1.getContext('2d'), {
+    type:'scatter',
+    data:{datasets:[{label:'Funcionários',data:pessoas.map(p=>({x:p.abs,y:+(p.prod/60).toFixed(1)})),backgroundColor:'#38bdf8',pointRadius:6,pointHoverRadius:8}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>{const p=pessoas[ctx.dataIndex];return `${p.name}: ${p.abs}h ausência, ${(p.prod/60).toFixed(1)}h produtivas`;}}}},
+      scales:{x:{title:{display:true,text:'Horas de Ausência'},grid:{color:'#2a3245'}},y:{title:{display:true,text:'Horas Produtivas'},grid:{color:'#2a3245'}}}}
+  });
+
+  // 2. Retrabalho × Eficiência
+  if(chartInstances['crossRet']){chartInstances['crossRet'].destroy();delete chartInstances['crossRet'];}
+  chartInstances['crossRet'] = new Chart(c2.getContext('2d'), {
+    type:'scatter',
+    data:{datasets:[{label:'Funcionários',data:pessoas.map(p=>({x:+(p.ret/60).toFixed(1),y:p.eff})),backgroundColor:'#fb923c',pointRadius:6,pointHoverRadius:8}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>{const p=pessoas[ctx.dataIndex];return `${p.name}: ${(p.ret/60).toFixed(1)}h retrabalho, ${p.eff}% eficiência`;}}}},
+      scales:{x:{title:{display:true,text:'Horas de Retrabalho'},grid:{color:'#2a3245'}},y:{title:{display:true,text:'Eficiência (%)'},grid:{color:'#2a3245'}}}}
+  });
+
+  // 3. Paradas por Hora do Dia
+  if(chartInstances['crossParadas']){chartInstances['crossParadas'].destroy();delete chartInstances['crossParadas'];}
+  const horaCount = Array(24).fill(0);
+  filtered.forEach(r=>{
+    if(r.tipo !== 'INÍCIO DE PARADA') return;
+    const d = tsToDate(r.ts);
+    if(d.getTime()===0) return;
+    horaCount[d.getHours()]++;
+  });
+  const labelsHora = Array.from({length:13},(_,i)=>(i+6)+'h');
+  const dataHora = labelsHora.map((_,i)=>horaCount[i+6]);
+  chartInstances['crossParadas'] = new Chart(c3.getContext('2d'), {
+    type:'bar',
+    data:{labels:labelsHora,datasets:[{label:'Paradas iniciadas',data:dataHora,backgroundColor:'#f87171',borderRadius:4}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{x:{grid:{color:'#2a3245'}},y:{grid:{color:'#2a3245'},title:{display:true,text:'Qtd. de paradas'}}}}
+  });
+}
+
 
 function renderBacklog(){
   const el=document.getElementById('sec-backlog');
@@ -3281,6 +3781,7 @@ function renderBacklog(){
         qty:    a.qtdPlanejada||'',
         serie:  a.nrSerie     ||'',
         impl:   a.implemento  ||'',
+        implNome: a.implementoNome ||'',
         client: a.cliente     ||'',
         ts:     tsConv,
         _abertoId: a.abertoId ||'',
@@ -3306,7 +3807,7 @@ function renderBacklog(){
       <thead><tr>
         <th>Funcionário</th><th>Operação</th><th>Cód. Item</th>
         <th>Série</th><th>Qtd Plan.</th><th>Abertura</th>
-        <th style="text-align:center">Fechar</th>
+        <th style="text-align:center">Ações</th>
       </tr></thead>
       <tbody>${_computedBacklog.map((r,idx)=>{
         const nome=r.func.split(/\s*[-—]\s*/).slice(1).join(' ')||r.func;
@@ -3319,8 +3820,10 @@ function renderBacklog(){
           <td style="font-size:12px">${serie}</td>
           <td style="color:var(--accent);font-weight:700">${r.qty||'—'}</td>
           <td style="font-size:11px;color:var(--text2)">${tsFormatted}</td>
-          <td style="text-align:center">
+          <td style="text-align:center;white-space:nowrap">
             <button class="fechar-btn" onclick="abrirModalFechar(${idx})">Fechar →</button>
+            <button class="excluir-btn" onclick="excluirApontamento(${idx})">Excluir</button>
+            <button class="editar-btn" onclick="abrirModalEdicao('backlog',${idx})">Editar</button>
           </td>
         </tr>`;
       }).join('')}</tbody>
@@ -3790,6 +4293,196 @@ async function confirmarFechamento(){
 document.addEventListener('keydown',e=>{
   if(e.key==='Escape'){ fecharModal(); fecharModalAbertura(); }
 });
+
+// ── EXCLUIR APONTAMENTO ──────────────────────────────────────────────────────
+// Remove PERMANENTEMENTE um apontamento — usa o abertoId (elo de pareamento, col P
+// da planilha) para apagar de uma vez ABERTURA + FECHAMENTO (ou todas as séries de
+// um lote), tanto do histórico (Respostas) quanto da aba Abertos. Protegido por
+// confirmação + senha (mesma senha de configuração do dashboard).
+async function excluirApontamento(idx){
+  if(idx>=_computedBacklog.length) return;
+  const r=_computedBacklog[idx];
+  const abertoId=r._abertoId||'';
+  if(!abertoId){
+    alert('Este registro não tem um ID de rastreamento (abertoId) — exclusão automática não está disponível para ele. Peça para remover manualmente na planilha.');
+    return;
+  }
+  const nome=funcName(r.func);
+  const serie=r.serie||r.impl||'—';
+  const confirmou=confirm(
+    'Excluir PERMANENTEMENTE este apontamento?\n\n'+
+    `Funcionário: ${nome}\nOperação: ${r.op||'—'}\nCód. Item: ${r.item||'—'}\nSérie: ${serie}\n\n`+
+    'Isso remove TODOS os registros ligados a essa abertura (abertura + fechamento, ou todas as séries do lote) da planilha. Não tem como desfazer.'
+  );
+  if(!confirmou) return;
+
+  const pwd=prompt('🔒 Senha de configuração (confirme para excluir):');
+  if(pwd!=='Agricef123'){
+    if(pwd!==null) alert('Senha incorreta — exclusão cancelada.');
+    return;
+  }
+
+  // Feedback visual: sem isso, o admin não vê nada acontecer durante a espera (pode levar
+  // até ~20s em horários de pico, já que o backend usa um lock compartilhado por todas as
+  // operações de escrita). Desabilita o botão clicado e escalona a mensagem após 5s.
+  const btn=event && event.target;
+  const textoOriginal=btn?btn.textContent:'';
+  if(btn){ btn.disabled=true; btn.textContent='Excluindo…'; }
+  const avisoDemora=setTimeout(()=>{ if(btn) btn.textContent='Ainda excluindo… (até 20s)'; }, 5000);
+
+  try{
+    const url=APONTAMENTO_URL+'?action=removerRegistroPorId&key=AGF2026&id='+encodeURIComponent(abertoId)+'&_='+Date.now();
+    const resp=await fetch(url);
+    const json=await resp.json();
+    if(!json.success) throw new Error(json.message||'Erro desconhecido');
+
+    // Remove da aba Abertos em memória (otimista) e recarrega o histórico completo
+    // para refletir a exclusão em todos os painéis (Feed, KPIs, Previsto x Realizado, etc.)
+    if(_abertosData){
+      _abertosData=_abertosData.filter(a=>a.abertoId!==abertoId);
+    }
+    alert(`✔ Excluído: ${json.removidosRespostas||0} linha(s) do histórico, ${json.removidosAbertos||0} da aba Abertos.`);
+    syncPanels();
+    fetchData();
+  }catch(err){
+    alert('Erro ao excluir: '+err.message);
+  }finally{
+    clearTimeout(avisoDemora);
+    if(btn){ btn.disabled=false; btn.textContent=textoOriginal||'Excluir'; }
+  }
+}
+
+
+// ── EDITAR APONTAMENTO ───────────────────────────────────────────────────────
+// Edita qualquer campo de um apontamento (aberto ou já fechado). Usa abertoId +
+// tipo + série pra identificar a linha exata no backend (editarApontamento),
+// que sincroniza a aba Abertos (se em aberto) e recalcula Saldo_Parcial (se for
+// um FECHAMENTO). Protegido por confirmação + senha, igual ao Excluir.
+const TIPO_RAW_MAP = {
+  'ABERTURA':'ABERTURA','FECHAMENTO':'FECHAMENTO',
+  'INÍCIO DE RETRABALHO':'INICIO_RETRABALHO','TÉRMINO DE RETRABALHO':'TERMINO_RETRABALHO',
+  'INÍCIO DE PARADA':'INICIO_PARADA','TÉRMINO DE PARADA':'TERMINO_PARADA',
+};
+let _edmContext = null;
+
+function abrirModalEdicao(origem, idx){
+  const r = origem==='backlog' ? _computedBacklog[idx] : _timelineItems[idx];
+  if(!r) return;
+  if(!r._abertoId){
+    alert('Este registro não tem um ID de rastreamento (abertoId) — edição direta não está disponível para ele.');
+    return;
+  }
+
+  // Backlog (aba Abertos) sempre representa o lado ABERTURA/INÍCIO_* em aberto.
+  // Timeline traz o tipo formatado direto da planilha — mapeia pra chave bruta do backend.
+  const tipoFormatado = origem==='backlog' ? (r.tipo||'ABERTURA') : r.tipo;
+  const tipoAlvo = TIPO_RAW_MAP[tipoFormatado] || 'ABERTURA';
+
+  _edmContext = { abertoId: r._abertoId, tipoAlvo, nrSerieAlvo: (r.serie||'').trim(), origem, idx };
+
+  document.getElementById('edmTipo').value = tipoAlvo;
+  document.getElementById('edmOperador').value = funcCodeNorm(r.func) || '';
+  document.getElementById('edmOperadorNome').value = r.func || '';
+  document.getElementById('edmOperacao').value = (r.op||'').substring(0,4);
+  document.getElementById('edmCodItem').value = r.item || '';
+  document.getElementById('edmNrSerie').value = r.serie || '';
+  document.getElementById('edmImplemento').value = (r.implNome!==undefined?r.implNome:r.impl) || '';
+  document.getElementById('edmCliente').value = r.client || '';
+  document.getElementById('edmQtdPlanejada').value = (origem==='backlog' ? r.qty : r.qtyPlan) || '';
+  document.getElementById('edmQuantidade').value = (origem==='backlog' ? '' : r.qty) || '';
+  document.getElementById('edmObs').value = r.obs1 || '';
+
+  const ts = tsToDate(r.ts);
+  const p = n => String(n).padStart(2,'0');
+  document.getElementById('edmData').value = ts.getFullYear()+'-'+p(ts.getMonth()+1)+'-'+p(ts.getDate());
+  document.getElementById('edmHora').value = p(ts.getHours())+':'+p(ts.getMinutes());
+
+  document.getElementById('edmErr').textContent = '';
+  document.getElementById('edmBtnOk').disabled = false;
+  document.getElementById('edmOverlay').classList.add('open');
+}
+
+function fecharModalEdicao(){
+  document.getElementById('edmOverlay').classList.remove('open');
+  _edmContext = null;
+}
+
+async function confirmarEdicao(){
+  if(!_edmContext) return;
+  const errEl = document.getElementById('edmErr');
+  const btnOk = document.getElementById('edmBtnOk');
+
+  const dataVal = document.getElementById('edmData').value;
+  const horaVal = document.getElementById('edmHora').value;
+  let carimbo;
+  if(dataVal && horaVal){
+    const partes = dataVal.split('-');
+    carimbo = partes[2]+'/'+partes[1]+'/'+partes[0]+' '+horaVal+':00';
+  }
+
+  const qtdPlVal = document.getElementById('edmQtdPlanejada').value;
+  const qtdVal = document.getElementById('edmQuantidade').value;
+
+  const novosValores = {
+    carimbo: carimbo,
+    operador: document.getElementById('edmOperador').value.trim(),
+    operadorNome: document.getElementById('edmOperadorNome').value.trim(),
+    tipo: document.getElementById('edmTipo').value,
+    operacao: document.getElementById('edmOperacao').value.trim(),
+    codItem: document.getElementById('edmCodItem').value.trim(),
+    nrSerie: document.getElementById('edmNrSerie').value.trim(),
+    implemento: document.getElementById('edmImplemento').value.trim(),
+    cliente: document.getElementById('edmCliente').value.trim(),
+    qtdPlanejada: qtdPlVal===''?'':Number(qtdPlVal),
+    quantidade: qtdVal===''?'':Number(qtdVal),
+    obs1: document.getElementById('edmObs').value.trim(),
+  };
+
+  const confirmou = confirm('Confirma a edição deste apontamento? A mudança será aplicada na planilha (histórico + Abertos, se em aberto) e não tem desfazer.');
+  if(!confirmou) return;
+
+  const pwd = prompt('🔒 Senha de configuração (confirme para editar):');
+  if(pwd!=='Agricef123'){
+    if(pwd!==null) alert('Senha incorreta — edição cancelada.');
+    return;
+  }
+
+  btnOk.disabled = true;
+  errEl.style.color = '';
+  errEl.textContent = 'Salvando…';
+  const avisoDemoraEdicao = setTimeout(()=>{ errEl.textContent = 'Ainda salvando… (pode levar até 20s)'; }, 5000);
+
+  try{
+    const payload = {
+      action: 'editarApontamento', key: 'AGF2026',
+      abertoId: _edmContext.abertoId,
+      tipoAlvo: _edmContext.tipoAlvo,
+      nrSerieAlvo: _edmContext.nrSerieAlvo,
+      novosValores: novosValores,
+    };
+    const url = APONTAMENTO_URL+'?payload='+encodeURIComponent(JSON.stringify(payload))+'&_='+Date.now();
+    const resp = await fetch(url);
+    const json = await resp.json();
+    if(!json.success) throw new Error(json.message||'Erro desconhecido');
+
+    errEl.style.color = 'var(--accent3)';
+    errEl.textContent = '✔ Apontamento atualizado!';
+    setTimeout(()=>{
+      errEl.style.color = '';
+      fecharModalEdicao();
+      fetchAbertos();
+      fetchData();
+      syncPanels();
+    }, 900);
+  }catch(err){
+    errEl.textContent = 'Erro: '+err.message;
+    btnOk.disabled = false;
+  }finally{
+    clearTimeout(avisoDemoraEdicao);
+  }
+}
+
+
 
 // ── FIM FECHAR APONTAMENTO ────────────────────────────────────────────────────
 
@@ -4431,8 +5124,7 @@ function renderAudit() {
 // ── SETTINGS & DnD ───────────────────────────────────────────────────────────
 function applySettings(){
   const s=loadSettings();
-  Object.entries(s.sections).forEach(([id,v])=>{const el=document.getElementById(id);if(el)el.style.display=v?'':'none';});
-  Object.entries(s.kpis).forEach(([id,v])=>{const el=document.getElementById(id);if(el)el.style.display=v?'':'none';});
+  renderVisibilidade(); // habilitado nas Configurações × pertence à página atual
   const main=document.querySelector('main');
   if(main)(s.sectionOrder||SECTIONS_META.map(x=>x.id)).forEach(id=>{const el=document.getElementById(id);if(el&&el.parentNode===main)main.appendChild(el);});
   const kpiRow=document.getElementById('sec-kpis');
