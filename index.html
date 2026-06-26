@@ -335,6 +335,31 @@ input[type="date"]{color-scheme:dark;}
   </div>
 </div>
 
+<!-- MODAL: Justificar Duração Suspeita -->
+<div class="fcm-overlay" id="justOverlay">
+  <div class="fcm-box">
+    <div class="fcm-title" style="color:#a78bfa">📝 Justificar Inconsistência</div>
+    <div style="font-size:11px;color:var(--text3);margin-bottom:12px;background:rgba(167,139,250,.08);border:1px solid rgba(167,139,250,.2);border-radius:6px;padding:8px 12px;">
+      Explique o motivo da duração fora do padrão. O item sai da contagem de inconsistências ativas e fica registrado na seção "Justificadas", com seu texto, para rastreabilidade.
+    </div>
+    <div class="fcm-info" id="justInfo"></div>
+    <div class="fcm-row">
+      <label>Justificativa</label>
+      <textarea id="justTexto" maxlength="300" rows="3" placeholder="Ex: operador esqueceu de fechar no fim do turno, retomou e fechou normalmente no dia seguinte"
+        style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:6px;font-size:13px;font-family:'Barlow',sans-serif;outline:none;resize:vertical;"></textarea>
+    </div>
+    <div class="fcm-row">
+      <label>Senha de configuração</label>
+      <input type="password" id="justSenha" style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:6px;font-size:14px;font-family:'Barlow',sans-serif;outline:none;">
+    </div>
+    <div class="fcm-err" id="justErr"></div>
+    <div class="fcm-btns">
+      <button class="btn-fcm-ok" id="justBtnOk" style="background:#a78bfa;color:#000;" onclick="confirmarJustificativa()">📝 SALVAR JUSTIFICATIVA</button>
+      <button class="btn-fcm-cancel" onclick="fecharModalJustificativa()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
 <div class="loading-overlay" id="loadingOverlay">
   <div class="loading-spinner"></div>
   <div class="loading-text">CARREGANDO DADOS</div>
@@ -1186,6 +1211,7 @@ let RAW_DATA=[],ABSENCES=[],PLANT_OPEN_DAYS=[],ALL_WORKDAYS=[],filtered=[];
 let _refreshTimer=null,_lastUpdate=null;
 let _fcmIdx=null;
 let _abertosData=null; // cache da aba Abertos (fonte de verdade para backlog)
+let _justificativasMap=new Map(); // chave (func||openTs||closeTs) -> {tipo,justificativa,detalhe,dataHora} — duração suspeita já justificada pelo líder
 const ESTIMADOS_DATA = [{"codigo": "509903", "desc": "ESTRUTURA CARROCERIA - CHASSI", "qty": 1.0, "horas_totais": 40.0, "horas_por_unid": 40.0}, {"codigo": "509904", "desc": "ESTRUTURA CARROCERIA - FECHAMENTO", "qty": 1.0, "horas_totais": 48.0, "horas_por_unid": 48.0}, {"codigo": "509905", "desc": "ESTRUTURA CARROCERIA - INTERNO", "qty": 1.0, "horas_totais": 48.0, "horas_por_unid": 48.0}, {"codigo": "509906", "desc": "ESTRUTURA CARROCERIA - PERIFÉRICOS", "qty": 1.0, "horas_totais": 80.0, "horas_por_unid": 80.0}, {"codigo": "509281", "desc": "SUPORTE ARTICULACAO DESCIDA", "qty": 4.0, "horas_totais": 4.0, "horas_por_unid": 1.0}, {"codigo": "509470", "desc": "PINO FIX MECANISMO FREIO", "qty": 12.0, "horas_totais": 1.0, "horas_por_unid": 0.083333}, {"codigo": "509686", "desc": "GANCHO DE FXACAO DO MEC. DESCAR", "qty": 4.0, "horas_totais": 1.0, "horas_por_unid": 0.25}, {"codigo": "509922", "desc": "ESTRUTURA CARROCERIA ABRAÇADEIRA", "qty": 1.0, "horas_totais": 88.0, "horas_por_unid": 88.0}, {"codigo": "509576", "desc": "ARTICULACAO RAMPA LATERAL", "qty": 2.0, "horas_totais": 1.0, "horas_por_unid": 0.5}, {"codigo": "509646", "desc": "GANCHO CORRENTE RAMPA LATERAL", "qty": 2.0, "horas_totais": 0.5, "horas_por_unid": 0.25}, {"codigo": "509569", "desc": "FECHAMENTO TRASEIRO - TELA 01", "qty": 2.0, "horas_totais": 0.5, "horas_por_unid": 0.25}, {"codigo": "509774", "desc": "SOLDAGEM DO PARACHOQUE 10T", "qty": 1.0, "horas_totais": 3.0, "horas_por_unid": 3.0}, {"codigo": "509778", "desc": "TUBO HASTE DO PARACHOQUE", "qty": 4.0, "horas_totais": 1.5, "horas_por_unid": 0.375}, {"codigo": "509202", "desc": "EIXO SUPERIOR COMPLETO ESTEIRA \nVERTICAL", "qty": 2.0, "horas_totais": 1.0, "horas_por_unid": 0.5}, {"codigo": "509204", "desc": "EIXO INFERIOR COMPLETO ESTEIRA VERTICAL - MOD3", "qty": 2.0, "horas_totais": 1.0, "horas_por_unid": 0.5}, {"codigo": "509205", "desc": "CONJUNTO EIXO SAIDA REDUTOR VERTICAL", "qty": 2.0, "horas_totais": 0.5, "horas_por_unid": 0.25}, {"codigo": "509244", "desc": "SUPORTE REDUTOR SUPERIOR", "qty": 2.0, "horas_totais": 0.5, "horas_por_unid": 0.25}, {"codigo": "509246", "desc": "SUPORTE REDUT. SUPT. - PERFIL 01", "qty": 2.0, "horas_totais": 0.17, "horas_por_unid": 0.085}, {"codigo": "509126", "desc": "TALISCA VERTICAL", "qty": 16.0, "horas_totais": 24.0, "horas_por_unid": 1.5}, {"codigo": "509122", "desc": "SUPORTE ROLAMENTO TALISCA VERTICAL", "qty": 32.0, "horas_totais": 3.0, "horas_por_unid": 0.09375}, {"codigo": "509248", "desc": "BATENTE CORRENTE VERTICAL", "qty": 4.0, "horas_totais": 0.5, "horas_por_unid": 0.125}, {"codigo": "508910", "desc": "ESTRUTURA ESTICADOR ESTEIRA \nHORIZONTAL - LD", "qty": 1.0, "horas_totais": 14.0, "horas_por_unid": 14.0}, {"codigo": "508932", "desc": "ESTRUTURA ESTICADOR ESTEIRA \nHORIZONTAL - LE", "qty": 1.0, "horas_totais": 14.0, "horas_por_unid": 14.0}, {"codigo": "507312", "desc": "BARRA DE AJUSTE DO ESTICADOR (PRÉ- MONTAGEM)", "qty": 4.0, "horas_totais": 0.5, "horas_por_unid": 0.125}, {"codigo": "509357", "desc": "CHASSI ABRACADEIRA", "qty": 1.0, "horas_totais": 20.0, "horas_por_unid": 20.0}, {"codigo": "509406", "desc": "CHASSI ABRACADEIRA OPOSTO", "qty": 1.0, "horas_totais": 20.0, "horas_por_unid": 20.0}, {"codigo": "509418", "desc": "CONJ. BRACO ARTICULACAO MEC. \nABRACADEIRA 01", "qty": 2.0, "horas_totais": 4.0, "horas_por_unid": 2.0}, {"codigo": "509419", "desc": "CONJ. BRACO ARTICULACAO MEC. \nABRACADEIRA 02", "qty": 6.0, "horas_totais": 9.0, "horas_por_unid": 1.5}, {"codigo": "508224", "desc": "CONJUNTO PINO BRACO FERRAMENTA", "qty": 16.0, "horas_totais": 2.5, "horas_por_unid": 0.15625}, {"codigo": "509395", "desc": "CONJ. EIXO MECANISMO DISTRIBUICAO ABRACADEIRA 01", "qty": 2.0, "horas_totais": 0.17, "horas_por_unid": 0.085}, {"codigo": "509396", "desc": "CONJ. EIXO MECANISMO DISTRIBUICAO ABRACADEIRA 02", "qty": 2.0, "horas_totais": 0.17, "horas_por_unid": 0.085}, {"codigo": "510216", "desc": "ESTICADOR CORRENTE ABRACADEIRA", "qty": 8.0, "horas_totais": 0.75, "horas_por_unid": 0.09375}, {"codigo": "510222", "desc": "ESTICADOR LD ENCOSTO EIXO", "qty": 2.0, "horas_totais": 0.17, "horas_por_unid": 0.085}, {"codigo": "510226", "desc": "ESTICADOR LD ENCOSTO EIXO OPOSTO", "qty": 2.0, "horas_totais": 0.17, "horas_por_unid": 0.085}, {"codigo": "510219", "desc": "ESTICADOR LD PORCA", "qty": 2.0, "horas_totais": 0.17, "horas_por_unid": 0.085}, {"codigo": "510225", "desc": "ESTICADOR LD PORCA", "qty": 2.0, "horas_totais": 0.17, "horas_por_unid": 0.085}, {"codigo": "510170", "desc": "SUPORTE SENSOR MOV. ABRAÇADEIRA", "qty": 2.0, "horas_totais": 0.5, "horas_por_unid": 0.25}, {"codigo": "509590", "desc": "CONJ. RAMPA ABRACADEIRA LATERAL 01", "qty": 1.0, "horas_totais": 1.5, "horas_por_unid": 1.5}, {"codigo": "509591", "desc": "CONJ. RAMPA ABRACADEIRA LATERAL 02", "qty": 1.0, "horas_totais": 1.5, "horas_por_unid": 1.5}, {"codigo": "509766", "desc": "CONJ. PINO C/ BATENTE ARTIC. RAMPA", "qty": 2.0, "horas_totais": 0.17, "horas_por_unid": 0.085}, {"codigo": "509589", "desc": "CONJ. RAMPA ABRACADEIRA CENTRAL", "qty": 1.0, "horas_totais": 2.0, "horas_por_unid": 2.0}, {"codigo": "509584", "desc": "ARTICULACAO RAMPA CENTRAL", "qty": 1.0, "horas_totais": 0.17, "horas_por_unid": 0.17}, {"codigo": "509580", "desc": "ALAVANCA RAMPA CENTRAL", "qty": 1.0, "horas_totais": 0.17, "horas_por_unid": 0.17}, {"codigo": "511224", "desc": "CONJ. PORTINHOLA ABRACADEIRAS 8", "qty": 1.0, "horas_totais": 7.0, "horas_por_unid": 7.0}, {"codigo": "511101", "desc": "CONJ. PORTINHOLA ABRACADEIRAS 5", "qty": 1.0, "horas_totais": 7.0, "horas_por_unid": 7.0}, {"codigo": "509080", "desc": "LIMITADOR CENTRAL", "qty": 2.0, "horas_totais": 20.0, "horas_por_unid": 10.0}, {"codigo": "509074", "desc": "LIMITADOR LATERAL", "qty": 4.0, "horas_totais": 6.5, "horas_por_unid": 1.625}, {"codigo": "509664", "desc": "FIXACAO DO LIMITADOR LATERAL", "qty": 4.0, "horas_totais": 1.0, "horas_por_unid": 0.25}, {"codigo": "509071", "desc": "TRAVE LATERAL", "qty": 3.0, "horas_totais": 3.0, "horas_por_unid": 1.0}, {"codigo": "510010", "desc": "ESTRUTURA CONVITE CARREGAMENTO", "qty": 2.0, "horas_totais": 1.0, "horas_por_unid": 0.5}, {"codigo": "510011", "desc": "ESTRUTURA CONVITE CARREGAMENTO \nOPOSTO", "qty": 2.0, "horas_totais": 1.0, "horas_por_unid": 0.5}, {"codigo": "509823", "desc": "CONJUNTO MECANISMO ABASTECIMENTO - MOD 3", "qty": 4.0, "horas_totais": 16.0, "horas_por_unid": 4.0}, {"codigo": "507525", "desc": "BARRA 1 MECANISMO AUXILIAR DE \nDESCARREGAMENTO", "qty": 4.0, "horas_totais": 1.5, "horas_por_unid": 0.375}, {"codigo": "505933", "desc": "CARENAGEM ENCODER EST. HORIZ.", "qty": 1.0, "horas_totais": 0.25, "horas_por_unid": 0.25}, {"codigo": "509902", "desc": "PROTEÇÃO DO ENCODER EST. VERT.", "qty": 1.0, "horas_totais": 0.25, "horas_por_unid": 0.25}, {"codigo": "508957", "desc": "CONJ. CARENAGEM REDUTOR ESTEIRA \nHORIZONTAL", "qty": 1.0, "horas_totais": 0.25, "horas_por_unid": 0.25}, {"codigo": "509926", "desc": "MECANISMO DESCARREGAMENTO A", "qty": 2.0, "horas_totais": 20.0, "horas_por_unid": 10.0}, {"codigo": "509927", "desc": "MECANISMO DESCARREGAMENTO B", "qty": 2.0, "horas_totais": 20.0, "horas_por_unid": 10.0}, {"codigo": "509936", "desc": "ARTICULAÇÃO T - REDUZIDA", "qty": 4.0, "horas_totais": 0.75, "horas_por_unid": 0.1875}, {"codigo": "510918", "desc": "PINO TRAVA MECANISMO DESCARREGAMENTO", "qty": 4.0, "horas_totais": 2.0, "horas_por_unid": 0.5}, {"codigo": "510413", "desc": "PINO TRAVA PERIFERICOS", "qty": 12.0, "horas_totais": 1.5, "horas_por_unid": 0.125}, {"codigo": "509456", "desc": "BARRA CAIXA PERIFERICOS", "qty": 6.0, "horas_totais": 0.5, "horas_por_unid": 0.083333}, {"codigo": "509425", "desc": "CONJ. CAIXA PERIFERICOS 02 MEDIA + PORTA", "qty": 1.0, "horas_totais": 23.0, "horas_por_unid": 23.0}, {"codigo": "510314", "desc": "FLANGE DE FIXACAO INTERCAMBIAVEL CX \nPERIFERICOS", "qty": 2.0, "horas_totais": 0.17, "horas_por_unid": 0.085}, {"codigo": "510017", "desc": "CONJ. CAIXA PERIFERICOS 3 + PORTAS", "qty": 1.0, "horas_totais": 24.0, "horas_por_unid": 24.0}, {"codigo": "509594", "desc": "CONJ. FIX PROTECAO LATERAL A", "qty": 2.0, "horas_totais": 0.17, "horas_por_unid": 0.085}, {"codigo": "ELET - 157 - 005", "desc": "PRÉ-MONTAGEM ELÉTRICA - PERIFÉRICOS", "qty": 27.0, "horas_totais": 12.0, "horas_por_unid": 0.444444}, {"codigo": "CALAFETAGEM 1", "desc": "CALAFETAGEM ESTRUTURA CARROCERIA", "qty": 1.0, "horas_totais": 8.0, "horas_por_unid": 8.0}, {"codigo": "CALAFETAGEM 2", "desc": "CALAFETAGEM ESTEIRAS VERTICAIS", "qty": 16.0, "horas_totais": 7.0, "horas_por_unid": 0.4375}, {"codigo": "CALAFETAGEM 3", "desc": "CALAFETAGEM ESTERIRAS HORIZONTAIS", "qty": 2.0, "horas_totais": 1.0, "horas_por_unid": 0.5}, {"codigo": "CALAFETAGEM 4", "desc": "CALAFETAGEM PERIFÉRICOS", "qty": 12.0, "horas_totais": 1.5, "horas_por_unid": 0.125}, {"codigo": "BORRACHA 1", "desc": "CORTE DE BORRACHAS ESTEIRA VERTICAL", "qty": 16.0, "horas_totais": 4.0, "horas_por_unid": 0.25}, {"codigo": "BORRACHA 2", "desc": "CORTE DE BORRACHAS ESTEIRA HORIZONTAL", "qty": 32.0, "horas_totais": 4.0, "horas_por_unid": 0.125}, {"codigo": "BORRACHA 3", "desc": "CORTE BORRACHÃO", "qty": 3.0, "horas_totais": 0.75, "horas_por_unid": 0.25}, {"codigo": "BORRACHA 4", "desc": "CORTE BOPRRACHA PARA-BARRO", "qty": 2.0, "horas_totais": 0.5, "horas_por_unid": 0.25}, {"codigo": "ENCAPSULAR", "desc": "ENCAPSULAMENTO LIMITADORES", "qty": 6.0, "horas_totais": 2.0, "horas_por_unid": 0.333333}, {"codigo": "401017", "desc": "PRÉ-MONTAGEM CONJ. ESTEIRA VERTICAL", "qty": 16.0, "horas_totais": 7.5, "horas_por_unid": 0.46875}, {"codigo": "400992", "desc": "PRÉ-MONTAGEM ESTEIRA HORIZONTAL LD", "qty": 1.0, "horas_totais": 8.0, "horas_por_unid": 8.0}, {"codigo": "400993", "desc": "PRÉ-MONTAGEM ESTEIRA HORIZONTAL LE", "qty": 1.0, "horas_totais": 8.0, "horas_por_unid": 8.0}, {"codigo": "401030", "desc": "PRÉ-MONTAGEM MECANISMO ABRAÇADEIRA", "qty": 1.0, "horas_totais": 6.0, "horas_por_unid": 6.0}, {"codigo": "401033", "desc": "PRÉ-MONTAGEM MECANISMO ABRAÇADEIRA OPOSTO", "qty": 1.0, "horas_totais": 6.0, "horas_por_unid": 6.0}, {"codigo": "401043", "desc": "PRÉ-MONTAGEM RAMPA CENTRAL", "qty": 1.0, "horas_totais": 0.5, "horas_por_unid": 0.5}, {"codigo": "401044", "desc": "PRÉ-MONTAGEM CONJ. RAMPA ABRAÇADEIRA LATERAL 01", "qty": 1.0, "horas_totais": 0.5, "horas_por_unid": 0.5}, {"codigo": "401045", "desc": "PRÉ-MONTAGEM CONJ. RAMPA ABRAÇADEIRA LATERAL 02", "qty": 1.0, "horas_totais": 0.5, "horas_por_unid": 0.5}, {"codigo": "PORTINHOLAS", "desc": "PRÉ-MONTAGEM CONJ. PORTINHOLAS", "qty": 2.0, "horas_totais": 1.0, "horas_por_unid": 0.5}, {"codigo": "PERIFÉRICOS", "desc": "PRÉ-MONTAGEM CONJ. PERIFÉRICOS", "qty": 12.0, "horas_totais": 1.5, "horas_por_unid": 0.125}, {"codigo": "PROTEÇÃO", "desc": "PROTEÇÃO DE BORRACHA + STRETCH", "qty": 2.0, "horas_totais": 0.5, "horas_por_unid": 0.25}, {"codigo": "INFRA ELÉTRICA", "desc": "INSTALAÇÃO CALHAS ELÉTRICAS", "qty": 6.0, "horas_totais": 2.0, "horas_por_unid": 0.333333}, {"codigo": "ELET - 157 - 000", "desc": "INSTALAÇÃO ELÉTRICA", "qty": 1.0, "horas_totais": 21.0, "horas_por_unid": 21.0}, {"codigo": "HIDRÁULICA", "desc": "INSTALAÇÃO HIDRÁULICA", "qty": 1.0, "horas_totais": 21.0, "horas_por_unid": 21.0}, {"codigo": "401021", "desc": "INSTALAÇÃO CONJ. ESTEIRA VERTICAL", "qty": 16.0, "horas_totais": 12.0, "horas_por_unid": 0.75}, {"codigo": "400991", "desc": "INSTALAÇÃO CONJ. ESTEIRA HORIZONTAL", "qty": 2.0, "horas_totais": 2.0, "horas_por_unid": 1.0}, {"codigo": "INSTAL. ABRAÇ.", "desc": "INSTALAÇÃO CONJ. MECANISMO ABRAÇADEIRA", "qty": 2.0, "horas_totais": 2.0, "horas_por_unid": 1.0}, {"codigo": "INSTAL. RAMPA", "desc": "INSTALAÇÃO CONJ. RAMPA ABRAÇADEIRA", "qty": 3.0, "horas_totais": 1.0, "horas_por_unid": 0.333333}, {"codigo": "INSTAL. PORT.", "desc": "INSTALAÇÃO PORTINHOLAS", "qty": 2.0, "horas_totais": 5.0, "horas_por_unid": 2.5}, {"codigo": "INSTAL. PERIF.", "desc": "INSTALAÇÃO CONJ. PERIFÉRICOS", "qty": 26.0, "horas_totais": 8.0, "horas_por_unid": 0.307692}, {"codigo": "FECHAMENTO", "desc": "INSTALAÇÃO CHAPAS DE FECHAMENTO", "qty": 7.0, "horas_totais": 2.0, "horas_por_unid": 0.285714}, {"codigo": "CAB AUX.", "desc": "INSTALAÇÃO CABINE AUXILIAR", "qty": 1.0, "horas_totais": 4.0, "horas_por_unid": 4.0}, {"codigo": "LIMPEZA", "desc": "LIMPEZA E PINTURA FINAL", "qty": 1.0, "horas_totais": 5.0, "horas_por_unid": 5.0}, {"codigo": "ADESIVOS", "desc": "APLICAÇÃO ADESIVOS", "qty": 84.0, "horas_totais": 5.0, "horas_por_unid": 0.059524}, {"codigo": "TESTE", "desc": "TESTE | CHECK LIST DE MONTAGEM", "qty": 1.0, "horas_totais": 16.0, "horas_por_unid": 16.0}];
 
 const SECTIONS_META=[{"id":"sec-flow","icon":"📈","name":"Panorama de Produção Anual","desc":"Throughput mensal, entradas e CFD — visão de fluxo completa","default":false},{"id":"sec-prazo","icon":"🎯","name":"Dentro/Fora do Prazo","desc":"Operações dentro e fora do prazo estimado por tipo","default":false},{"id":"sec-projects","icon":"🔩","name":"Tabela de Projetos por Série","desc":"Status, datas, horas e operações agrupadas por Nº de Série","default":false},{"id": "sec-func", "icon": "👷", "name": "Eficiência por Funcionário", "desc": "Horas produtivas, paradas, retrabalho e eficiência %", "default": true}, {"id": "sec-ops-op", "icon": "⚙️", "name": "Tempo por Operação", "desc": "Tempo total por tipo de operação", "default": true}, {"id": "sec-ops-item", "icon": "🏷️", "name": "Top Códigos de Item", "desc": "Itens com maior tempo de operação", "default": true}, {"id": "sec-serie", "icon": "🔩", "name": "Produção por Nº de Série", "desc": "Horas por série com detalhamento por operação e item", "default": true}, {"id": "sec-paradas", "icon": "⛔", "name": "Paradas & Retrabalhos", "desc": "Tempo perdido por tipo de parada e retrabalho", "default": true}, {"id": "sec-rank", "icon": "🏆", "name": "Ranking de Produtividade", "desc": "Ranking de horas produtivas por funcionário", "default": true}, {"id": "sec-timeline", "icon": "📋", "name": "Últimos Apontamentos", "desc": "Feed dos apontamentos mais recentes", "default": true}, {"id": "sec-pv", "icon": "📊", "name": "Previsto × Realizado", "desc": "Comparação entre tempo estimado e real por código de item", "default": true}, {"id": "sec-att", "icon": "📅", "name": "Assiduidade & Ausências", "desc": "Calendário heatmap por funcionário", "default": true}, {"id": "sec-oee", "icon": "🏭", "name": "OEE & Tempo de Ciclo", "desc": "Ciclo completo por série", "default": false}, {"id": "sec-trend", "icon": "📈", "name": "Tendência Semanal", "desc": "Evolução da eficiência semana a semana", "default": false}, {"id": "sec-heatmap", "icon": "🕐", "name": "Heatmap por Hora do Dia", "desc": "Intensidade de apontamentos por hora", "default": false}, {"id": "sec-backlog", "icon": "⏳", "name": "Backlog — Ordens em Aberto", "desc": "ABERTURAs sem FECHAMENTO correspondente", "default": false}, {"id": "sec-weekday", "icon": "📅", "name": "Produtividade por Dia da Semana", "desc": "Média de horas produtivas por dia", "default": false}, {"id": "sec-audit", "icon": "🔍", "name": "Auditoria & Validação", "desc": "Valide pares, analise por funcionário e detecte inconsistências", "default": false}, {"id": "sec-perf", "icon": "🏅", "name": "Análise de Desempenho Individual", "desc": "EE, velocidade vs peers, consistência e retrabalho por operador", "default": false}];
@@ -1298,6 +1324,7 @@ async function fetchData(){
     showLoadingState(false);
     console.log('✓',records.length,'apontamentos carregados');
     fetchAbertos(); // atualiza aba Abertos em paralelo (não bloqueia o render)
+    fetchJustificativasAuditoria(); // idem, justificativas de duração suspeita
   }catch(err){showLoadingState(false,err.message);console.error('Erro fetchData:',err);}
 }
 
@@ -1314,6 +1341,20 @@ async function fetchAbertos(){
       if(secBacklog && secBacklog.style.display!=='none') renderBacklog();
     }
   }catch(e){console.warn('fetchAbertos:',e.message);}
+}
+
+async function fetchJustificativasAuditoria(){
+  try{
+    const resp=await fetch(APONTAMENTO_URL+'?action=getJustificativasAuditoria&_='+Date.now());
+    if(!resp.ok) return;
+    const json=await resp.json();
+    if(json.success && Array.isArray(json.justificativas)){
+      _justificativasMap=new Map(json.justificativas.map(j=>[j.chave,j]));
+      console.log('✓ Justificativas de auditoria:',_justificativasMap.size);
+      const secAudit=document.getElementById('sec-audit');
+      if(secAudit && secAudit.style.display!=='none') renderAudit();
+    }
+  }catch(e){console.warn('fetchJustificativasAuditoria:',e.message);}
 }
 
 function startAutoRefresh(){if(_refreshTimer)clearInterval(_refreshTimer);_refreshTimer=setInterval(fetchData,REFRESH_INTERVAL_MS);}
@@ -3867,6 +3908,78 @@ async function confirmarAberturaRetroativa(){
 }
 // ── FIM REGISTRAR ABERTURA RETROATIVA ────────────────────────────────────────
 
+// ── JUSTIFICAR DURAÇÃO SUSPEITA ──────────────────────────────────────────────
+let _justRecord = null; // item de duração suspeita sendo justificado
+
+function abrirModalJustificativa(i){
+  _justRecord = i;
+  document.getElementById('justInfo').innerHTML = `
+    <div class="fcm-fld"><div class="fcm-fld-lbl">Inconsistência</div><div class="fcm-fld-val">${i.desc}</div></div>
+    <div class="fcm-fld"><div class="fcm-fld-lbl">Detalhe</div><div class="fcm-fld-val" style="font-size:11px">${i.detail}</div></div>`;
+  document.getElementById('justTexto').value = '';
+  document.getElementById('justSenha').value = '';
+  document.getElementById('justErr').textContent = '';
+  document.getElementById('justErr').style.color = '';
+  document.getElementById('justBtnOk').disabled = false;
+  document.getElementById('justOverlay').classList.add('open');
+  setTimeout(()=>document.getElementById('justTexto').focus(), 120);
+}
+
+function fecharModalJustificativa(){
+  document.getElementById('justOverlay').classList.remove('open');
+  _justRecord = null;
+}
+
+async function confirmarJustificativa(){
+  if(!_justRecord) return;
+  const i = _justRecord;
+  const texto = document.getElementById('justTexto').value.trim();
+  const senha = document.getElementById('justSenha').value;
+  const errEl = document.getElementById('justErr');
+  const btnOk = document.getElementById('justBtnOk');
+
+  if(senha !== 'Agricef123'){ errEl.textContent = 'Senha incorreta.'; return; }
+  if(!texto){ errEl.textContent = 'Informe a justificativa.'; return; }
+
+  const payload = {
+    action: 'salvarJustificativaAuditoria',
+    key: 'AGF2026',
+    chave: i.chave,
+    tipo: i.tipo,
+    justificativa: texto,
+    detalhe: i.desc + ' | ' + i.detail,
+  };
+
+  btnOk.disabled = true;
+  errEl.style.color = '';
+  errEl.textContent = 'Salvando…';
+
+  try{
+    const url = APONTAMENTO_URL + '?payload=' + encodeURIComponent(JSON.stringify(payload)) + '&_=' + Date.now();
+    const resp = await fetch(url);
+    const json = await resp.json();
+    if(!json.success) throw new Error(json.message || 'Erro desconhecido');
+
+    // Atualização otimista: injeta no map local para o re-render imediato refletir,
+    // sem precisar esperar o próximo fetchJustificativasAuditoria (a cada 2min).
+    _justificativasMap.set(i.chave, {
+      chave: i.chave, tipo: i.tipo, justificativa: texto,
+      detalhe: payload.detalhe, dataHora: new Date().toLocaleString('pt-BR'),
+    });
+
+    errEl.style.color = 'var(--accent3)';
+    errEl.textContent = '✔ Justificativa salva!';
+    setTimeout(()=>{
+      fecharModalJustificativa();
+      renderAudit3();
+    }, 700);
+  } catch(err){
+    errEl.textContent = 'Erro: ' + err.message;
+    btnOk.disabled = false;
+  }
+}
+// ── FIM JUSTIFICAR DURAÇÃO SUSPEITA ──────────────────────────────────────────
+
 function renderWeekday(){
   if(!document.getElementById('sec-weekday')||document.getElementById('sec-weekday').style.display==='none') return;
   const pairs=pairRows(filtered,'ABERTURA','FECHAMENTO');
@@ -4123,7 +4236,11 @@ function renderAudit3() {
   // Orphan fechamentos: ainda usa computePairingTruth para detectar fechamentos sem abertura
   const { orphanFechamentos: _orphanFechs } = computePairingTruth();
 
-  // 2. Duração > 10h ou < 1min
+  // 2. Duração > 10h ou < 1min — itens já justificados pelo líder saem da contagem ativa
+  // (issues) e vão para issuesJustificadas, mostrados numa seção recolhível separada.
+  // Chave: func+openTs+closeTs (pairRows não expõe o abertoId, mas essa combinação é única
+  // o suficiente na prática) — calculada da mesma forma ao salvar a justificativa.
+  const issuesJustificadas = [];
   const allPairs = [
     ...pairRows(filtered,'ABERTURA','FECHAMENTO'),
     ...pairRows(filtered,'INÍCIO DE PARADA','TÉRMINO DE PARADA'),
@@ -4131,15 +4248,23 @@ function renderAudit3() {
   ];
   allPairs.forEach(p => {
     const name = funcName(p.func) || p.func;
+    const chave = p.func+'||'+p.openTs+'||'+p.closeTs;
+    const just = _justificativasMap.get(chave);
     if (p.dur > 600) {
-      issues.push({ type: 'duracao', sev: 'media', icon: '🟠',
+      const item = { type: 'duracao', sev: 'media', icon: '🟠',
         desc: `Duração muito longa: ${fmtH(p.dur)}`,
-        detail: `${name} | ${p.op||'parada'} | ${tsToDate(p.openTs).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})} → ${tsToDate(p.closeTs).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})}` });
+        detail: `${name} | ${p.op||'parada'} | ${tsToDate(p.openTs).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})} → ${tsToDate(p.closeTs).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})}`,
+        chave, tipoJustificativa: 'duracao_longa' };
+      if (just) issuesJustificadas.push({ ...item, justificativa: just });
+      else issues.push(item);
     }
     if (p.dur > 0 && p.dur < 1) {
-      issues.push({ type: 'duracao', sev: 'baixa', icon: '🟡',
+      const item = { type: 'duracao', sev: 'baixa', icon: '🟡',
         desc: `Duração muito curta: ${Math.round(p.dur*60)}s`,
-        detail: `${name} | ${p.op||'parada'} | ${tsToDate(p.openTs).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})}` });
+        detail: `${name} | ${p.op||'parada'} | ${tsToDate(p.openTs).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})}`,
+        chave, tipoJustificativa: 'duracao_curta' };
+      if (just) issuesJustificadas.push({ ...item, justificativa: just });
+      else issues.push(item);
     }
   });
 
@@ -4217,11 +4342,17 @@ function renderAudit3() {
       html += `<div style="margin-bottom:14px">
         <div style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;padding-bottom:4px;border-bottom:1px solid var(--border)">${g.label} (${g.items.length})</div>`;
       g.items.forEach((i,idx) => {
-        const btnAbertura = (i.type==='orphan' && i.raw)
+        const btnAcao = (i.type==='orphan' && i.raw)
           ? `<button onclick='abrirModalAbertura(${JSON.stringify(i.raw).replace(/'/g,"&#39;")})'
                style="margin-left:auto;flex-shrink:0;background:rgba(56,189,248,.12);border:1px solid rgba(56,189,248,.35);color:var(--accent2);padding:4px 10px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Barlow Condensed',sans-serif;white-space:nowrap;transition:all .15s"
                onmouseover="this.style.background='rgba(56,189,248,.22)'" onmouseout="this.style.background='rgba(56,189,248,.12)'">
                + Registrar Abertura
+             </button>`
+          : (i.type==='duracao' && i.chave)
+          ? `<button onclick='abrirModalJustificativa(${JSON.stringify({chave:i.chave,tipo:i.tipoJustificativa,desc:i.desc,detail:i.detail}).replace(/'/g,"&#39;")})'
+               style="margin-left:auto;flex-shrink:0;background:rgba(167,139,250,.12);border:1px solid rgba(167,139,250,.35);color:#a78bfa;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Barlow Condensed',sans-serif;white-space:nowrap;transition:all .15s"
+               onmouseover="this.style.background='rgba(167,139,250,.22)'" onmouseout="this.style.background='rgba(167,139,250,.12)'">
+               📝 Justificar
              </button>`
           : '';
         html += `<div style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:6px;border:1px solid var(--border);margin-bottom:5px;background:var(--surface2)">
@@ -4230,11 +4361,33 @@ function renderAudit3() {
             <div style="font-size:12px;font-weight:600">${i.desc}</div>
             <div style="font-size:11px;color:var(--text2);margin-top:2px">${i.detail}</div>
           </div>
-          ${btnAbertura}
+          ${btnAcao}
         </div>`;
       });
       html += '</div>';
     });
+  }
+
+  // Seção "Justificadas" — recolhível, fora da contagem ativa de inconsistências, mas
+  // mantida visível para rastreabilidade (quem justificou, quando, e o texto).
+  if (issuesJustificadas.length) {
+    html += `<div style="margin-top:18px">
+      <div onclick="const b=document.getElementById('auditJustificadasBody');const open=b.style.display!=='none';b.style.display=open?'none':'block';this.querySelector('.just-arrow').textContent=open?'▸':'▾';"
+        style="cursor:pointer;display:flex;align-items:center;gap:6px;font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;padding-bottom:4px;border-bottom:1px solid var(--border)">
+        <span class="just-arrow">▸</span> ✅ Justificadas (${issuesJustificadas.length})
+      </div>
+      <div id="auditJustificadasBody" style="display:none">`;
+    issuesJustificadas.forEach(i => {
+      html += `<div style="display:flex;align-items:flex-start;gap:10px;padding:8px 10px;border-radius:6px;border:1px solid var(--border);margin-bottom:5px;background:var(--surface2);opacity:.7">
+        <span style="font-size:14px;flex-shrink:0">${i.icon}</span>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:12px;font-weight:600">${i.desc}</div>
+          <div style="font-size:11px;color:var(--text2);margin-top:2px">${i.detail}</div>
+          <div style="font-size:11px;color:var(--accent3);margin-top:4px">💬 "${i.justificativa.justificativa}" <span style="color:var(--text3)">— ${i.justificativa.dataHora}</span></div>
+        </div>
+      </div>`;
+    });
+    html += '</div></div>';
   }
 
   cont.innerHTML = html;
