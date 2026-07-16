@@ -4134,31 +4134,43 @@ function computePairingTruth(){
 
 function computeOpenOrders(){
   // Roda em RAW_DATA completo (ignora filtro de período)
-  const opens = [];
-  RAW_DATA.forEach(r => {
-    if(r.tipo === 'ABERTURA') opens.push({...r, _used:false});
-  });
-  RAW_DATA.forEach(r => {
-    if(r.tipo !== 'FECHAMENTO') return;
-    const rTs = tsToDate(r.ts);
-    let best=null, bestScore=-1;
-    for(let i=0;i<opens.length;i++){
-      const o=opens[i];
-      if(o._used) continue;
-      if(!sameFunc(o.func, r.func)) continue;
-      if(tsToDate(o.ts) > rTs) continue;
-      let score=1;
-      if(o.op === r.op)     score+=4;
-      if(o.serie === r.serie) score+=2;
-      if(o.item === r.item)  score+=1;
-      if(score > bestScore || (score === bestScore && best !== null && tsToDate(o.ts) > tsToDate(opens[best].ts))){
-        bestScore=score; best=i;
+  // Cobre os 3 pares abertura/fechamento que existem no sistema — antes só considerava
+  // ABERTURA/FECHAMENTO, deixando retrabalhos e paradas travados invisíveis para o backlog
+  // (um apontamento de INÍCIO DE PARADA nunca fechado não aparecia aqui nem nos alertas).
+  const PARES = [
+    ['ABERTURA','FECHAMENTO'],
+    ['INÍCIO DE RETRABALHO','TÉRMINO DE RETRABALHO'],
+    ['INÍCIO DE PARADA','TÉRMINO DE PARADA'],
+  ];
+  let todosAbertos = [];
+  PARES.forEach(([openType, closeType]) => {
+    const opens = [];
+    RAW_DATA.forEach(r => {
+      if(r.tipo === openType) opens.push({...r, _used:false});
+    });
+    RAW_DATA.forEach(r => {
+      if(r.tipo !== closeType) return;
+      const rTs = tsToDate(r.ts);
+      let best=null, bestScore=-1;
+      for(let i=0;i<opens.length;i++){
+        const o=opens[i];
+        if(o._used) continue;
+        if(!sameFunc(o.func, r.func)) continue;
+        if(tsToDate(o.ts) > rTs) continue;
+        let score=1;
+        if(o.op === r.op)     score+=4;
+        if(o.serie === r.serie) score+=2;
+        if(o.item === r.item)  score+=1;
+        if(score > bestScore || (score === bestScore && best !== null && tsToDate(o.ts) > tsToDate(opens[best].ts))){
+          bestScore=score; best=i;
+        }
       }
-    }
-    if(best!==null) opens[best]._used=true;
+      if(best!==null) opens[best]._used=true;
+    });
+    todosAbertos = todosAbertos.concat(opens.filter(o=>!o._used));
   });
   // Ordena do mais recente para o mais antigo
-  return opens.filter(o=>!o._used).sort((a,b)=>b.ts.localeCompare(a.ts));
+  return todosAbertos.sort((a,b)=>b.ts.localeCompare(a.ts));
 }
 
 function abrirModalFechar(idx){
