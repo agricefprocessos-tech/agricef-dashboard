@@ -1680,7 +1680,15 @@ function computeAbsences(records){
   return {absences,openDays,workdays:wdays};
 }
 
+// Requisições de fetchData() podem se sobrepor: o backend (Apps Script) leva 14-37s sob carga
+// real e o auto-refresh dispara a cada 2min — se uma busca demorar mais que isso, a próxima já
+// terá começado. Sem controle de ordem, a que RESOLVE por último vence, mesmo se foi a que
+// COMEÇOU primeiro (dados mais antigos sobrescrevendo dados mais novos) — mesma classe de bug
+// já corrigida na fila offline do app de apontamento (commit 6575745). _fetchSeq garante que só
+// a busca mais recentemente DISPARADA tem permissão de aplicar seu resultado.
+let _fetchSeq=0;
 async function fetchData(){
+  const meuSeq=++_fetchSeq;
   showLoadingState(true);
   try{
     // Usa o mesmo script de apontamentos (deployment mais recente) para garantir dados frescos.
@@ -1691,6 +1699,13 @@ async function fetchData(){
     if(!Array.isArray(json)) throw new Error('Resposta inválida');
     const records=parseSheetJSON(json);
     if(!records.length) throw new Error('Nenhum registro encontrado');
+    if(meuSeq!==_fetchSeq){
+      // Uma busca mais nova já foi disparada enquanto esta estava em andamento — descarta este
+      // resultado desatualizado em vez de sobrescrever dados mais recentes.
+      console.warn('fetchData: resultado descartado (busca #'+meuSeq+' superada por #'+_fetchSeq+')');
+      showLoadingState(false);
+      return;
+    }
     RAW_DATA=records;
     const {absences,openDays,workdays}=computeAbsences(records);
     ABSENCES=absences;PLANT_OPEN_DAYS=openDays;ALL_WORKDAYS=workdays;
