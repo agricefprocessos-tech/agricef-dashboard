@@ -1866,6 +1866,42 @@ function funcName(funcStr) {
   return s;
 }
 
+// Encontra a melhor ABERTURA (ainda não usada) pra casar com um FECHAMENTO/TÉRMINO. Usada por
+// pairRows(), computeOpenOrders() e computePairingTruth() — as 3 tinham essa lógica duplicada
+// e foi exatamente essa duplicação que causou o painel de Auditoria e o KPI de Backlog
+// mostrarem números diferentes (uma foi corrigida, a outra ficou pra trás sem ninguém notar).
+// Fase 1: abertoId exato — elo direto gravado pelo backend (col P/"Coluna 16"), sem ambiguidade.
+// Fase 2: fuzzy por operador+score — fallback só quando não há abertoId (registros antigos, de
+// antes do backend gravar esse elo) ou nenhuma abertura com esse ID foi encontrada.
+function _encontrarMelhorAberturaIdx(opens, r, rTs){
+  if(r._abertoId){
+    for(let i=0;i<opens.length;i++){
+      const o=opens[i];
+      if(o._used) continue;
+      if(!sameFunc(o.func, r.func)) continue;
+      if(tsToDate(o.ts) > rTs) continue;
+      if(o._abertoId && o._abertoId === r._abertoId) return i;
+    }
+  }
+  let best=null, bestScore=-1;
+  for(let i=0;i<opens.length;i++){
+    const o=opens[i];
+    if(o._used) continue;
+    if(!sameFunc(o.func, r.func)) continue;
+    if(tsToDate(o.ts) > rTs) continue;
+    let score = 1;
+    if(o.op === r.op) score += 4;
+    if(o.serie === r.serie) score += 2;
+    if(o.item === r.item) score += 1;
+    // Empate: prefere a ABERTURA mais recente (mais próxima do FECHAMENTO no tempo)
+    // Isso evita que órfãos antigos "roubem" fechamentos de ordens novas
+    if(score > bestScore || (score === bestScore && best !== null && tsToDate(o.ts) > tsToDate(opens[best].ts))){
+      bestScore=score; best=i;
+    }
+  }
+  return best;
+}
+
 function pairRows(rows, openType, closeType){
   const pairs = [];
   const opens = [];
@@ -1873,23 +1909,8 @@ function pairRows(rows, openType, closeType){
     if(r.tipo === openType){
       opens.push({...r, _used:false});
     } else if(r.tipo === closeType){
-      let best=null, bestScore=-1;
       const rTs = tsToDate(r.ts);
-      for(let i=0;i<opens.length;i++){
-        const o=opens[i];
-        if(o._used) continue;
-        if(!sameFunc(o.func, r.func)) continue;
-        if(tsToDate(o.ts) > rTs) continue;
-        let score = 1;
-        if(o.op === r.op) score += 4;
-        if(o.serie === r.serie) score += 2;
-        if(o.item === r.item) score += 1;
-        // Empate: prefere a ABERTURA mais recente (mais próxima do FECHAMENTO no tempo)
-        // Isso evita que órfãos antigos "roubem" fechamentos de ordens novas
-        if(score > bestScore || (score === bestScore && best !== null && tsToDate(o.ts) > tsToDate(opens[best].ts))){
-          bestScore=score; best=i;
-        }
-      }
+      const best = _encontrarMelhorAberturaIdx(opens, r, rTs);
       if(best!==null){
         const o=opens[best];
         const dur = workMinutes(tsToDate(o.ts), tsToDate(r.ts));
@@ -4121,20 +4142,7 @@ function computePairingTruth(){
   RAW_DATA.forEach(r => {
     if(r.tipo !== 'FECHAMENTO') return;
     const rTs = tsToDate(r.ts);
-    let best=null, bestScore=-1;
-    for(let i=0;i<opens.length;i++){
-      const o=opens[i];
-      if(o._used) continue;
-      if(!sameFunc(o.func, r.func)) continue;
-      if(tsToDate(o.ts) > rTs) continue;
-      let score=1;
-      if(o.op === r.op)     score+=4;
-      if(o.serie === r.serie) score+=2;
-      if(o.item === r.item)  score+=1;
-      if(score > bestScore || (score === bestScore && best !== null && tsToDate(o.ts) > tsToDate(opens[best].ts))){
-        bestScore=score; best=i;
-      }
-    }
+    const best = _encontrarMelhorAberturaIdx(opens, r, rTs);
     if(best!==null){
       opens[best]._used=true;
     } else {
@@ -4166,20 +4174,7 @@ function computeOpenOrders(){
     RAW_DATA.forEach(r => {
       if(r.tipo !== closeType) return;
       const rTs = tsToDate(r.ts);
-      let best=null, bestScore=-1;
-      for(let i=0;i<opens.length;i++){
-        const o=opens[i];
-        if(o._used) continue;
-        if(!sameFunc(o.func, r.func)) continue;
-        if(tsToDate(o.ts) > rTs) continue;
-        let score=1;
-        if(o.op === r.op)     score+=4;
-        if(o.serie === r.serie) score+=2;
-        if(o.item === r.item)  score+=1;
-        if(score > bestScore || (score === bestScore && best !== null && tsToDate(o.ts) > tsToDate(opens[best].ts))){
-          bestScore=score; best=i;
-        }
-      }
+      const best = _encontrarMelhorAberturaIdx(opens, r, rTs);
       if(best!==null) opens[best]._used=true;
     });
     todosAbertos = todosAbertos.concat(opens.filter(o=>!o._used));
