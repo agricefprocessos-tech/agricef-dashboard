@@ -469,6 +469,26 @@ input[type="date"]{color-scheme:dark;}
   </div>
 </div>
 
+<!-- Modal de senha para confirmar edição — substitui confirm()/prompt() nativos, que falhavam
+     silenciosamente em alguns navegadores/celulares e usavam comparação de senha sem trim. -->
+<div class="fcm-overlay" id="edmSenhaOverlay">
+  <div class="fcm-box" style="width:380px">
+    <div class="fcm-title" style="color:#fbbf24">&#128274; Confirmar edi&ccedil;&atilde;o</div>
+    <div style="font-size:12px;color:var(--text2);line-height:1.5;margin:10px 0 16px">
+      A mudan&ccedil;a ser&aacute; aplicada na planilha (hist&oacute;rico + aba Abertos, se ainda em aberto) e <strong>n&atilde;o tem desfazer</strong>. Digite a senha de configura&ccedil;&atilde;o para continuar.
+    </div>
+    <div class="fcm-row">
+      <label>Senha de configura&ccedil;&atilde;o</label>
+      <input type="password" id="edmSenhaInput" autocomplete="off" style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:6px;font-size:14px;font-family:'Barlow',sans-serif;outline:none;transition:border-color .2s;" onfocus="this.style.borderColor='#fbbf24'" onblur="this.style.borderColor='var(--border)'" onkeydown="if(event.key==='Enter')confirmarSenhaEdicao()">
+    </div>
+    <div class="fcm-err" id="edmSenhaErr"></div>
+    <div class="fcm-btns">
+      <button class="btn-fcm-ok" id="edmSenhaBtnOk" style="background:#fbbf24;color:#000;" onclick="confirmarSenhaEdicao()">Confirmar edi&ccedil;&atilde;o</button>
+      <button class="btn-fcm-cancel" onclick="fecharModalSenhaEdicao()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
 <div class="fcm-overlay" id="helpOverlay">
   <div class="fcm-box" style="width:480px">
     <div class="fcm-title" id="helpTitulo" style="color:var(--accent2)"></div>
@@ -4429,10 +4449,13 @@ function fecharModalEdicao(){
   _edmContext = null;
 }
 
-async function confirmarEdicao(){
+// _edmPendingValores guarda os valores validados enquanto o modal de senha está aberto —
+// confirmarEdicao() só monta e valida os campos; quem realmente envia é confirmarSenhaEdicao(),
+// depois da senha confirmada.
+let _edmPendingValores = null;
+
+function confirmarEdicao(){
   if(!_edmContext) return;
-  const errEl = document.getElementById('edmErr');
-  const btnOk = document.getElementById('edmBtnOk');
 
   const dataVal = document.getElementById('edmData').value;
   const horaVal = document.getElementById('edmHora').value;
@@ -4445,7 +4468,7 @@ async function confirmarEdicao(){
   const qtdPlVal = document.getElementById('edmQtdPlanejada').value;
   const qtdVal = document.getElementById('edmQuantidade').value;
 
-  const novosValores = {
+  _edmPendingValores = {
     carimbo: carimbo,
     operador: document.getElementById('edmOperador').value.trim(),
     operadorNome: document.getElementById('edmOperadorNome').value.trim(),
@@ -4460,14 +4483,30 @@ async function confirmarEdicao(){
     obs1: document.getElementById('edmObs').value.trim(),
   };
 
-  const confirmou = confirm('Confirma a edição deste apontamento? A mudança será aplicada na planilha (histórico + Abertos, se em aberto) e não tem desfazer.');
-  if(!confirmou) return;
+  // Substitui confirm()+prompt() nativos — falhavam de forma pouco clara em alguns navegadores
+  // (celular, webview embutido) e a comparação de senha não tirava espaço/quebra de linha do
+  // que o operador digitava. Modal próprio dá feedback visual e é confiável em qualquer navegador.
+  document.getElementById('edmSenhaInput').value = '';
+  document.getElementById('edmSenhaErr').textContent = '';
+  document.getElementById('edmSenhaOverlay').classList.add('open');
+  setTimeout(()=>document.getElementById('edmSenhaInput').focus(), 100);
+}
 
-  const pwd = prompt('🔒 Senha de configuração (confirme para editar):');
-  if(pwd!=='Agricef123'){
-    if(pwd!==null) alert('Senha incorreta — edição cancelada.');
-    return;
-  }
+function fecharModalSenhaEdicao(){
+  document.getElementById('edmSenhaOverlay').classList.remove('open');
+}
+
+async function confirmarSenhaEdicao(){
+  const errSenha = document.getElementById('edmSenhaErr');
+  const pwd = document.getElementById('edmSenhaInput').value.trim();
+  if(pwd === ''){ errSenha.textContent = 'Digite a senha.'; return; }
+  if(pwd !== 'Agricef123'){ errSenha.textContent = 'Senha incorreta.'; return; }
+
+  fecharModalSenhaEdicao();
+
+  const novosValores = _edmPendingValores;
+  const errEl = document.getElementById('edmErr');
+  const btnOk = document.getElementById('edmBtnOk');
 
   btnOk.disabled = true;
   errEl.style.color = '';
