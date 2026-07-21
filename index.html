@@ -301,7 +301,7 @@ input[type="date"]{color-scheme:dark;}
 <!-- MODAL: Fechar Apontamento -->
 <div class="fcm-overlay" id="fcmOverlay">
   <div class="fcm-box">
-    <div class="fcm-title">✔ Fechar Apontamento</div>
+    <div class="fcm-title" id="fcmTitle">✔ Fechar Apontamento</div>
     <div class="fcm-info" id="fcmInfo"></div>
     <div class="fcm-row" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
       <div>
@@ -313,7 +313,7 @@ input[type="date"]{color-scheme:dark;}
         <input type="time" id="fcmHora" step="60" style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:6px;font-size:14px;font-family:'Barlow',sans-serif;outline:none;transition:border-color .2s;" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
       </div>
     </div>
-    <div class="fcm-row">
+    <div class="fcm-row" id="fcmQtdRow">
       <label>Quantidade Realizada <span id="fcmQtdHint" style="color:var(--text3);font-weight:400;text-transform:none"></span></label>
       <input type="number" id="fcmQtd" min="0" step="1" placeholder="0">
     </div>
@@ -3841,6 +3841,10 @@ function renderBacklog(){
         client: a.cliente     ||'',
         ts:     tsConv,
         _abertoId: a.abertoId ||'',
+        // Fix#FecharRetrabalhoParada: preserva o tipo real (ABERTURA/INÍCIO DE RETRABALHO/
+        // INÍCIO DE PARADA) — sem isso, "Fechar" sempre mandava FECHAMENTO fixo pro backend,
+        // que rejeitava com "tipo incompatível" sempre que o aberto era retrabalho ou parada.
+        tipo:   a.tipo ||'ABERTURA',
       };
     });
     if(srcEl) srcEl.innerHTML='<span style="color:var(--accent2)">● aba Abertos (tempo real)</span>';
@@ -4210,14 +4214,23 @@ function abrirModalFechar(idx){
   const nome=funcName(r.func);
   const serie=r.serie||r.impl||'—';
   const tsFormatted=r.ts?r.ts.replace(/(\d{4})\/(\d{2})\/(\d{2})\s/,'$3/$2/$1 '):'—';
+  const tipoAberto = r.tipo || 'ABERTURA';
+  const ehProducao = tipoAberto === 'ABERTURA';
   document.getElementById('fcmInfo').innerHTML=`
     <div class="fcm-fld"><div class="fcm-fld-lbl">Funcionário</div><div class="fcm-fld-val">${nome}</div></div>
-    <div class="fcm-fld"><div class="fcm-fld-lbl">Operação</div><div class="fcm-fld-val">${r.op||'—'}</div></div>
-    <div class="fcm-fld"><div class="fcm-fld-lbl">Cód. Item</div><div class="fcm-fld-val" style="color:var(--accent2)">${r.item||'—'}</div></div>
+    <div class="fcm-fld"><div class="fcm-fld-lbl">${ehProducao?'Operação':'Tipo'}</div><div class="fcm-fld-val">${r.op||tipoAberto||'—'}</div></div>
+    ${ehProducao ? `<div class="fcm-fld"><div class="fcm-fld-lbl">Cód. Item</div><div class="fcm-fld-val" style="color:var(--accent2)">${r.item||'—'}</div></div>
     <div class="fcm-fld"><div class="fcm-fld-lbl">Nº Série</div><div class="fcm-fld-val">${serie}</div></div>
-    <div class="fcm-fld"><div class="fcm-fld-lbl">Qtd Planejada</div><div class="fcm-fld-val" style="color:var(--accent)">${r.qty||'—'}</div></div>
+    <div class="fcm-fld"><div class="fcm-fld-lbl">Qtd Planejada</div><div class="fcm-fld-val" style="color:var(--accent)">${r.qty||'—'}</div></div>` : ''}
     <div class="fcm-fld"><div class="fcm-fld-lbl">Abertura</div><div class="fcm-fld-val" style="font-size:11px">${tsFormatted}</div></div>`;
   document.getElementById('fcmQtdHint').textContent=r.qty?`(planejado: ${r.qty})`:'';
+  // Fix#FecharRetrabalhoParada: retrabalho e parada não têm quantidade/série (mesma regra do
+  // backend e do app do operador) — esconde o campo em vez de exigir/enviar algo que não existe.
+  document.getElementById('fcmQtdRow').style.display = ehProducao ? '' : 'none';
+  document.getElementById('fcmTitle').textContent = ehProducao ? '✔ Fechar Apontamento'
+    : (tipoAberto === 'INÍCIO DE RETRABALHO' ? '✔ Encerrar Retrabalho' : '✔ Encerrar Parada');
+  document.getElementById('fcmBtnOk').textContent = ehProducao ? '✔ CONFIRMAR FECHAMENTO'
+    : (tipoAberto === 'INÍCIO DE RETRABALHO' ? '✔ CONFIRMAR TÉRMINO DE RETRABALHO' : '✔ CONFIRMAR TÉRMINO DE PARADA');
   // Preenche data/hora com o momento atual como sugestão
   const _now=new Date();
   const _pad=n=>String(n).padStart(2,'0');
@@ -4259,13 +4272,17 @@ async function confirmarFechamento(){
     errEl.textContent='A data/hora do fechamento não pode ser anterior à abertura.'; return;
   }
 
+  // Fix#FecharRetrabalhoParada: retrabalho e parada não têm quantidade (nem no backend, nem
+  // no app do operador) — só valida/exige qtd quando o que está aberto é produção mesmo.
+  const tipoAberto = r.tipo || 'ABERTURA';
+  const ehProducao = tipoAberto === 'ABERTURA';
   const OPERACOES_COM_QTD=['0010','0020','0030','0040','0050','0060','0080'];
   const opCod=(r.op||'').substring(0,4);
-  if(OPERACOES_COM_QTD.includes(opCod)&&qtdVal===''){
+  if(ehProducao && OPERACOES_COM_QTD.includes(opCod)&&qtdVal===''){
     errEl.textContent='Informe a quantidade realizada para esta operação.'; return;
   }
-  const qtd=qtdVal===''?'':Number(qtdVal);
-  if(qtdVal!==''&&(isNaN(qtd)||qtd<0)){errEl.textContent='Quantidade inválida.'; return;}
+  const qtd=(!ehProducao||qtdVal==='')?'':Number(qtdVal);
+  if(ehProducao && qtdVal!==''&&(isNaN(qtd)||qtd<0)){errEl.textContent='Quantidade inválida.'; return;}
 
   btnOk.disabled=true;
   errEl.textContent='Enviando…';
@@ -4277,7 +4294,7 @@ async function confirmarFechamento(){
   const abertoId = r._abertoId || '';
 
   const payload={
-    tipoApontamento:'FECHAMENTO',
+    tipoApontamento: TIPO_TERMINO_MAP[tipoAberto] || 'FECHAMENTO',
     operador:operCod,
     operadorNome:r.func,
     implemento:r.impl||'',
@@ -4404,6 +4421,14 @@ const TIPO_RAW_MAP = {
   'ABERTURA':'ABERTURA','FECHAMENTO':'FECHAMENTO',
   'INÍCIO DE RETRABALHO':'INICIO_RETRABALHO','TÉRMINO DE RETRABALHO':'TERMINO_RETRABALHO',
   'INÍCIO DE PARADA':'INICIO_PARADA','TÉRMINO DE PARADA':'TERMINO_PARADA',
+};
+// Tipo aberto (backlog) → chave crua do fechamento correspondente. Usado por abrirModalFechar/
+// confirmarFechamento para não mandar sempre FECHAMENTO fixo — o backend rejeita com "tipo de
+// fechamento incompatível" se o que está aberto for retrabalho ou parada.
+const TIPO_TERMINO_MAP = {
+  'ABERTURA': 'FECHAMENTO',
+  'INÍCIO DE RETRABALHO': 'TERMINO_RETRABALHO',
+  'INÍCIO DE PARADA': 'TERMINO_PARADA',
 };
 let _edmContext = null;
 
