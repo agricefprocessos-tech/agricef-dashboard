@@ -317,6 +317,12 @@ input[type="date"]{color-scheme:dark;}
       <label>Quantidade Realizada <span id="fcmQtdHint" style="color:var(--text3);font-weight:400;text-transform:none"></span></label>
       <input type="number" id="fcmQtd" min="0" step="1" placeholder="0">
     </div>
+    <!-- Fix#FecharLote: grid de quantidade realizada por série — só aparece quando o item
+         aberto é um lote (isLote/loteSeries preservados vindos da aba Abertos). -->
+    <div class="fcm-row" id="fcmLoteRow" style="display:none">
+      <label>Quantidade Realizada por Série</label>
+      <div id="fcmLoteGrid" style="display:flex;flex-direction:column;gap:8px;margin-top:4px"></div>
+    </div>
     <div class="fcm-row">
       <label>Observação (opcional)</label>
       <input type="text" id="fcmObs" placeholder="—" maxlength="120">
@@ -3845,6 +3851,11 @@ function renderBacklog(){
         // INÍCIO DE PARADA) — sem isso, "Fechar" sempre mandava FECHAMENTO fixo pro backend,
         // que rejeitava com "tipo incompatível" sempre que o aberto era retrabalho ou parada.
         tipo:   a.tipo ||'ABERTURA',
+        // Fix#FecharLote: preserva loteSeries/isLote — sem isso, "Fechar" num lote sempre
+        // mandava payload de série única, e o backend rejeitava com "selecione quais séries
+        // está fechando" sem nenhuma forma de fato selecionar as séries pelo dashboard.
+        loteSeries: a.loteSeries || null,
+        isLote: a.isLote === true,
       };
     });
     if(srcEl) srcEl.innerHTML='<span style="color:var(--accent2)">● aba Abertos (tempo real)</span>';
@@ -4216,17 +4227,32 @@ function abrirModalFechar(idx){
   const tsFormatted=r.ts?r.ts.replace(/(\d{4})\/(\d{2})\/(\d{2})\s/,'$3/$2/$1 '):'—';
   const tipoAberto = r.tipo || 'ABERTURA';
   const ehProducao = tipoAberto === 'ABERTURA';
+  // Fix#FecharLote: um lote não tem série/qtd únicas — cada série do lote é fechada com sua
+  // própria quantidade realizada, igual ao app do operador (renderFechLoteSeriesGrid).
+  const ehLote = ehProducao && r.isLote === true && Array.isArray(r.loteSeries) && r.loteSeries.length > 0;
   document.getElementById('fcmInfo').innerHTML=`
     <div class="fcm-fld"><div class="fcm-fld-lbl">Funcionário</div><div class="fcm-fld-val">${nome}</div></div>
     <div class="fcm-fld"><div class="fcm-fld-lbl">${ehProducao?'Operação':'Tipo'}</div><div class="fcm-fld-val">${r.op||tipoAberto||'—'}</div></div>
     ${ehProducao ? `<div class="fcm-fld"><div class="fcm-fld-lbl">Cód. Item</div><div class="fcm-fld-val" style="color:var(--accent2)">${r.item||'—'}</div></div>
-    <div class="fcm-fld"><div class="fcm-fld-lbl">Nº Série</div><div class="fcm-fld-val">${serie}</div></div>
-    <div class="fcm-fld"><div class="fcm-fld-lbl">Qtd Planejada</div><div class="fcm-fld-val" style="color:var(--accent)">${r.qty||'—'}</div></div>` : ''}
+    ${ehLote ? '' : `<div class="fcm-fld"><div class="fcm-fld-lbl">Nº Série</div><div class="fcm-fld-val">${serie}</div></div>
+    <div class="fcm-fld"><div class="fcm-fld-lbl">Qtd Planejada</div><div class="fcm-fld-val" style="color:var(--accent)">${r.qty||'—'}</div></div>`}` : ''}
     <div class="fcm-fld"><div class="fcm-fld-lbl">Abertura</div><div class="fcm-fld-val" style="font-size:11px">${tsFormatted}</div></div>`;
   document.getElementById('fcmQtdHint').textContent=r.qty?`(planejado: ${r.qty})`:'';
   // Fix#FecharRetrabalhoParada: retrabalho e parada não têm quantidade/série (mesma regra do
   // backend e do app do operador) — esconde o campo em vez de exigir/enviar algo que não existe.
-  document.getElementById('fcmQtdRow').style.display = ehProducao ? '' : 'none';
+  document.getElementById('fcmQtdRow').style.display = (ehProducao && !ehLote) ? '' : 'none';
+  if(ehLote){
+    _fcmLoteSeries = r.loteSeries.map(s=>({
+      nrSerie: s.nrSerie, implemento: s.implemento, cliente: s.cliente,
+      qtdPlanejada: Number(s.qtdPlanejada)||0,
+      qtdRealizada: Number(s.qtdPlanejada)||0,
+    }));
+    document.getElementById('fcmLoteRow').style.display='';
+    renderFcmLoteGrid();
+  } else {
+    _fcmLoteSeries = [];
+    document.getElementById('fcmLoteRow').style.display='none';
+  }
   document.getElementById('fcmTitle').textContent = ehProducao ? '✔ Fechar Apontamento'
     : (tipoAberto === 'INÍCIO DE RETRABALHO' ? '✔ Encerrar Retrabalho' : '✔ Encerrar Parada');
   document.getElementById('fcmBtnOk').textContent = ehProducao ? '✔ CONFIRMAR FECHAMENTO'
@@ -4242,6 +4268,36 @@ function abrirModalFechar(idx){
   document.getElementById('fcmBtnOk').disabled=false;
   document.getElementById('fcmOverlay').classList.add('open');
   setTimeout(()=>document.getElementById('fcmData').focus(),120);
+}
+
+// Fix#FecharLote: grid de quantidade realizada por série no modal de Fechar — mesmo padrão
+// visual/comportamental do app do operador (renderFechLoteSeriesGrid/onChangeFechLoteQtd).
+let _fcmLoteSeries=[];
+function renderFcmLoteGrid(){
+  const grid=document.getElementById('fcmLoteGrid');
+  if(!grid) return;
+  grid.innerHTML=_fcmLoteSeries.map((s,i)=>{
+    const completo = Number(s.qtdRealizada) >= Number(s.qtdPlanejada) && Number(s.qtdPlanejada) > 0;
+    return `<div class="fcm-lote-card" data-idx="${i}" style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;border:1px solid ${completo?'rgba(46,204,113,.4)':'rgba(243,156,18,.4)'};background:${completo?'rgba(46,204,113,.08)':'rgba(243,156,18,.08)'}">
+      <div style="flex:1">
+        <div style="font-weight:700;font-size:13px">${s.nrSerie}</div>
+        <div style="font-size:11px;color:var(--text3)">${s.implemento||''} · planejado ${s.qtdPlanejada}</div>
+      </div>
+      <input type="number" min="0" step="1" inputmode="numeric" value="${s.qtdRealizada}"
+        style="width:70px;text-align:center" data-idx="${i}" oninput="onChangeFcmLoteQtd(${i}, this.value)">
+    </div>`;
+  }).join('');
+}
+function onChangeFcmLoteQtd(idx, valor){
+  const item=_fcmLoteSeries[idx];
+  if(!item) return;
+  item.qtdRealizada = valor===''?0:Math.max(0, Number(valor)||0);
+  const card=document.querySelector('#fcmLoteGrid .fcm-lote-card[data-idx="'+idx+'"]');
+  if(card){
+    const completo = item.qtdRealizada >= item.qtdPlanejada && item.qtdPlanejada > 0;
+    card.style.borderColor = completo ? 'rgba(46,204,113,.4)' : 'rgba(243,156,18,.4)';
+    card.style.background  = completo ? 'rgba(46,204,113,.08)' : 'rgba(243,156,18,.08)';
+  }
 }
 
 function fecharModal(){
@@ -4276,13 +4332,14 @@ async function confirmarFechamento(){
   // no app do operador) — só valida/exige qtd quando o que está aberto é produção mesmo.
   const tipoAberto = r.tipo || 'ABERTURA';
   const ehProducao = tipoAberto === 'ABERTURA';
+  const ehLote = ehProducao && r.isLote === true && Array.isArray(r.loteSeries) && r.loteSeries.length > 0;
   const OPERACOES_COM_QTD=['0010','0020','0030','0040','0050','0060','0080'];
   const opCod=(r.op||'').substring(0,4);
-  if(ehProducao && OPERACOES_COM_QTD.includes(opCod)&&qtdVal===''){
+  if(ehProducao && !ehLote && OPERACOES_COM_QTD.includes(opCod)&&qtdVal===''){
     errEl.textContent='Informe a quantidade realizada para esta operação.'; return;
   }
-  const qtd=(!ehProducao||qtdVal==='')?'':Number(qtdVal);
-  if(ehProducao && qtdVal!==''&&(isNaN(qtd)||qtd<0)){errEl.textContent='Quantidade inválida.'; return;}
+  const qtd=(!ehProducao||ehLote||qtdVal==='')?'':Number(qtdVal);
+  if(ehProducao && !ehLote && qtdVal!==''&&(isNaN(qtd)||qtd<0)){errEl.textContent='Quantidade inválida.'; return;}
 
   btnOk.disabled=true;
   errEl.textContent='Enviando…';
@@ -4293,20 +4350,28 @@ async function confirmarFechamento(){
   // Usa o abertoId da abertura se disponível (campo _abertoId injetado ao montar o backlog)
   const abertoId = r._abertoId || '';
 
+  // Fix#FecharLote: fechamento de lote manda o array loteSeries (uma qtdRealizada por série,
+  // preenchida no grid _fcmLoteSeries) em vez de nrSerie/quantidade únicos — mesmo formato que
+  // o app do operador já envia com sucesso (state.fechLoteSeries).
+  const totalPlanejadoLote = ehLote ? _fcmLoteSeries.reduce((s,x)=>s+(Number(x.qtdPlanejada)||0),0) : '';
+  const totalRealizadoLote = ehLote ? _fcmLoteSeries.reduce((s,x)=>s+(Number(x.qtdRealizada)||0),0) : '';
+
   const payload={
     tipoApontamento: TIPO_TERMINO_MAP[tipoAberto] || 'FECHAMENTO',
     operador:operCod,
     operadorNome:r.func,
     implemento:r.impl||'',
-    nrSerie:r.serie||'',
+    nrSerie:ehLote?'':(r.serie||''),
     cliente:r.client||'',
     operacao:r.op||'',
     codItem:r.item||'',
-    qtdPlanejada:r.qty||'',
-    quantidade:qtd,
+    qtdPlanejada:ehLote?totalPlanejadoLote:(r.qty||''),
+    quantidade:ehLote?totalRealizadoLote:qtd,
     obs1:obs,
     timestamp:carimbo,
     abertoId: abertoId,
+    lote: ehLote ? _fcmLoteSeries.map(s=>s.nrSerie).join(', ') : '',
+    loteSeries: ehLote ? _fcmLoteSeries : null,
   };
 
   try{
