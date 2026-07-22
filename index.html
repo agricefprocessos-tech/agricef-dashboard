@@ -2006,8 +2006,16 @@ function pairRows(rows, openType, closeType){
 
 // ── STATE ────────────────────────────────────────────────────────────────────
 
+// Fix#FiltroDataAtual: data local (não UTC) de hoje, formato yyyy-MM-dd — usar
+// toISOString() erraria o dia entre meia-noite e 3h da manhã (GMT-3 vs UTC).
+function hojeStr(){
+  const d = new Date();
+  const p = n => String(n).padStart(2,'0');
+  return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate());
+}
+
 // ── POPULATE FILTERS ─────────────────────────────────────────────────────────
-function populateFilters(prevFunc='',prevSerie='',prevOp='',prevItem='',prevFrom='',prevTo=''){ 
+function populateFilters(prevFunc='',prevSerie='',prevOp='',prevItem='',prevFrom='',prevTo=''){
   const funcs = [...new Set(RAW_DATA.map(r=>r.func))].sort();
   const series = [...new Set(RAW_DATA.map(r=>r.serie).filter(s=>s&&s[0]>='0'&&s[0]<='9'))].sort();
   const ops = [...new Set(RAW_DATA.map(r=>r.op).filter(Boolean))].sort();
@@ -2025,7 +2033,10 @@ function populateFilters(prevFunc='',prevSerie='',prevOp='',prevItem='',prevFrom
   fill('fOp', ops, null, prevOp);
   fill('fItem', items, null, prevItem);
   document.getElementById('fFrom').value=prevFrom||dates[0]?.replace(/\//g,'-')||'';
-  document.getElementById('fTo').value=prevTo||dates[dates.length-1]?.replace(/\//g,'-')||'';
+  // Fix#FiltroDataAtual: "Até" deve ser o dia real de hoje (quando o dashboard é aberto),
+  // não o último registro que existe na planilha — antes, se ninguém tivesse apontado nada
+  // ainda hoje, o filtro vinha com a data de ontem (ou mais antiga) e escondia o dia atual.
+  document.getElementById('fTo').value=prevTo||hojeStr();
 }
 
 
@@ -2035,9 +2046,7 @@ function saveFilters(){
       func:document.getElementById('fFunc')?.value||'',
       serie:document.getElementById('fSerie')?.value||'',
       op:document.getElementById('fOp')?.value||'',
-      item:document.getElementById('fItem')?.value||'',
-      from:document.getElementById('fFrom')?.value||'',
-      to:document.getElementById('fTo')?.value||''
+      item:document.getElementById('fItem')?.value||''
     };
     localStorage.setItem('agricef-filters',JSON.stringify(f));
   }catch(e){}
@@ -2047,7 +2056,11 @@ function restoreFilters(){
     const s=localStorage.getItem('agricef-filters');
     if(!s) return;
     const f=JSON.parse(s);
-    ['fFunc','fSerie','fOp','fItem','fFrom','fTo'].forEach(id=>{
+    // Fix#FiltroDataAtual: fFrom/fTo NÃO são restaurados daqui de propósito — só
+    // funcionário/série/operação/item persistem entre sessões. Antes, "Até" ficava preso
+    // para sempre no valor salvo na primeira vez (nunca acompanhava o dia real), porque essa
+    // restauração rodava depois de populateFilters() e sobrescrevia o default fresco de hoje.
+    ['fFunc','fSerie','fOp','fItem'].forEach(id=>{
       const k=id.slice(1).toLowerCase();
       const el=document.getElementById(id);
       if(el && f[k]!==undefined && f[k]!=='') el.value=f[k];
@@ -2088,11 +2101,15 @@ function applyFilters(){
   saveFilters();
 }
 
+// Fix#LimparQuebrado: referenciava prevFrom/prevTo, que nunca foram parâmetros nem variáveis
+// desta função (só existem como parâmetros de populateFilters) — clicar em "Limpar" lançava
+// ReferenceError e abortava a função antes mesmo de chegar no applyFilters(), deixando o botão
+// completamente sem efeito. Corrigido junto com o default de "Até" = hoje real (Fix#FiltroDataAtual).
 function resetFilters(){
   ['fFunc','fSerie','fOp','fItem'].forEach(id=>document.getElementById(id).value='');
   const dates = RAW_DATA.map(r=>tsToDateStr(r.ts)).sort();
-  document.getElementById('fFrom').value=prevFrom||dates[0]?.replace(/\//g,'-')||'';
-  document.getElementById('fTo').value=prevTo||dates[dates.length-1]?.replace(/\//g,'-')||'';
+  document.getElementById('fFrom').value=dates[0]?.replace(/\//g,'-')||'';
+  document.getElementById('fTo').value=hojeStr();
   applyFilters();
 }
 
