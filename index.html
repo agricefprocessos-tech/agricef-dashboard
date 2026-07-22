@@ -5063,18 +5063,40 @@ function renderAudit3() {
   if (!cont) return;
 
   const issues = [];
+  const issuesJustificadas = [];
 
   // 1. ABERTURAs sem FECHAMENTO — usa computeOpenOrders() sobre TODO o RAW_DATA
   // (mesmo escopo do KPI "Backlog Aberto" e do painel de ordens abertas),
   // garantindo que os números sejam idênticos independente do filtro de período.
+  //
+  // Fix#FalsoPositivoBacklog: computeOpenOrders() faz pareamento por HEURÍSTICA
+  // (func + janela de horário via _encontrarMelhorAberturaIdx) sobre o histórico bruto —
+  // isso erra quando há streams simultâneos do mesmo operador (ex: parada aninhada dentro
+  // de um retrabalho), escolhendo o par errado e deixando outro ABERTURA "para trás" mesmo
+  // que ele já tenha sido fechado de verdade. A aba Abertos (_abertosData) é o estado real
+  // mantido pelo backend a cada abertura/fechamento — se o abertoId do item não está mais
+  // lá, ele JÁ foi fechado; a heurística só não achou o par certo. Sem essa checagem, itens
+  // fechados há semanas continuavam aparecendo como inconsistência para sempre, sem nenhum
+  // botão de ação (só existiam aqui, nunca no backlog real).
   const _openOrds = computeOpenOrders(); // opera sobre RAW_DATA completo, sem filtro
+  const _abertosIdsAtivos = new Set((_abertosData||[]).map(a=>a.abertoId).filter(Boolean));
   _openOrds.forEach(r => {
+    if (r._abertoId && !_abertosIdsAtivos.has(r._abertoId)) return; // falso positivo — já fechado
+
     const name = funcName(r.func);
     const dt = tsToDate(r.ts).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
-    issues.push({ type:'backlog', sev:'alta', icon:'🔴',
+    // Sem abertoId = registro anterior ao sistema de rastreamento (legado) — não dá pra
+    // localizar a linha exata no backend, então Fechar/Editar/Excluir não funcionam; só
+    // resta "Justificar" (mesmo mecanismo de duração suspeita) pra reconhecer e tirar da lista.
+    const chave = 'backlog||' + (r._abertoId || (r.func+'||'+r.ts+'||'+r.tipo));
+    const just = _justificativasMap.get(chave);
+    const item = { type:'backlog', sev:'alta', icon:'🔴',
       desc:'Abertura sem fechamento correspondente',
-      detail:`${name} | ${r.op||'—'} | Item: ${r.item||'—'} | Série: ${r.serie&&r.serie[0]>='0'?r.serie:'—'} | ${dt}`,
-      raw: r });
+      detail:`${name} | ${r.op||'—'} | Item: ${r.item||'—'} | Série: ${r.serie&&r.serie[0]>='0'?r.serie:'—'} | ${dt}`
+        + (r._abertoId ? '' : ' | ⚠️ registro legado (sem ID de rastreamento)'),
+      raw: r, chave, tipoJustificativa: 'backlog_aberto' };
+    if (just) issuesJustificadas.push({ ...item, justificativa: just });
+    else issues.push(item);
   });
 
   // Orphan fechamentos: ainda usa computePairingTruth para detectar fechamentos sem abertura
@@ -5084,7 +5106,6 @@ function renderAudit3() {
   // (issues) e vão para issuesJustificadas, mostrados numa seção recolhível separada.
   // Chave: func+openTs+closeTs (pairRows não expõe o abertoId, mas essa combinação é única
   // o suficiente na prática) — calculada da mesma forma ao salvar a justificativa.
-  const issuesJustificadas = [];
   const allPairs = [
     ...pairRows(filtered,'ABERTURA','FECHAMENTO'),
     ...pairRows(filtered,'INÍCIO DE PARADA','TÉRMINO DE PARADA'),
@@ -5186,7 +5207,26 @@ function renderAudit3() {
       html += `<div style="margin-bottom:14px">
         <div style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;padding-bottom:4px;border-bottom:1px solid var(--border)">${g.label} (${g.items.length})</div>`;
       g.items.forEach((i,idx) => {
-        const btnAcao = (i.type==='orphan' && i.raw)
+        // Fix#AcoesBacklogAuditoria: itens "Abertura sem Fechamento" tinham zero ação — o
+        // "Fechar/Editar/Excluir" só existia na tabela de Backlog. Como a maioria desses
+        // itens SÃO os mesmos que aparecem no Backlog (mesmo abertoId), reaproveita os
+        // mesmos modais indexando de volta em _computedBacklog. Registros sem abertoId são
+        // legados (anteriores ao sistema de rastreamento) — não dá pra localizar a linha
+        // exata no backend, então só oferece "Justificar" pra reconhecer e tirar da lista.
+        const btnAcaoBacklog = (bIdx => bIdx < 0 ? '' : `
+          <button class="fechar-btn" onclick="abrirModalFechar(${bIdx})">Fechar →</button>
+          <button class="excluir-btn" onclick="excluirApontamento(${bIdx})">Excluir</button>
+          <button class="editar-btn" onclick="abrirModalEdicao('backlog',${bIdx})">Editar</button>
+        `)(i.raw && i.raw._abertoId ? _computedBacklog.findIndex(b => b._abertoId === i.raw._abertoId) : -1);
+        const btnAcao = (i.type==='backlog' && btnAcaoBacklog)
+          ? `<div style="margin-left:auto;flex-shrink:0;white-space:nowrap">${btnAcaoBacklog}</div>`
+          : (i.type==='backlog' && i.chave)
+          ? `<button onclick='abrirModalJustificativa(${JSON.stringify({chave:i.chave,tipo:i.tipoJustificativa,desc:i.desc,detail:i.detail}).replace(/'/g,"&#39;")})'
+               style="margin-left:auto;flex-shrink:0;background:rgba(167,139,250,.12);border:1px solid rgba(167,139,250,.35);color:#a78bfa;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Barlow Condensed',sans-serif;white-space:nowrap;transition:all .15s"
+               onmouseover="this.style.background='rgba(167,139,250,.22)'" onmouseout="this.style.background='rgba(167,139,250,.12)'">
+               📝 Justificar
+             </button>`
+          : (i.type==='orphan' && i.raw)
           ? `<button onclick='abrirModalAbertura(${JSON.stringify(i.raw).replace(/'/g,"&#39;")})'
                style="margin-left:auto;flex-shrink:0;background:rgba(56,189,248,.12);border:1px solid rgba(56,189,248,.35);color:var(--accent2);padding:4px 10px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Barlow Condensed',sans-serif;white-space:nowrap;transition:all .15s"
                onmouseover="this.style.background='rgba(56,189,248,.22)'" onmouseout="this.style.background='rgba(56,189,248,.12)'">
