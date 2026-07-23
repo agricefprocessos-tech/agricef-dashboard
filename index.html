@@ -2958,7 +2958,14 @@ const EST_MAP = {};
 ESTIMADOS_DATA.forEach(e => { EST_MAP[normCode(e.codigo)] = e; });
 
 function workMinutes(dtStart, dtEnd){
-  if(!dtStart||!dtEnd||dtEnd<=dtStart) return 0;
+  // Bug#TimestampInvalidoTravaDashboard: um Carimbo malformado na planilha (ex: hora com
+  // "::" duplo, ou formato fora do dd/mm/aaaa esperado por parseSheetJSON) vira aqui um
+  // Date "Invalid Date" — que é um OBJETO, então `!dtStart`/`!dtEnd` nunca pegam isso (só
+  // pegam null/undefined). Sem este isNaN, esse único registro corrompido travava o dashboard
+  // inteiro pra sempre: nextWD() nunca converge quando `d` é Invalid Date (getDate()+1 = NaN
+  // pra sempre), rodando um `while` sem nenhum limite de iteração. Confirmado contra dado real
+  // de produção (linha ABERTURA de 22/07/2026 com carimbo "2026/07/22 14::53:16").
+  if(!dtStart||!dtEnd||isNaN(dtStart.getTime())||isNaN(dtEnd.getTime())||dtEnd<=dtStart) return 0;
   // Janela 6h-19h: inclui ±2h de horas extras. Almoço NÃO deduzido automaticamente
   // (cada funcionário tem 1h entre 11:30-13:30, registra como INÍCIO/TÉRMINO DE PARADA)
   const jorn = typeof getJornada==='function' ? getJornada() : {start:6,end:19};
@@ -2970,7 +2977,8 @@ function workMinutes(dtStart, dtEnd){
   function nextWD(dt){
     const d=new Date(dt); d.setHours(WS/60,0,0,0);
     d.setDate(d.getDate()+1);
-    while(!isWD(d)) d.setDate(d.getDate()+1);
+    let guard=0; // defesa extra: nunca rodar mais que ~2 anos de dias mesmo se algo escapar do isNaN acima
+    while(!isWD(d)&&guard++<1000) d.setDate(d.getDate()+1);
     return d;
   }
   let tot=0, cur=new Date(dtStart), it=0;
