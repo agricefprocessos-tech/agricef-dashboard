@@ -2605,7 +2605,7 @@ function switchTab(el, panelId){
 }
 
 // ── RENDER ALL ────────────────────────────────────────────────────────────────
-function safeRender(fn,name){console.log('START',name);try{fn();}catch(e){console.error('Erro em '+name+':',e.message,e.stack);}console.log('END',name);}
+function safeRender(fn,name){try{fn();}catch(e){console.error('Erro em '+name+':',e.message,e.stack);}}
 
 // ── TENDÊNCIA PERÍODO × PERÍODO ──────────────────────────────────────────────
 function calcTrend(current, previous){
