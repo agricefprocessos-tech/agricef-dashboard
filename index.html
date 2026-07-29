@@ -1980,7 +1980,11 @@ function _encontrarMelhorAberturaIdx(opens, r, rTs){
 function pairRows(rows, openType, closeType){
   const pairs = [];
   const opens = [];
-  rows.forEach(r => {
+  // Ordena por timestamp real antes de parear — a ordem de chegada em `rows` (id/inserção)
+  // não é garantida cronológica para dados antigos migrados em lote, e o pareamento abaixo
+  // só encontra uma ABERTURA se ela já tiver sido empilhada em `opens` neste loop.
+  const sorted = [...rows].sort((a,b) => tsToDate(a.ts) - tsToDate(b.ts));
+  sorted.forEach(r => {
     if(r.tipo === openType){
       opens.push({...r, _used:false});
     } else if(r.tipo === closeType){
