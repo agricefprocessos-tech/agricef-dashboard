@@ -3934,6 +3934,12 @@ function renderBacklog(){
         // está fechando" sem nenhuma forma de fato selecionar as séries pelo dashboard.
         loteSeries: a.loteSeries || null,
         isLote: a.isLote === true,
+        // Achado#BacklogParada: getAbertos agora expõe se este aberto tem uma parada aninhada
+        // ativa — sem isso o backlog mostrava uma ABERTURA pausada como produção normal em
+        // andamento, sem nenhum sinal de que o operador não está de fato trabalhando nela agora.
+        emPausa: a.emPausa === true,
+        motivoParada: a.motivoParada || '',
+        paradaDesde: a.paradaDesde || '',
       };
     });
     if(srcEl) srcEl.innerHTML='<span style="color:var(--accent2)">● aba Abertos (tempo real)</span>';
@@ -3962,8 +3968,11 @@ function renderBacklog(){
         const nome=r.func.split(/\s*[-—]\s*/).slice(1).join(' ')||r.func;
         const serie=r.serie||r.impl||'—';
         const tsFormatted=r.ts?r.ts.replace(/(\d{4})\/(\d{2})\/(\d{2})\s/,'$3/$2/$1 '):'—';
+        const pausaBadge = r.emPausa
+          ? `<div style="margin-top:2px;font-size:10px;font-weight:700;color:#f39c12;white-space:nowrap" title="${r.motivoParada||''} · desde ${r.paradaDesde||'—'}">⏸ EM PAUSA</div>`
+          : '';
         return `<tr>
-          <td style="font-size:12px;font-weight:600">${nome}</td>
+          <td style="font-size:12px;font-weight:600">${nome}${pausaBadge}</td>
           <td style="font-size:12px">${r.op||'—'}</td>
           <td style="color:var(--accent2);font-size:12px">${r.item||'—'}</td>
           <td style="font-size:12px">${serie}</td>
