@@ -1418,8 +1418,9 @@ function isParadaSistemica(tipoParada, tipoSetup){
 // pelo job dashboard-sync.ts do backend novo, a partir do Postgres) em vez do endpoint antigo
 // — só a leitura de KPIs/gráficos migrou; fechar/editar continua em APONTAMENTO_URL por enquanto.
 const APPS_SCRIPT_URL='https://script.google.com/macros/s/AKfycbyHjHkisWX5z92qs6DEiuzXI5lzcUaDtj4aM5jruOLtc7GLSQVAESltoCyWtuT7xK_5/exec';
-// Script clasp-managed (agricef-appsscript.gs) — getAbertos + gravarApontamento
-const APONTAMENTO_URL='https://script.google.com/macros/s/AKfycbybtpUgNv_P8YkRNLmPwQVB4n3cS4XMlQQVQUFOgV7MUbjJWK5Xt8HZ8IJEUVHMJCihgA/exec';
+// Backend novo direto (Editar/Fechar/Excluir) — só alcançável de dentro da rede da AGRICEF,
+// diferente da leitura acima (que funciona de qualquer lugar via o espelho sincronizado).
+const APONTAMENTO_URL='http://192.168.10.70:3100/exec';
 const REFRESH_INTERVAL_MS=2*60*1000; // 2 min — reduzido para diminuir delay de aparecimento
 let RAW_DATA=[],ABSENCES=[],PLANT_OPEN_DAYS=[],ALL_WORKDAYS=[],filtered=[],_timelineItems=[];
 let _refreshTimer=null,_lastUpdate=null;
