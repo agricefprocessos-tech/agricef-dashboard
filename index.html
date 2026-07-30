@@ -3940,6 +3940,10 @@ function renderBacklog(){
         emPausa: a.emPausa === true,
         motivoParada: a.motivoParada || '',
         paradaDesde: a.paradaDesde || '',
+        // Motivo do próprio aberto quando ele É uma parada/retrabalho avulso (não aninhado numa
+        // produção) — caso diferente de emPausa (que é sobre uma produção COM parada aninhada
+        // em cima). Aqui não existe produção por baixo; a linha inteira é a parada/retrabalho.
+        motivo: a.motivo || '',
       };
     });
     if(srcEl) srcEl.innerHTML='<span style="color:var(--accent2)">● aba Abertos (tempo real)</span>';
@@ -3971,9 +3975,17 @@ function renderBacklog(){
         const pausaBadge = r.emPausa
           ? `<div style="margin-top:2px;font-size:10px;font-weight:700;color:#f39c12;white-space:nowrap" title="${r.motivoParada||''} · desde ${r.paradaDesde||'—'}">⏸ EM PAUSA</div>`
           : '';
+        // Parada/retrabalho avulso (não aninhado): não tem operação de produção por baixo —
+        // sem isso a célula ficava um "—" indistinguível de dado faltando. Mostra o tipo + motivo
+        // aqui em vez de tratar como abertura comum.
+        const ehParadaOuRetrabalho = r.tipo === 'INÍCIO DE PARADA' || r.tipo === 'INÍCIO DE RETRABALHO';
+        const opCell = ehParadaOuRetrabalho
+          ? `<span style="font-weight:700;color:${r.tipo==='INÍCIO DE PARADA'?'#f39c12':'#a78bfa'}">${r.tipo==='INÍCIO DE PARADA'?'⏸':'🔧'} ${r.tipo}</span>`
+            + (r.motivo ? `<div style="font-size:10px;color:var(--text2)">${r.motivo}</div>` : '')
+          : (r.op||'—');
         return `<tr>
           <td style="font-size:12px;font-weight:600">${nome}${pausaBadge}</td>
-          <td style="font-size:12px">${r.op||'—'}</td>
+          <td style="font-size:12px">${opCell}</td>
           <td style="color:var(--accent2);font-size:12px">${r.item||'—'}</td>
           <td style="font-size:12px">${serie}</td>
           <td style="color:var(--accent);font-weight:700">${r.qty||'—'}</td>
