@@ -1827,7 +1827,7 @@ async function fetchAbertos(){
 
 async function fetchJustificativasAuditoria(){
   try{
-    const resp=await fetch(APONTAMENTO_URL+'?action=getJustificativasAuditoria&_='+Date.now());
+    const resp=await fetch(APPS_SCRIPT_URL+'?action=getJustificativasAuditoria&_='+Date.now());
     if(!resp.ok) return;
     const json=await resp.json();
     if(json.success && Array.isArray(json.justificativas)){
@@ -1844,7 +1844,7 @@ let _iaTabAtual='diario';
 
 async function fetchAnaliseIA(){
   try{
-    const resp=await fetch(APONTAMENTO_URL+'?action=getAnaliseIA&_='+Date.now());
+    const resp=await fetch(APPS_SCRIPT_URL+'?action=getAnaliseIA&_='+Date.now());
     if(!resp.ok) return;
     const json=await resp.json();
     _analiseIAData={diario:json.diario||null, semanal:json.semanal||null};
