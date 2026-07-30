@@ -1043,6 +1043,14 @@ input[type="date"]{color-scheme:dark;}
       <button class="refresh-btn" onclick="renderBacklog()" title="Recalcular ordens em aberto" style="margin-left:8px;flex-shrink:0">↻</button>
     </div>
     <div class="card-body scrollable" id="backlogPanel"><div class="empty">Carregando...</div></div>
+    <div class="card-hd" style="border-top:1px solid var(--border);margin-top:8px">
+      <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0">
+        <div class="card-title">🧮 Backlog — Lotes com Saldo Pendente <button class="help-btn" onclick="abrirAjuda('sec-backlog-saldos')">ℹ️</button></div>
+        <div class="card-badge" id="backlogSaldosBadge">Carregando...</div>
+      </div>
+      <button class="refresh-btn" onclick="renderBacklogSaldos()" title="Recalcular saldos pendentes" style="margin-left:8px;flex-shrink:0">↻</button>
+    </div>
+    <div class="card-body scrollable" id="backlogSaldosPanel"><div class="empty">Carregando...</div></div>
   </div>
 
   <!-- DIA DA SEMANA -->
@@ -1474,6 +1482,7 @@ const AJUDA_TEXTOS = {
   'sec-trend': 'Evolução da eficiência geral semana a semana. Queda sustentada (não um pico isolado) é o sinal mais confiável de que algo estrutural mudou — equipe, processo ou mix de produtos. Ação: se a queda persistir por 2+ semanas, investigue mudanças de equipe/processo no período, não trate como variação normal.',
   'sec-heatmap': 'Intensidade de apontamentos por hora do dia e dia da semana — mostra quando a fábrica realmente produz. Horários com baixa intensidade dentro do turno normal podem indicar gargalo de início/fim de turno ou parada recorrente não capturada como tal. Ação: cruze horários "frios" do heatmap com a aba de Insights Cruzados (Paradas por Hora) para achar a causa.',
   'sec-backlog': 'Ordens com ABERTURA registrada mas sem FECHAMENTO — trabalho que já começou e ainda não terminou, em qualquer período. Backlog crescente sem novas entregas é o sinal mais direto de gargalo real na produção. Ação: ordens com mais dias em aberto devem ser tratadas primeiro — risco de atraso cresce com o tempo parado.',
+  'sec-backlog-saldos': 'Lotes que já foram fechados, mas sobrou quantidade não produzida em uma ou mais séries (saldo pendente) — diferente de "Ordens em Aberto", aqui o ciclo já foi encerrado pelo operador, só falta ele voltar e reabrir pra terminar a quantidade restante. Ação: saldos parados há muitos dias indicam que o operador esqueceu ou foi remanejado — vale cobrar a reabertura antes que a série feche o projeto incompleta.',
   'sec-weekday': 'Média de horas produtivas por dia da semana. Quedas sistemáticas em dias específicos (ex: segunda ou sexta) indicam um padrão de equipe, não um fato isolado. Ação: se um dia da semana é consistentemente mais fraco, investigue causas de calendário (entressafra, escalas, manutenção programada) antes de agir sobre pessoas.',
   'sec-audit': 'Ferramentas para validar a consistência dos próprios dados do dashboard — pares ABERTURA/FECHAMENTO órfãos, duplicados, inconsistências de cálculo. Use isso quando um número parecer "estranho" antes de desconfiar da produção real. Ação: rode a auditoria antes de tomar decisões baseadas em um KPI que pareça fora do padrão.',
   'sec-perf': 'Compara cada operador com a velocidade média dos pares na mesma operação, junto com consistência e taxa de retrabalho individual. Mede desempenho relativo, não absoluto — bom para identificar quem pode treinar quem. Ação: operadores consistentemente abaixo dos pares na mesma operação são candidatos a treinamento direcionado, não advertência.',
@@ -1508,7 +1517,7 @@ const RENDER_POR_SECAO = {
   'sec-oee': ['renderLeadTime','renderOEE'],
   'sec-trend': ['renderTrend'],
   'sec-heatmap': ['renderHeatmap'],
-  'sec-backlog': ['renderBacklog'],
+  'sec-backlog': ['renderBacklog','renderBacklogSaldos'],
   'sec-flow': ['renderFlow'],
   'sec-prazo': ['renderPrazo'],
   'sec-projects': ['renderProjects'],
@@ -1796,6 +1805,7 @@ async function fetchData(){
     fetchAbertos(); // atualiza aba Abertos em paralelo (não bloqueia o render)
     fetchJustificativasAuditoria(); // idem, justificativas de duração suspeita
     fetchAnaliseIA(); // idem — análise de IA é independente do feed principal
+    fetchSaldosPendentes(); // idem — lotes com saldo pendente (backlog de saldos)
     if(typeof renderInsightsCruzados==='function') renderInsightsCruzados(); // só tem efeito se a página atual for 'cruzados'
   }catch(err){showLoadingState(false,err.message);console.error('Erro fetchData:',err);}
 }
@@ -1840,6 +1850,20 @@ async function fetchAnaliseIA(){
     _analiseIAData={diario:json.diario||null, semanal:json.semanal||null};
     renderAnaliseIA();
   }catch(e){console.warn('fetchAnaliseIA:',e.message);}
+}
+
+let _saldosPendentesData=[];
+async function fetchSaldosPendentes(){
+  try{
+    const resp=await fetch(APPS_SCRIPT_URL+'?action=getSaldosPendentes&_='+Date.now());
+    if(!resp.ok) return;
+    const json=await resp.json();
+    if(json.success && Array.isArray(json.lotes)){
+      _saldosPendentesData=json.lotes;
+      const secBacklog=document.getElementById('sec-backlog');
+      if(secBacklog && secBacklog.style.display!=='none') renderBacklogSaldos();
+    }
+  }catch(e){console.warn('fetchSaldosPendentes:',e.message);}
 }
 
 function switchIaTab(tipo){
@@ -2913,6 +2937,7 @@ function renderAll(){
   safeRender(renderTrend,'renderTrend');
   safeRender(renderHeatmap,'renderHeatmap');
   safeRender(renderBacklog,'renderBacklog');
+  safeRender(renderBacklogSaldos,'renderBacklogSaldos');
   safeRender(renderWeekday,'renderWeekday');
   safeRender(renderAudit,'renderAudit');
   safeRender(renderPerformance,'renderPerformance');
@@ -3319,6 +3344,7 @@ function pvSort(col){
   safeRender(renderTrend,'renderTrend');
   safeRender(renderHeatmap,'renderHeatmap');
   safeRender(renderBacklog,'renderBacklog');
+  safeRender(renderBacklogSaldos,'renderBacklogSaldos');
   safeRender(renderWeekday,'renderWeekday');
   safeRender(renderAudit,'renderAudit');
   safeRender(renderPerformance,'renderPerformance');
@@ -4001,6 +4027,50 @@ function renderBacklog(){
     </table>`;
 }
 
+function renderBacklogSaldos(){
+  const el=document.getElementById('sec-backlog');
+  if(!el||el.style.display==='none') return;
+
+  const panel=document.getElementById('backlogSaldosPanel');
+  const badgeEl=document.getElementById('backlogSaldosBadge');
+
+  const lotes=_saldosPendentesData||[];
+  if(badgeEl) badgeEl.textContent=lotes.length ? lotes.length+' com saldo pendente' : 'Nenhum saldo pendente';
+
+  if(!lotes.length){
+    panel.innerHTML='<div class="empty">Nenhum lote com saldo pendente encontrado.</div>';
+    return;
+  }
+
+  // Um lote pode ter várias séries pendentes — cada série vira uma linha própria pra manter
+  // a tabela simples (sem célula-dentro-de-célula pra listar séries de um lote grande).
+  const linhas=[];
+  lotes.forEach(l=>{
+    (l.series||[]).forEach(s=>{
+      linhas.push({...l, nrSerie:s.nrSerie, qtdRestante:s.qtdRestante});
+    });
+  });
+
+  panel.innerHTML=`
+    <table class="tbl">
+      <thead><tr>
+        <th>Funcionário</th><th>Operação</th><th>Cód. Item</th>
+        <th>Série</th><th>Qtd Pendente</th><th>Última Atualização</th>
+      </tr></thead>
+      <tbody>${linhas.map(r=>{
+        const nome=(r.operadorNome||'').split(/\s*[-—]\s*/).slice(1).join(' ')||r.operadorNome||'—';
+        return `<tr>
+          <td style="font-size:12px;font-weight:600">${nome}</td>
+          <td style="font-size:12px">${r.operacao||'—'}</td>
+          <td style="color:var(--accent2);font-size:12px">${r.codItem||'—'}</td>
+          <td style="font-size:12px">${r.nrSerie||'—'}</td>
+          <td style="color:var(--accent);font-weight:700">${r.qtdRestante ?? '—'}</td>
+          <td style="font-size:11px;color:var(--text2)">${r.ultimaAtualizacao||'—'}</td>
+        </tr>`;
+      }).join('')}</tbody>
+    </table>`;
+}
+
 // ── KPIs ESTRATÉGICOS ────────────────────────────────────────────────────────
 function renderStrategicKPIs(){
   const pairs = pairRows(RAW_DATA,'ABERTURA','FECHAMENTO');
@@ -4259,6 +4329,7 @@ let _computedBacklog = [];
 function syncPanels(){
   safeRender(renderKPIs,       'renderKPIs');       // KPI "Backlog Aberto" + contadores
   safeRender(renderBacklog,    'renderBacklog');     // tabela de ordens em aberto
+  safeRender(renderBacklogSaldos, 'renderBacklogSaldos'); // tabela de lotes com saldo pendente
   safeRender(renderAudit3,     'renderAudit3');      // aba Inconsistências
   safeRender(renderAlerts,     'renderAlerts');      // cards de alertas
   safeRender(showAlertBanner,  'showAlertBanner');   // banner vermelho/amarelo no topo
