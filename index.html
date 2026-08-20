@@ -2390,6 +2390,13 @@ function _encontrarMelhorAberturaIdx(opens, r, rTs){
     if(o._used) continue;
     if(!sameFunc(o.func, r.func)) continue;
     if(tsToDate(o.ts) > rTs) continue;
+    // Piso: quando o FECHAMENTO traz item ou serie, a ABERTURA candidata precisa bater neles.
+    // Sem isso a nota base 1 fazia qualquer abertura do mesmo funcionario servir, e um
+    // fechamento orfao "roubava" a abertura de outro item — inventando uma duracao que nunca
+    // existiu. Confirmado na base: o item 510222 tem UM unico evento (um fechamento sem
+    // abertura) e mesmo assim o painel exibia 57min de realizado.
+    if(r.item && o.item && o.item !== r.item) continue;
+    if(r.serie && o.serie && o.serie !== r.serie) continue;
     let score = 1;
     if(o.op === r.op) score += 4;
     if(o.serie === r.serie) score += 2;
@@ -3445,12 +3452,20 @@ function getPrevistoRows(){
   const imap = {};
   prod.forEach(p => {
     if(!p.item) return;
-    const nc = normCode(p.item);
-    if(!imap[nc]) imap[nc]={item:p.item,real_min:0,qty_real:0};
-    imap[nc].real_min += p.dur;
-    // Use qty from the pair (set from FECHAMENTO record in pairRows)
     const qty = parseFloat(p.qty)||0;
+    const nc = normCode(p.item);
+    if(!imap[nc]) imap[nc]={item:p.item,real_min:0,qty_real:0,ciclos:0,ignorados:0,ops:new Set()};
+    // Ciclo sem quantidade informada fica FORA das duas somas.
+    //
+    // Antes, o tempo dele entrava e a quantidade nao — o previsto saia de uma populacao
+    // (os ciclos que informaram quantidade) e o realizado de outra (todos), e o indicador
+    // acusava desvios de +4000% que eram so essa diferenca. Somar o tempo de 36 ciclos
+    // contra o orcamento de 8 pecas nao mede nada.
+    if(qty <= 0){ imap[nc].ignorados++; return; }
+    imap[nc].real_min += p.dur;
     imap[nc].qty_real += qty;
+    imap[nc].ciclos++;
+    if(p.op) imap[nc].ops.add(String(p.op).substring(0,4));
   });
   return Object.entries(imap).map(([nc,v])=>{
     const est = EST_MAP[nc];
@@ -3478,6 +3493,13 @@ function getPrevistoRows(){
       delta_min,
       delta_pct,
       has_est:   !!est,
+      // has_real era lido em tres lugares e NUNCA definido aqui: toda linha caia no selo
+      // "Nao produzido" (os selos Excesso/Atencao/OK eram codigo morto) e o grafico do card,
+      // que filtra por has_est && has_real, vinha sempre vazio.
+      has_real:  v.ciclos > 0,
+      ciclos:    v.ciclos,
+      ignorados: v.ignorados,
+      n_ops:     v.ops.size,
       qty_warning,
     };
   }).sort((a,b)=>{
@@ -3735,7 +3757,11 @@ function renderPrevisto(){
       <td style="font-family:'Barlow Condensed',sans-serif;font-weight:700;color:var(--accent2)">${r.codigo}</td>
       <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${r.descricao}">${r.descricao}</td>
       <td style="text-align:center;color:var(--text3)">${r.qty_ref!==null&&r.qty_ref!==undefined?r.qty_ref:'—'}</td>
-      <td style="text-align:center;color:var(--accent2);font-weight:600">${r.qty_real!==null&&r.qty_real>0?r.qty_real:'—'}</td>
+      <td style="text-align:center;color:var(--accent2);font-weight:600">${r.qty_real!==null&&r.qty_real>0?r.qty_real:'—'}${
+        r.ignorados ? `<div style="font-size:9px;color:var(--text3);font-weight:400" title="Ciclos fechados sem informar quantidade — ficam fora da conta porque não dá para medir produção sem eles">${r.ignorados} s/ qtd</div>` : ''
+      }${
+        r.n_ops>1 ? `<div style="font-size:9px;color:var(--warn);font-weight:400" title="A quantidade soma ${r.n_ops} operações diferentes. Se a mesma peça passa por todas elas, ela é contada uma vez por etapa e o previsto fica inflado.">⚠ ${r.n_ops} operações</div>` : ''
+      }</td>
       <td style="color:var(--text2)">${estH}</td>
       <td style="font-weight:600">${realH}</td>
       <td style="color:${r.delta_min!==null?deltaColor:'var(--text3)'};">${r.delta_min!==null?(r.delta_min>0?'+':'')+fmtH(Math.abs(r.delta_min)):deltaTxt}</td>
@@ -3745,6 +3771,14 @@ function renderPrevisto(){
     </tr>`;
   });
   html+='</tbody></table>';
+  const totIgn = rows.reduce((acc,r)=>acc+(r.ignorados||0),0);
+  const totMultiOp = rows.filter(r=>r.n_ops>1).length;
+  if(totIgn || totMultiOp){
+    html+=`<div style="margin-top:10px;font-size:11px;color:var(--text3);line-height:1.6">
+      ${totIgn?`<div><strong>${totIgn} ciclo(s)</strong> ficaram fora da conta por terem sido fechados sem informar a quantidade — sem ela não dá para medir produção. Veja a página <em>Integridade dos Dados</em>.</div>`:''}
+      ${totMultiOp?`<div><strong>⚠ ${totMultiOp} item(ns)</strong> somam mais de uma operação. Se a mesma peça passa por todas as etapas e cada uma informa a quantidade, ela é contada uma vez por etapa e o previsto fica inflado — o desvio real é maior que o exibido.</div>`:''}
+    </div>`;
+  }
   document.getElementById('pvTable').innerHTML=html;
 }
 
