@@ -788,6 +788,7 @@ input[type="date"]{color-scheme:dark;}
   <button class="page-tab" data-page="planejamento" onclick="mudarPagina('planejamento')">📊 Planejamento</button>
   <button class="page-tab" data-page="qualidade" onclick="mudarPagina('qualidade')">⛔ Qualidade</button>
   <button class="page-tab" data-page="cruzados" onclick="mudarPagina('cruzados')">🔀 Insights Cruzados</button>
+  <button class="page-tab" data-page="integridade" onclick="mudarPagina('integridade')">🔍 Integridade dos Dados</button>
 </div>
 
 <main style="padding-top:4px">
@@ -824,6 +825,7 @@ input[type="date"]{color-scheme:dark;}
   <div class="page-grid" data-page-grid="planejamento"></div>
   <div class="page-grid" data-page-grid="qualidade"></div>
   <div class="page-grid" data-page-grid="cruzados"></div>
+  <div class="page-grid" data-page-grid="integridade"></div>
 
   <!-- Funcionários -->
   <div class="card sec-card" id="sec-func" data-page="pessoas">
@@ -1211,6 +1213,64 @@ input[type="date"]{color-scheme:dark;}
     <div class="card-body" style="height:340px"><canvas id="chartCrossParadasHora"></canvas></div>
   </div>
 
+  <!-- ============ INTEGRIDADE & QUALIDADE DOS DADOS ============ -->
+
+  <div class="card sec-card" id="sec-int-indice" data-page="integridade">
+    <div class="card-hd">
+      <div class="card-title">🔍 Índice de Confiabilidade <button class="help-btn" onclick="abrirAjuda('sec-int-indice')">ℹ️</button></div>
+      <div class="card-badge" id="intIndiceBadge">—</div>
+    </div>
+    <div class="card-body" id="intIndicePanel"><div class="empty">Carregando…</div></div>
+  </div>
+
+  <div class="card sec-card" id="sec-int-revisao" data-page="integridade" data-full="true">
+    <div class="card-hd">
+      <div class="card-title">📋 Fila de Revisão <button class="help-btn" onclick="abrirAjuda('sec-int-revisao')">ℹ️</button></div>
+      <div class="card-badge" id="intRevisaoBadge">—</div>
+    </div>
+    <div class="card-body" id="intRevisaoPanel"><div class="empty">Carregando…</div></div>
+  </div>
+
+  <div class="card sec-card" id="sec-int-tendencia" data-page="integridade">
+    <div class="card-hd">
+      <div class="card-title">📈 Tendência da Disciplina <button class="help-btn" onclick="abrirAjuda('sec-int-tendencia')">ℹ️</button></div>
+      <div class="card-badge">Estamos ficando melhores ou piores?</div>
+    </div>
+    <div class="card-body" id="intTendenciaPanel"><div class="empty">Carregando…</div></div>
+  </div>
+
+  <div class="card sec-card" id="sec-int-cobertura" data-page="integridade">
+    <div class="card-hd">
+      <div class="card-title">🔢 Cobertura de Quantidade <button class="help-btn" onclick="abrirAjuda('sec-int-cobertura')">ℹ️</button></div>
+      <div class="card-badge" id="intCoberturaBadge">—</div>
+    </div>
+    <div class="card-body" id="intCoberturaPanel"><div class="empty">Carregando…</div></div>
+  </div>
+
+  <div class="card sec-card" id="sec-int-operadores" data-page="integridade">
+    <div class="card-hd">
+      <div class="card-title">🤝 Quem Precisa de Apoio <button class="help-btn" onclick="abrirAjuda('sec-int-operadores')">ℹ️</button></div>
+      <div class="card-badge">Padrão de registro por pessoa</div>
+    </div>
+    <div class="card-body" id="intOperadoresPanel"><div class="empty">Carregando…</div></div>
+  </div>
+
+  <div class="card sec-card" id="sec-int-cadastro" data-page="integridade">
+    <div class="card-hd">
+      <div class="card-title">📚 Lacunas de Cadastro <button class="help-btn" onclick="abrirAjuda('sec-int-cadastro')">ℹ️</button></div>
+      <div class="card-badge" id="intCadastroBadge">—</div>
+    </div>
+    <div class="card-body" id="intCadastroPanel"><div class="empty">Carregando…</div></div>
+  </div>
+
+  <div class="card sec-card" id="sec-int-regressao" data-page="integridade">
+    <div class="card-hd">
+      <div class="card-title">🛡️ Sentinela de Regressão <button class="help-btn" onclick="abrirAjuda('sec-int-regressao')">ℹ️</button></div>
+      <div class="card-badge" id="intRegressaoBadge">—</div>
+    </div>
+    <div class="card-body" id="intRegressaoPanel"><div class="empty">Carregando…</div></div>
+  </div>
+
 </main>
 
 
@@ -1460,7 +1520,7 @@ let _abertosData=null; // cache da aba Abertos (fonte de verdade para backlog)
 let _justificativasMap=new Map(); // chave (func||openTs||closeTs) -> {tipo,justificativa,detalhe,dataHora} — duração suspeita já justificada pelo líder
 const ESTIMADOS_DATA = [{"codigo": "509903", "desc": "ESTRUTURA CARROCERIA - CHASSI", "qty": 1.0, "horas_totais": 40.0, "horas_por_unid": 40.0}, {"codigo": "509904", "desc": "ESTRUTURA CARROCERIA - FECHAMENTO", "qty": 1.0, "horas_totais": 48.0, "horas_por_unid": 48.0}, {"codigo": "509905", "desc": "ESTRUTURA CARROCERIA - INTERNO", "qty": 1.0, "horas_totais": 48.0, "horas_por_unid": 48.0}, {"codigo": "509906", "desc": "ESTRUTURA CARROCERIA - PERIFÉRICOS", "qty": 1.0, "horas_totais": 80.0, "horas_por_unid": 80.0}, {"codigo": "509281", "desc": "SUPORTE ARTICULACAO DESCIDA", "qty": 4.0, "horas_totais": 4.0, "horas_por_unid": 1.0}, {"codigo": "509470", "desc": "PINO FIX MECANISMO FREIO", "qty": 12.0, "horas_totais": 1.0, "horas_por_unid": 0.083333}, {"codigo": "509686", "desc": "GANCHO DE FXACAO DO MEC. DESCAR", "qty": 4.0, "horas_totais": 1.0, "horas_por_unid": 0.25}, {"codigo": "509922", "desc": "ESTRUTURA CARROCERIA ABRAÇADEIRA", "qty": 1.0, "horas_totais": 88.0, "horas_por_unid": 88.0}, {"codigo": "509576", "desc": "ARTICULACAO RAMPA LATERAL", "qty": 2.0, "horas_totais": 1.0, "horas_por_unid": 0.5}, {"codigo": "509646", "desc": "GANCHO CORRENTE RAMPA LATERAL", "qty": 2.0, "horas_totais": 0.5, "horas_por_unid": 0.25}, {"codigo": "509569", "desc": "FECHAMENTO TRASEIRO - TELA 01", "qty": 2.0, "horas_totais": 0.5, "horas_por_unid": 0.25}, {"codigo": "509774", "desc": "SOLDAGEM DO PARACHOQUE 10T", "qty": 1.0, "horas_totais": 3.0, "horas_por_unid": 3.0}, {"codigo": "509778", "desc": "TUBO HASTE DO PARACHOQUE", "qty": 4.0, "horas_totais": 1.5, "horas_por_unid": 0.375}, {"codigo": "509202", "desc": "EIXO SUPERIOR COMPLETO ESTEIRA \nVERTICAL", "qty": 2.0, "horas_totais": 1.0, "horas_por_unid": 0.5}, {"codigo": "509204", "desc": "EIXO INFERIOR COMPLETO ESTEIRA VERTICAL - MOD3", "qty": 2.0, "horas_totais": 1.0, "horas_por_unid": 0.5}, {"codigo": "509205", "desc": "CONJUNTO EIXO SAIDA REDUTOR VERTICAL", "qty": 2.0, "horas_totais": 0.5, "horas_por_unid": 0.25}, {"codigo": "509244", "desc": "SUPORTE REDUTOR SUPERIOR", "qty": 2.0, "horas_totais": 0.5, "horas_por_unid": 0.25}, {"codigo": "509246", "desc": "SUPORTE REDUT. SUPT. - PERFIL 01", "qty": 2.0, "horas_totais": 0.17, "horas_por_unid": 0.085}, {"codigo": "509126", "desc": "TALISCA VERTICAL", "qty": 16.0, "horas_totais": 24.0, "horas_por_unid": 1.5}, {"codigo": "509122", "desc": "SUPORTE ROLAMENTO TALISCA VERTICAL", "qty": 32.0, "horas_totais": 3.0, "horas_por_unid": 0.09375}, {"codigo": "509248", "desc": "BATENTE CORRENTE VERTICAL", "qty": 4.0, "horas_totais": 0.5, "horas_por_unid": 0.125}, {"codigo": "508910", "desc": "ESTRUTURA ESTICADOR ESTEIRA \nHORIZONTAL - LD", "qty": 1.0, "horas_totais": 14.0, "horas_por_unid": 14.0}, {"codigo": "508932", "desc": "ESTRUTURA ESTICADOR ESTEIRA \nHORIZONTAL - LE", "qty": 1.0, "horas_totais": 14.0, "horas_por_unid": 14.0}, {"codigo": "507312", "desc": "BARRA DE AJUSTE DO ESTICADOR (PRÉ- MONTAGEM)", "qty": 4.0, "horas_totais": 0.5, "horas_por_unid": 0.125}, {"codigo": "509357", "desc": "CHASSI ABRACADEIRA", "qty": 1.0, "horas_totais": 20.0, "horas_por_unid": 20.0}, {"codigo": "509406", "desc": "CHASSI ABRACADEIRA OPOSTO", "qty": 1.0, "horas_totais": 20.0, "horas_por_unid": 20.0}, {"codigo": "509418", "desc": "CONJ. BRACO ARTICULACAO MEC. \nABRACADEIRA 01", "qty": 2.0, "horas_totais": 4.0, "horas_por_unid": 2.0}, {"codigo": "509419", "desc": "CONJ. BRACO ARTICULACAO MEC. \nABRACADEIRA 02", "qty": 6.0, "horas_totais": 9.0, "horas_por_unid": 1.5}, {"codigo": "508224", "desc": "CONJUNTO PINO BRACO FERRAMENTA", "qty": 16.0, "horas_totais": 2.5, "horas_por_unid": 0.15625}, {"codigo": "509395", "desc": "CONJ. EIXO MECANISMO DISTRIBUICAO ABRACADEIRA 01", "qty": 2.0, "horas_totais": 0.17, "horas_por_unid": 0.085}, {"codigo": "509396", "desc": "CONJ. EIXO MECANISMO DISTRIBUICAO ABRACADEIRA 02", "qty": 2.0, "horas_totais": 0.17, "horas_por_unid": 0.085}, {"codigo": "510216", "desc": "ESTICADOR CORRENTE ABRACADEIRA", "qty": 8.0, "horas_totais": 0.75, "horas_por_unid": 0.09375}, {"codigo": "510222", "desc": "ESTICADOR LD ENCOSTO EIXO", "qty": 2.0, "horas_totais": 0.17, "horas_por_unid": 0.085}, {"codigo": "510226", "desc": "ESTICADOR LD ENCOSTO EIXO OPOSTO", "qty": 2.0, "horas_totais": 0.17, "horas_por_unid": 0.085}, {"codigo": "510219", "desc": "ESTICADOR LD PORCA", "qty": 2.0, "horas_totais": 0.17, "horas_por_unid": 0.085}, {"codigo": "510225", "desc": "ESTICADOR LD PORCA", "qty": 2.0, "horas_totais": 0.17, "horas_por_unid": 0.085}, {"codigo": "510170", "desc": "SUPORTE SENSOR MOV. ABRAÇADEIRA", "qty": 2.0, "horas_totais": 0.5, "horas_por_unid": 0.25}, {"codigo": "509590", "desc": "CONJ. RAMPA ABRACADEIRA LATERAL 01", "qty": 1.0, "horas_totais": 1.5, "horas_por_unid": 1.5}, {"codigo": "509591", "desc": "CONJ. RAMPA ABRACADEIRA LATERAL 02", "qty": 1.0, "horas_totais": 1.5, "horas_por_unid": 1.5}, {"codigo": "509766", "desc": "CONJ. PINO C/ BATENTE ARTIC. RAMPA", "qty": 2.0, "horas_totais": 0.17, "horas_por_unid": 0.085}, {"codigo": "509589", "desc": "CONJ. RAMPA ABRACADEIRA CENTRAL", "qty": 1.0, "horas_totais": 2.0, "horas_por_unid": 2.0}, {"codigo": "509584", "desc": "ARTICULACAO RAMPA CENTRAL", "qty": 1.0, "horas_totais": 0.17, "horas_por_unid": 0.17}, {"codigo": "509580", "desc": "ALAVANCA RAMPA CENTRAL", "qty": 1.0, "horas_totais": 0.17, "horas_por_unid": 0.17}, {"codigo": "511224", "desc": "CONJ. PORTINHOLA ABRACADEIRAS 8", "qty": 1.0, "horas_totais": 7.0, "horas_por_unid": 7.0}, {"codigo": "511101", "desc": "CONJ. PORTINHOLA ABRACADEIRAS 5", "qty": 1.0, "horas_totais": 7.0, "horas_por_unid": 7.0}, {"codigo": "509080", "desc": "LIMITADOR CENTRAL", "qty": 2.0, "horas_totais": 20.0, "horas_por_unid": 10.0}, {"codigo": "509074", "desc": "LIMITADOR LATERAL", "qty": 4.0, "horas_totais": 6.5, "horas_por_unid": 1.625}, {"codigo": "509664", "desc": "FIXACAO DO LIMITADOR LATERAL", "qty": 4.0, "horas_totais": 1.0, "horas_por_unid": 0.25}, {"codigo": "509071", "desc": "TRAVE LATERAL", "qty": 3.0, "horas_totais": 3.0, "horas_por_unid": 1.0}, {"codigo": "510010", "desc": "ESTRUTURA CONVITE CARREGAMENTO", "qty": 2.0, "horas_totais": 1.0, "horas_por_unid": 0.5}, {"codigo": "510011", "desc": "ESTRUTURA CONVITE CARREGAMENTO \nOPOSTO", "qty": 2.0, "horas_totais": 1.0, "horas_por_unid": 0.5}, {"codigo": "509823", "desc": "CONJUNTO MECANISMO ABASTECIMENTO - MOD 3", "qty": 4.0, "horas_totais": 16.0, "horas_por_unid": 4.0}, {"codigo": "507525", "desc": "BARRA 1 MECANISMO AUXILIAR DE \nDESCARREGAMENTO", "qty": 4.0, "horas_totais": 1.5, "horas_por_unid": 0.375}, {"codigo": "505933", "desc": "CARENAGEM ENCODER EST. HORIZ.", "qty": 1.0, "horas_totais": 0.25, "horas_por_unid": 0.25}, {"codigo": "509902", "desc": "PROTEÇÃO DO ENCODER EST. VERT.", "qty": 1.0, "horas_totais": 0.25, "horas_por_unid": 0.25}, {"codigo": "508957", "desc": "CONJ. CARENAGEM REDUTOR ESTEIRA \nHORIZONTAL", "qty": 1.0, "horas_totais": 0.25, "horas_por_unid": 0.25}, {"codigo": "509926", "desc": "MECANISMO DESCARREGAMENTO A", "qty": 2.0, "horas_totais": 20.0, "horas_por_unid": 10.0}, {"codigo": "509927", "desc": "MECANISMO DESCARREGAMENTO B", "qty": 2.0, "horas_totais": 20.0, "horas_por_unid": 10.0}, {"codigo": "509936", "desc": "ARTICULAÇÃO T - REDUZIDA", "qty": 4.0, "horas_totais": 0.75, "horas_por_unid": 0.1875}, {"codigo": "510918", "desc": "PINO TRAVA MECANISMO DESCARREGAMENTO", "qty": 4.0, "horas_totais": 2.0, "horas_por_unid": 0.5}, {"codigo": "510413", "desc": "PINO TRAVA PERIFERICOS", "qty": 12.0, "horas_totais": 1.5, "horas_por_unid": 0.125}, {"codigo": "509456", "desc": "BARRA CAIXA PERIFERICOS", "qty": 6.0, "horas_totais": 0.5, "horas_por_unid": 0.083333}, {"codigo": "509425", "desc": "CONJ. CAIXA PERIFERICOS 02 MEDIA + PORTA", "qty": 1.0, "horas_totais": 23.0, "horas_por_unid": 23.0}, {"codigo": "510314", "desc": "FLANGE DE FIXACAO INTERCAMBIAVEL CX \nPERIFERICOS", "qty": 2.0, "horas_totais": 0.17, "horas_por_unid": 0.085}, {"codigo": "510017", "desc": "CONJ. CAIXA PERIFERICOS 3 + PORTAS", "qty": 1.0, "horas_totais": 24.0, "horas_por_unid": 24.0}, {"codigo": "509594", "desc": "CONJ. FIX PROTECAO LATERAL A", "qty": 2.0, "horas_totais": 0.17, "horas_por_unid": 0.085}, {"codigo": "ELET - 157 - 005", "desc": "PRÉ-MONTAGEM ELÉTRICA - PERIFÉRICOS", "qty": 27.0, "horas_totais": 12.0, "horas_por_unid": 0.444444}, {"codigo": "CALAFETAGEM 1", "desc": "CALAFETAGEM ESTRUTURA CARROCERIA", "qty": 1.0, "horas_totais": 8.0, "horas_por_unid": 8.0}, {"codigo": "CALAFETAGEM 2", "desc": "CALAFETAGEM ESTEIRAS VERTICAIS", "qty": 16.0, "horas_totais": 7.0, "horas_por_unid": 0.4375}, {"codigo": "CALAFETAGEM 3", "desc": "CALAFETAGEM ESTERIRAS HORIZONTAIS", "qty": 2.0, "horas_totais": 1.0, "horas_por_unid": 0.5}, {"codigo": "CALAFETAGEM 4", "desc": "CALAFETAGEM PERIFÉRICOS", "qty": 12.0, "horas_totais": 1.5, "horas_por_unid": 0.125}, {"codigo": "BORRACHA 1", "desc": "CORTE DE BORRACHAS ESTEIRA VERTICAL", "qty": 16.0, "horas_totais": 4.0, "horas_por_unid": 0.25}, {"codigo": "BORRACHA 2", "desc": "CORTE DE BORRACHAS ESTEIRA HORIZONTAL", "qty": 32.0, "horas_totais": 4.0, "horas_por_unid": 0.125}, {"codigo": "BORRACHA 3", "desc": "CORTE BORRACHÃO", "qty": 3.0, "horas_totais": 0.75, "horas_por_unid": 0.25}, {"codigo": "BORRACHA 4", "desc": "CORTE BOPRRACHA PARA-BARRO", "qty": 2.0, "horas_totais": 0.5, "horas_por_unid": 0.25}, {"codigo": "ENCAPSULAR", "desc": "ENCAPSULAMENTO LIMITADORES", "qty": 6.0, "horas_totais": 2.0, "horas_por_unid": 0.333333}, {"codigo": "401017", "desc": "PRÉ-MONTAGEM CONJ. ESTEIRA VERTICAL", "qty": 16.0, "horas_totais": 7.5, "horas_por_unid": 0.46875}, {"codigo": "400992", "desc": "PRÉ-MONTAGEM ESTEIRA HORIZONTAL LD", "qty": 1.0, "horas_totais": 8.0, "horas_por_unid": 8.0}, {"codigo": "400993", "desc": "PRÉ-MONTAGEM ESTEIRA HORIZONTAL LE", "qty": 1.0, "horas_totais": 8.0, "horas_por_unid": 8.0}, {"codigo": "401030", "desc": "PRÉ-MONTAGEM MECANISMO ABRAÇADEIRA", "qty": 1.0, "horas_totais": 6.0, "horas_por_unid": 6.0}, {"codigo": "401033", "desc": "PRÉ-MONTAGEM MECANISMO ABRAÇADEIRA OPOSTO", "qty": 1.0, "horas_totais": 6.0, "horas_por_unid": 6.0}, {"codigo": "401043", "desc": "PRÉ-MONTAGEM RAMPA CENTRAL", "qty": 1.0, "horas_totais": 0.5, "horas_por_unid": 0.5}, {"codigo": "401044", "desc": "PRÉ-MONTAGEM CONJ. RAMPA ABRAÇADEIRA LATERAL 01", "qty": 1.0, "horas_totais": 0.5, "horas_por_unid": 0.5}, {"codigo": "401045", "desc": "PRÉ-MONTAGEM CONJ. RAMPA ABRAÇADEIRA LATERAL 02", "qty": 1.0, "horas_totais": 0.5, "horas_por_unid": 0.5}, {"codigo": "PORTINHOLAS", "desc": "PRÉ-MONTAGEM CONJ. PORTINHOLAS", "qty": 2.0, "horas_totais": 1.0, "horas_por_unid": 0.5}, {"codigo": "PERIFÉRICOS", "desc": "PRÉ-MONTAGEM CONJ. PERIFÉRICOS", "qty": 12.0, "horas_totais": 1.5, "horas_por_unid": 0.125}, {"codigo": "PROTEÇÃO", "desc": "PROTEÇÃO DE BORRACHA + STRETCH", "qty": 2.0, "horas_totais": 0.5, "horas_por_unid": 0.25}, {"codigo": "INFRA ELÉTRICA", "desc": "INSTALAÇÃO CALHAS ELÉTRICAS", "qty": 6.0, "horas_totais": 2.0, "horas_por_unid": 0.333333}, {"codigo": "ELET - 157 - 000", "desc": "INSTALAÇÃO ELÉTRICA", "qty": 1.0, "horas_totais": 21.0, "horas_por_unid": 21.0}, {"codigo": "HIDRÁULICA", "desc": "INSTALAÇÃO HIDRÁULICA", "qty": 1.0, "horas_totais": 21.0, "horas_por_unid": 21.0}, {"codigo": "401021", "desc": "INSTALAÇÃO CONJ. ESTEIRA VERTICAL", "qty": 16.0, "horas_totais": 12.0, "horas_por_unid": 0.75}, {"codigo": "400991", "desc": "INSTALAÇÃO CONJ. ESTEIRA HORIZONTAL", "qty": 2.0, "horas_totais": 2.0, "horas_por_unid": 1.0}, {"codigo": "INSTAL. ABRAÇ.", "desc": "INSTALAÇÃO CONJ. MECANISMO ABRAÇADEIRA", "qty": 2.0, "horas_totais": 2.0, "horas_por_unid": 1.0}, {"codigo": "INSTAL. RAMPA", "desc": "INSTALAÇÃO CONJ. RAMPA ABRAÇADEIRA", "qty": 3.0, "horas_totais": 1.0, "horas_por_unid": 0.333333}, {"codigo": "INSTAL. PORT.", "desc": "INSTALAÇÃO PORTINHOLAS", "qty": 2.0, "horas_totais": 5.0, "horas_por_unid": 2.5}, {"codigo": "INSTAL. PERIF.", "desc": "INSTALAÇÃO CONJ. PERIFÉRICOS", "qty": 26.0, "horas_totais": 8.0, "horas_por_unid": 0.307692}, {"codigo": "FECHAMENTO", "desc": "INSTALAÇÃO CHAPAS DE FECHAMENTO", "qty": 7.0, "horas_totais": 2.0, "horas_por_unid": 0.285714}, {"codigo": "CAB AUX.", "desc": "INSTALAÇÃO CABINE AUXILIAR", "qty": 1.0, "horas_totais": 4.0, "horas_por_unid": 4.0}, {"codigo": "LIMPEZA", "desc": "LIMPEZA E PINTURA FINAL", "qty": 1.0, "horas_totais": 5.0, "horas_por_unid": 5.0}, {"codigo": "ADESIVOS", "desc": "APLICAÇÃO ADESIVOS", "qty": 84.0, "horas_totais": 5.0, "horas_por_unid": 0.059524}, {"codigo": "TESTE", "desc": "TESTE | CHECK LIST DE MONTAGEM", "qty": 1.0, "horas_totais": 16.0, "horas_por_unid": 16.0}];
 
-const SECTIONS_META=[{"id":"sec-flow","icon":"📈","name":"Panorama de Produção Anual","desc":"Throughput mensal, entradas e CFD — visão de fluxo completa","default":false},{"id":"sec-prazo","icon":"🎯","name":"Dentro/Fora do Prazo","desc":"Operações dentro e fora do prazo estimado por tipo","default":false},{"id":"sec-projects","icon":"🔩","name":"Tabela de Projetos por Série","desc":"Status, datas, horas e operações agrupadas por Nº de Série","default":false},{"id": "sec-func", "icon": "👷", "name": "Eficiência por Funcionário", "desc": "Horas produtivas, paradas, retrabalho e eficiência %", "default": true}, {"id": "sec-ops-op", "icon": "⚙️", "name": "Tempo por Operação", "desc": "Tempo total por tipo de operação", "default": true}, {"id": "sec-ops-item", "icon": "🏷️", "name": "Top Códigos de Item", "desc": "Itens com maior tempo de operação", "default": true}, {"id": "sec-serie", "icon": "🔩", "name": "Produção por Nº de Série", "desc": "Horas por série com detalhamento por operação e item", "default": true}, {"id": "sec-paradas", "icon": "⛔", "name": "Paradas & Retrabalhos", "desc": "Tempo perdido por tipo de parada e retrabalho", "default": true}, {"id": "sec-rank", "icon": "🏆", "name": "Ranking de Produtividade", "desc": "Ranking de horas produtivas por funcionário", "default": true}, {"id": "sec-timeline", "icon": "📋", "name": "Últimos Apontamentos", "desc": "Feed dos apontamentos mais recentes", "default": true}, {"id": "sec-pv", "icon": "📊", "name": "Previsto × Realizado", "desc": "Comparação entre tempo estimado e real por código de item", "default": true}, {"id": "sec-att", "icon": "📅", "name": "Assiduidade & Ausências", "desc": "Calendário heatmap por funcionário", "default": true}, {"id": "sec-oee", "icon": "🏭", "name": "OEE & Tempo de Ciclo", "desc": "Ciclo completo por série", "default": false}, {"id": "sec-trend", "icon": "📈", "name": "Tendência Semanal", "desc": "Evolução da eficiência semana a semana", "default": false}, {"id": "sec-heatmap", "icon": "🕐", "name": "Heatmap por Hora do Dia", "desc": "Intensidade de apontamentos por hora", "default": false}, {"id": "sec-backlog", "icon": "⏳", "name": "Backlog — Ordens em Aberto", "desc": "ABERTURAs sem FECHAMENTO correspondente", "default": false}, {"id": "sec-backlog-saldos", "icon": "🧮", "name": "Backlog — Lotes com Saldo Pendente", "desc": "Lotes já fechados com quantidade restante não produzida", "default": true}, {"id": "sec-weekday", "icon": "📅", "name": "Produtividade por Dia da Semana", "desc": "Média de horas produtivas por dia", "default": false}, {"id": "sec-audit", "icon": "🔍", "name": "Auditoria & Validação", "desc": "Valide pares, analise por funcionário e detecte inconsistências", "default": false}, {"id": "sec-perf", "icon": "🏅", "name": "Análise de Desempenho Individual", "desc": "EE, velocidade vs peers, consistência e retrabalho por operador", "default": false}];
+const SECTIONS_META=[{"id":"sec-flow","icon":"📈","name":"Panorama de Produção Anual","desc":"Throughput mensal, entradas e CFD — visão de fluxo completa","default":false},{"id":"sec-prazo","icon":"🎯","name":"Dentro/Fora do Prazo","desc":"Operações dentro e fora do prazo estimado por tipo","default":false},{"id":"sec-projects","icon":"🔩","name":"Tabela de Projetos por Série","desc":"Status, datas, horas e operações agrupadas por Nº de Série","default":false},{"id": "sec-func", "icon": "👷", "name": "Eficiência por Funcionário", "desc": "Horas produtivas, paradas, retrabalho e eficiência %", "default": true}, {"id": "sec-ops-op", "icon": "⚙️", "name": "Tempo por Operação", "desc": "Tempo total por tipo de operação", "default": true}, {"id": "sec-ops-item", "icon": "🏷️", "name": "Top Códigos de Item", "desc": "Itens com maior tempo de operação", "default": true}, {"id": "sec-serie", "icon": "🔩", "name": "Produção por Nº de Série", "desc": "Horas por série com detalhamento por operação e item", "default": true}, {"id": "sec-paradas", "icon": "⛔", "name": "Paradas & Retrabalhos", "desc": "Tempo perdido por tipo de parada e retrabalho", "default": true}, {"id": "sec-rank", "icon": "🏆", "name": "Ranking de Produtividade", "desc": "Ranking de horas produtivas por funcionário", "default": true}, {"id": "sec-timeline", "icon": "📋", "name": "Últimos Apontamentos", "desc": "Feed dos apontamentos mais recentes", "default": true}, {"id": "sec-pv", "icon": "📊", "name": "Previsto × Realizado", "desc": "Comparação entre tempo estimado e real por código de item", "default": true}, {"id": "sec-att", "icon": "📅", "name": "Assiduidade & Ausências", "desc": "Calendário heatmap por funcionário", "default": true}, {"id": "sec-oee", "icon": "🏭", "name": "OEE & Tempo de Ciclo", "desc": "Ciclo completo por série", "default": false}, {"id": "sec-trend", "icon": "📈", "name": "Tendência Semanal", "desc": "Evolução da eficiência semana a semana", "default": false}, {"id": "sec-heatmap", "icon": "🕐", "name": "Heatmap por Hora do Dia", "desc": "Intensidade de apontamentos por hora", "default": false}, {"id": "sec-backlog", "icon": "⏳", "name": "Backlog — Ordens em Aberto", "desc": "ABERTURAs sem FECHAMENTO correspondente", "default": false}, {"id": "sec-backlog-saldos", "icon": "🧮", "name": "Backlog — Lotes com Saldo Pendente", "desc": "Lotes já fechados com quantidade restante não produzida", "default": true}, {"id": "sec-weekday", "icon": "📅", "name": "Produtividade por Dia da Semana", "desc": "Média de horas produtivas por dia", "default": false}, {"id": "sec-audit", "icon": "🔍", "name": "Auditoria & Validação", "desc": "Valide pares, analise por funcionário e detecte inconsistências", "default": false}, {"id": "sec-perf", "icon": "🏅", "name": "Análise de Desempenho Individual", "desc": "EE, velocidade vs peers, consistência e retrabalho por operador", "default": false}, {"id": "sec-int-indice", "icon": "🔍", "name": "Índice de Confiabilidade", "desc": "Quanto do apontamento serve para medir", "default": true}, {"id": "sec-int-revisao", "icon": "📋", "name": "Fila de Revisão", "desc": "Apontamentos suspeitos aguardando decisão", "default": true}, {"id": "sec-int-tendencia", "icon": "📈", "name": "Tendência da Disciplina", "desc": "A qualidade do apontamento melhora ou piora mês a mês", "default": true}, {"id": "sec-int-cobertura", "icon": "🔢", "name": "Cobertura de Quantidade", "desc": "Fechamentos que informam quantidade produzida", "default": true}, {"id": "sec-int-operadores", "icon": "🤝", "name": "Quem Precisa de Apoio", "desc": "Padrão de registro por pessoa", "default": true}, {"id": "sec-int-cadastro", "icon": "📚", "name": "Lacunas de Cadastro", "desc": "Itens sem tempo de referência e cadastros sem uso", "default": true}, {"id": "sec-int-regressao", "icon": "🛡️", "name": "Sentinela de Regressão", "desc": "Problemas já corrigidos que possam ter voltado", "default": true}];
 const KPIS_META=[{"id": "kpi-oee", "icon": "🏭", "name": "OEE", "desc": "Disponibilidade × Performance × Qualidade"}, {"id": "kpi-taxa-ret", "icon": "🔄", "name": "Taxa de Retrabalho", "desc": "% de operações que geraram retrabalho"}, {"id": "kpi-backlog", "icon": "⏳", "name": "Backlog Aberto", "desc": "Ordens com abertura mas sem fechamento"}, {"id": "kpi-custo", "icon": "💸", "name": "% Improdutividade", "desc": "Proporção de horas não produtivas"},{"id":"kpi-wip","icon":"🔄","name":"WIP Médio","desc":"Work In Progress médio (Lei de Little)"},{"id":"kpi-throughput","icon":"🚀","name":"Throughput Médio","desc":"Operações fechadas por mês em média"},{"id":"kpi-cv","icon":"📉","name":"Coef. Variação","desc":"Variabilidade do throughput mensal"},{"id":"kpi-leadtime2","icon":"⏳","name":"Lead Time Médio","desc":"Tempo médio abertura→fechamento em horas"}];
 const DEFAULT_HALF_WIDTH = ["sec-ops-op", "sec-ops-item", "sec-serie", "sec-paradas", "sec-rank", "sec-timeline"];
 
@@ -1491,6 +1551,13 @@ function saveSettings(){const s=loadSettings();s.costPerHour=parseFloat(document
 let _paginaAtual = localStorage.getItem('agricef-pagina-atual') || 'visao-geral';
 
 const AJUDA_TEXTOS = {
+  'sec-int-indice': 'Percentual dos fechamentos que servem para medir: informam quantidade E não têm marca de suspeita da auditoria. É um critério severo de propósito — é o número que diz o quanto dá para confiar nos indicadores. Ação: se o índice está baixo, olhe qual das duas causas pesa mais (sem quantidade ou com marca) e ataque essa primeiro.',
+  'sec-int-revisao': 'Apontamentos que a auditoria não consegue confirmar nem descartar sozinha — duração fora de escala, fechamento em segundos, sobreposição de horário. Enquanto estiverem pendentes, ficam fora de TODOS os cálculos do dashboard e dos relatórios. Ação: para cada linha decida "É problema" (segue fora) ou "Falso positivo" (volta a contar). A revisão só funciona dentro da rede da fábrica.',
+  'sec-int-tendencia': 'Percentual dos apontamentos de cada mês com cada tipo de problema. Mais importante que o número absoluto é a direção: a disciplina de apontamento está melhorando ou piorando? Ação: se uma coluna sobe dois meses seguidos, é sinal de que algo mudou na rotina do chão de fábrica — vale conversar antes que vire hábito.',
+  'sec-int-cobertura': 'Quantos fechamentos informam a quantidade produzida. Fechamento sem quantidade não entra em nenhuma conta de produção nem no Previsto × Realizado — a peça foi feita, mas o sistema não sabe quantas. É a maior lacuna da base hoje. Ação: a correção é comportamental; comece pelos funcionários no topo da lista.',
+  'sec-int-operadores': 'Padrão de registro por pessoa. NÃO é ranking de desempenho: "fechado em segundos" normalmente é quem faz o trabalho e só depois abre e fecha o apontamento — a quantidade sai certa, o tempo não. Ação: trate como treinamento, não como cobrança; expor isso como ranking cria resistência ao sistema.',
+  'sec-int-cadastro': 'O Previsto × Realizado só consegue opinar sobre item que tenha tempo de referência cadastrado. Este bloco mostra quais itens não têm, ordenados por volume de apontamentos. Ação: cadastrar a estimativa dos itens do topo é o que mais aumenta a cobertura do indicador com menos esforço.',
+  'sec-int-regressao': 'Verificações de problemas que já foram corrigidos na base (linhas duplicadas, grafias divergentes, carimbo impossível, saldo inválido). Todas devem ficar em zero. Ação: se alguma sair de zero, algo regrediu — provavelmente uma mudança recente no sistema ou uma importação manual.',
   'sec-func': 'Mostra, por funcionário, quantas horas foram produtivas, paradas e de retrabalho, e a eficiência (% das horas do dia ativo que foram produtivas). Eficiência baixa (abaixo de 60%) pode indicar sobrecarga de paradas/retrabalho, falta de material ou subutilização. Ação: investigue os casos "Baixo" primeiro — confira se o problema é de processo (gargalo, falta de peça) ou individual antes de cobrar produtividade.',
   'sec-ops-op': 'Soma o tempo total dedicado a cada tipo de operação (Cortar, Furar, Soldar, etc.). Operações com tempo muito acima das demais podem ser gargalos estruturais da linha. Ação: se uma operação concentra desproporcionalmente o tempo, avalie redistribuir mão de obra ou revisar o método de trabalho dela.',
   'sec-ops-item': 'Ranking dos códigos de item que mais consomem tempo de produção. Itens no topo merecem atenção redobrada em precisão de apontamento e padronização de processo, já que erros ali têm maior impacto no total. Ação: padronize o processo dos itens do topo antes dos demais — o ganho de eficiência ali se multiplica.',
@@ -1548,6 +1615,13 @@ const RENDER_POR_SECAO = {
   'sec-weekday': ['renderWeekday'],
   'sec-audit': ['renderAudit'],
   'sec-perf': ['renderPerformance'],
+  'sec-int-indice': ['renderIntegridade'],
+  'sec-int-revisao': ['renderIntegridade'],
+  'sec-int-tendencia': ['renderIntegridade'],
+  'sec-int-cobertura': ['renderIntegridade'],
+  'sec-int-operadores': ['renderIntegridade'],
+  'sec-int-cadastro': ['renderIntegridade'],
+  'sec-int-regressao': ['renderIntegridade'],
 };
 // Algumas dessas seções são genuinamente lentas de calcular (ex: renderProjects ~5s em
 // produção, varrendo todo o histórico). Esse cache evita refazer o cálculo ao trocar de
@@ -1835,6 +1909,7 @@ async function fetchData(){
     fetchJustificativasAuditoria(); // idem, justificativas de duração suspeita
     fetchAnaliseIA(); // idem — análise de IA é independente do feed principal
     fetchSaldosPendentes(); // idem — lotes com saldo pendente (backlog de saldos)
+    fetchQualidade(); // idem — painel de integridade e qualidade dos dados
     if(typeof renderInsightsCruzados==='function') renderInsightsCruzados(); // só tem efeito se a página atual for 'cruzados'
   }catch(err){showLoadingState(false,err.message);console.error('Erro fetchData:',err);}
 }
@@ -1852,6 +1927,303 @@ async function fetchAbertos(){
       if(secBacklog && secBacklog.style.display!=='none') renderBacklog();
     }
   }catch(e){console.warn('fetchAbertos:',e.message);}
+}
+
+// ── INTEGRIDADE & QUALIDADE DOS DADOS ────────────────────────────────────────
+// Payload calculado pelo backend (qualidade.service.ts) e publicado no espelho pelo
+// dashboard-sync. É recalculado a cada ~10min, não a cada ciclo: são varreduras da base
+// inteira e o dado muda devagar.
+let _qualidadeData = null;
+
+async function fetchQualidade(){
+  try{
+    const resp = await fetch(APPS_SCRIPT_URL+'?action=getQualidade&_='+Date.now());
+    if(!resp.ok) return;
+    const json = await resp.json();
+    if(json && json.success){
+      _qualidadeData = json;
+      const sec = document.getElementById('sec-int-indice');
+      if(sec && sec.closest('.page-grid.active')) renderIntegridade();
+    }
+  }catch(e){ console.warn('fetchQualidade:', e.message); }
+}
+
+// Uma função só desenha os 7 blocos: eles vêm do mesmo payload e sempre mudam juntos.
+// RENDER_POR_SECAO aponta todas as seções pra cá; o guard de _secoesJaRenderizadas evita
+// redesenhar 7 vezes ao abrir a página.
+function renderIntegridade(){
+  const q = _qualidadeData;
+  if(!q){ return; }
+  renderIntIndice(q); renderIntRevisao(q); renderIntTendencia(q);
+  renderIntCobertura(q); renderIntOperadores(q); renderIntCadastro(q); renderIntRegressao(q);
+}
+
+function _corPct(pct, invertido){
+  // invertido = quanto MENOR melhor (ex: % sem quantidade)
+  const bom = invertido ? pct <= 10 : pct >= 85;
+  const medio = invertido ? pct <= 30 : pct >= 65;
+  return bom ? 'var(--accent3)' : medio ? 'var(--accent)' : 'var(--danger)';
+}
+
+function renderIntIndice(q){
+  const el = document.getElementById('sec-int-indice');
+  if(!el || el.style.display==='none') return;
+  const i = q.indice;
+  const badge = document.getElementById('intIndiceBadge');
+  const quando = q.geradoEm ? new Date(q.geradoEm).toLocaleString('pt-BR') : '—';
+  if(badge) badge.textContent = 'Recalculado em '+quando;
+
+  const cor = _corPct(i.pct, false);
+  document.getElementById('intIndicePanel').innerHTML = `
+    <div style="display:flex;gap:22px;align-items:center;flex-wrap:wrap">
+      <div style="text-align:center;min-width:150px">
+        <div style="font-size:52px;font-weight:800;line-height:1;color:${cor}">${i.pct}%</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:6px;text-transform:uppercase;letter-spacing:.5px">
+          dos fechamentos servem para medir
+        </div>
+      </div>
+      <div style="flex:1;min-width:280px;display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px">
+        ${[
+          ['Fechamentos', i.total, 'var(--accent2)', 'no histórico'],
+          ['Confiáveis', i.uteis, 'var(--accent3)', 'com quantidade e sem marca'],
+          ['Sem quantidade', i.semQtd, 'var(--danger)', 'não dá para medir produção'],
+          ['Com marca de suspeita', i.comFlag, 'var(--warn)', 'fora dos cálculos'],
+        ].map(([lbl,val,cor2,sub])=>`
+          <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px">
+            <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px">${lbl}</div>
+            <div style="font-size:22px;font-weight:700;color:${cor2}">${val.toLocaleString('pt-BR')}</div>
+            <div style="font-size:10px;color:var(--text3)">${sub}</div>
+          </div>`).join('')}
+      </div>
+    </div>`;
+}
+
+function renderIntRevisao(q){
+  const el = document.getElementById('sec-int-revisao');
+  if(!el || el.style.display==='none') return;
+  const badge = document.getElementById('intRevisaoBadge');
+  const panel = document.getElementById('intRevisaoPanel');
+  const fila = q.revisao || [];
+  if(badge) badge.textContent = q.revisaoPendentes
+    ? q.revisaoPendentes+' pendente(s)'+(q.revisaoPendentes>fila.length ? ' · exibindo as '+fila.length+' de maior impacto' : '')
+    : 'nada pendente';
+
+  if(!fila.length){
+    panel.innerHTML='<div class="empty">Nenhuma marcação pendente de revisão. 🎉</div>';
+    return;
+  }
+  const rotulo = {
+    DURACAO_EXTREMA:'Duração fora de escala', DURACAO_IRRISORIA:'Fechado em segundos',
+    SOBREPOSICAO:'Dois apontamentos ao mesmo tempo', OPERACAO_DIVERGENTE:'Operação divergente',
+    QTD_ACIMA_PLANEJADO:'Quantidade acima do planejado',
+  };
+  panel.innerHTML = `
+    <div style="font-size:11px;color:var(--text3);margin-bottom:8px">
+      Ordenada por impacto — quanto o registro distorce os indicadores. Enquanto pendente, fica
+      <strong>fora de todos os cálculos</strong>. "Falso positivo" devolve o registro aos indicadores.
+    </div>
+    <div style="overflow-x:auto"><table class="tbl">
+      <thead><tr>
+        <th>Motivo</th><th>Funcionário</th><th>Quando</th><th>Item / Série</th>
+        <th>O que foi detectado</th><th style="text-align:center">Decisão</th>
+      </tr></thead>
+      <tbody>${fila.map(r=>`
+        <tr id="susp-${r.id}">
+          <td style="font-size:11px;font-weight:600;white-space:nowrap">${rotulo[r.motivo]||r.motivo}</td>
+          <td style="font-size:11px">${(r.operador||'').split(/\s*—\s*/).slice(1).join(' ')||r.operador}</td>
+          <td style="font-size:11px;color:var(--text2);white-space:nowrap">${r.data}</td>
+          <td style="font-size:11px"><span style="color:var(--accent2)">${r.item||'—'}</span>${r.serie?'<div style="font-size:10px;color:var(--text3)">série '+r.serie+'</div>':''}</td>
+          <td style="font-size:11px;color:var(--text2)">${r.detalhe}</td>
+          <td style="text-align:center;white-space:nowrap">
+            <button class="excluir-btn" onclick="revisarSuspeito(${r.id},true)" title="Confirma o problema — segue fora dos cálculos">É problema</button>
+            <button class="fechar-btn" onclick="revisarSuspeito(${r.id},false)" title="Registro é válido — volta a contar">Falso positivo</button>
+          </td>
+        </tr>`).join('')}</tbody>
+    </table></div>`;
+}
+
+// Escrita: vai direto no backend (APONTAMENTO_URL), igual a Editar/Fechar/Excluir — só
+// funciona dentro da rede da fábrica, num navegador que já aceitou o certificado.
+async function revisarSuspeito(id, confirmado){
+  const linha = document.getElementById('susp-'+id);
+  if(linha) linha.style.opacity = '.5';
+  try{
+    const url = APONTAMENTO_URL+'?action=revisarSuspeito&key=AGF2026&id='+encodeURIComponent(id)
+      +'&confirmado='+(confirmado?'true':'false')+'&revisadoPor=dashboard&_='+Date.now();
+    const resp = await fetch(url);
+    const json = await resp.json();
+    if(!json.success) throw new Error(json.message||'falha ao gravar');
+    if(linha){
+      linha.style.transition='opacity .3s';
+      linha.style.opacity='0';
+      setTimeout(()=>linha.remove(), 300);
+    }
+    // Atualiza o contador local sem esperar o próximo ciclo do espelho (até 10min).
+    if(_qualidadeData){
+      _qualidadeData.revisaoPendentes = Math.max(0, (_qualidadeData.revisaoPendentes||1)-1);
+      _qualidadeData.revisao = (_qualidadeData.revisao||[]).filter(r=>r.id!==id);
+      const badge=document.getElementById('intRevisaoBadge');
+      if(badge) badge.textContent=_qualidadeData.revisaoPendentes+' pendente(s)';
+    }
+    showToastQual(confirmado?'Marcado como problema.':'Falso positivo — volta a contar nos indicadores.');
+  }catch(err){
+    if(linha) linha.style.opacity='1';
+    showToastQual('Erro: '+err.message+' — a revisão exige estar na rede da fábrica.', true);
+  }
+}
+
+function showToastQual(msg, erro){
+  let t=document.getElementById('qualToast');
+  if(!t){
+    t=document.createElement('div'); t.id='qualToast';
+    t.style.cssText='position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:9999;'
+      +'padding:11px 18px;border-radius:8px;font-size:13px;font-weight:600;box-shadow:0 6px 24px rgba(0,0,0,.4)';
+    document.body.appendChild(t);
+  }
+  t.style.background = erro ? '#7f1d1d' : '#14532d';
+  t.style.color = '#fff';
+  t.textContent = msg;
+  t.style.display='block';
+  clearTimeout(t._tm);
+  t._tm=setTimeout(()=>{ t.style.display='none'; }, erro?6000:3000);
+}
+
+function renderIntTendencia(q){
+  const el = document.getElementById('sec-int-tendencia');
+  if(!el || el.style.display==='none') return;
+  const t = q.tendencia||[];
+  const panel=document.getElementById('intTendenciaPanel');
+  if(!t.length){ panel.innerHTML='<div class="empty">Sem histórico suficiente.</div>'; return; }
+
+  const barra = (pct, invertido) => {
+    const w = Math.min(100, pct);
+    return `<div style="background:var(--surface2);border-radius:3px;height:7px;overflow:hidden;min-width:60px">
+      <div style="width:${w}%;height:100%;background:${_corPct(pct, invertido)}"></div></div>`;
+  };
+  const mesNome = m => {
+    const [a,b]=m.split('-');
+    return ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'][Number(b)-1]+'/'+a.slice(2);
+  };
+  panel.innerHTML = `
+    <div style="font-size:11px;color:var(--text3);margin-bottom:8px">
+      Percentual dos apontamentos do mês com cada problema. <strong>Menor é melhor</strong> nas três colunas.
+    </div>
+    <div style="overflow-x:auto"><table class="tbl">
+      <thead><tr><th>Mês</th><th>Apontamentos</th>
+        <th>Sem quantidade</th><th>Fechado em segundos</th><th>Com marca de suspeita</th></tr></thead>
+      <tbody>${t.map(m=>`<tr>
+        <td style="font-weight:700">${mesNome(m.mes)}</td>
+        <td style="color:var(--text2)">${m.total}</td>
+        <td><div style="display:flex;align-items:center;gap:8px">${barra(m.semQtdPct,true)}
+          <span style="font-weight:700;color:${_corPct(m.semQtdPct,true)}">${m.semQtdPct}%</span></div></td>
+        <td><div style="display:flex;align-items:center;gap:8px">${barra(m.curtosPct,true)}
+          <span style="font-weight:700;color:${_corPct(m.curtosPct,true)}">${m.curtosPct}%</span></div></td>
+        <td><div style="display:flex;align-items:center;gap:8px">${barra(m.flagsPct,true)}
+          <span style="font-weight:700;color:${_corPct(m.flagsPct,true)}">${m.flagsPct}%</span></div></td>
+      </tr>`).join('')}</tbody>
+    </table></div>`;
+}
+
+function renderIntCobertura(q){
+  const el = document.getElementById('sec-int-cobertura');
+  if(!el || el.style.display==='none') return;
+  const c = q.cobertura;
+  const badge=document.getElementById('intCoberturaBadge');
+  if(badge){ badge.textContent = c.pct+'% dos fechamentos informam quantidade'; }
+  const piores=(c.porOperador||[]).filter(o=>o.semQtd>0).slice(0,10);
+  document.getElementById('intCoberturaPanel').innerHTML = `
+    <div style="font-size:11px;color:var(--text3);margin-bottom:8px">
+      Sem quantidade, o fechamento não entra em nenhuma conta de produção nem no Previsto × Realizado.
+      É a maior lacuna da base hoje: <strong>${c.semQtd.toLocaleString('pt-BR')} de ${c.fechamentos.toLocaleString('pt-BR')}</strong>.
+    </div>
+    ${piores.length ? `<table class="tbl">
+      <thead><tr><th>Funcionário</th><th>Fechamentos</th><th>Sem quantidade</th><th>%</th></tr></thead>
+      <tbody>${piores.map(o=>`<tr>
+        <td style="font-size:12px">${o.operador.split(/\s*—\s*/).slice(1).join(' ')||o.operador}</td>
+        <td style="color:var(--text2)">${o.total}</td>
+        <td style="font-weight:600">${o.semQtd}</td>
+        <td style="font-weight:700;color:${_corPct(o.pct,true)}">${o.pct}%</td>
+      </tr>`).join('')}</tbody></table>`
+      : '<div class="empty">Todos os fechamentos informam quantidade.</div>'}`;
+}
+
+function renderIntOperadores(q){
+  const el = document.getElementById('sec-int-operadores');
+  if(!el || el.style.display==='none') return;
+  const ops=[...(q.operadores||[])].sort((a,b)=>b.curtosPct-a.curtosPct).filter(o=>o.curtos>0||o.flags>0).slice(0,10);
+  document.getElementById('intOperadoresPanel').innerHTML = `
+    <div style="font-size:11px;color:var(--text3);margin-bottom:8px">
+      Isto não é ranking de desempenho — é onde a <strong>rotina de registro</strong> precisa de ajuste.
+      "Fechado em segundos" costuma ser quem aponta depois de fazer o trabalho: a quantidade fica certa,
+      o tempo não.
+    </div>
+    ${ops.length ? `<table class="tbl">
+      <thead><tr><th>Funcionário</th><th>Apontamentos</th><th>Em segundos</th><th>Marcados</th></tr></thead>
+      <tbody>${ops.map(o=>`<tr>
+        <td style="font-size:12px">${o.operador.split(/\s*—\s*/).slice(1).join(' ')||o.operador}</td>
+        <td style="color:var(--text2)">${o.total}</td>
+        <td><span style="font-weight:700;color:${_corPct(o.curtosPct,true)}">${o.curtosPct}%</span>
+          <span style="font-size:10px;color:var(--text3)"> (${o.curtos})</span></td>
+        <td style="color:var(--warn);font-weight:600">${o.flags}</td>
+      </tr>`).join('')}</tbody></table>`
+      : '<div class="empty">Nenhum padrão de registro fora do esperado.</div>'}`;
+}
+
+function renderIntCadastro(q){
+  const el = document.getElementById('sec-int-cadastro');
+  if(!el || el.style.display==='none') return;
+  const itens = q.cadastro?.itens || [];
+  // Cruzamento com a tabela de estimativas acontece aqui: ESTIMADOS_DATA vive no dashboard,
+  // o backend não a conhece.
+  const semEst = itens.filter(i => !EST_MAP[normCode(i.codItem)]);
+  const usosSemEst = semEst.reduce((s,i)=>s+i.usos,0);
+  const usosTotal = itens.reduce((s,i)=>s+i.usos,0) || 1;
+  const badge=document.getElementById('intCadastroBadge');
+  if(badge) badge.textContent = semEst.length+' de '+itens.length+' itens sem estimativa';
+
+  document.getElementById('intCadastroPanel').innerHTML = `
+    <div style="font-size:11px;color:var(--text3);margin-bottom:10px">
+      O Previsto × Realizado só consegue opinar sobre item com tempo de referência cadastrado.
+      Hoje <strong>${Math.round(usosSemEst/usosTotal*100)}% dos apontamentos</strong> são de itens sem referência.
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:12px">
+      ${[
+        ['Itens sem estimativa', semEst.length, 'var(--danger)'],
+        ['Séries sem uso', q.cadastro?.seriesSemUso ?? 0, 'var(--text2)'],
+        ['Operações sem uso', q.cadastro?.operacoesSemUso ?? 0, 'var(--text2)'],
+        ['Operadores sem uso', q.cadastro?.operadoresSemUso ?? 0, 'var(--text2)'],
+      ].map(([l,v,c])=>`<div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:9px 11px">
+        <div style="font-size:10px;color:var(--text3);text-transform:uppercase">${l}</div>
+        <div style="font-size:20px;font-weight:700;color:${c}">${v}</div></div>`).join('')}
+    </div>
+    ${semEst.length ? `<div style="font-size:11px;color:var(--text3);margin-bottom:5px">
+        Itens sem referência com mais apontamentos — cadastrar estes primeiro dá o maior ganho:</div>
+      <table class="tbl"><thead><tr><th>Código do item</th><th>Apontamentos</th></tr></thead>
+      <tbody>${semEst.slice(0,12).map(i=>`<tr>
+        <td style="color:var(--accent2);font-size:12px">${i.codItem}</td>
+        <td style="font-weight:600">${i.usos}</td></tr>`).join('')}</tbody></table>` : ''}`;
+}
+
+function renderIntRegressao(q){
+  const el = document.getElementById('sec-int-regressao');
+  if(!el || el.style.display==='none') return;
+  const r = q.regressao||[];
+  const falhas = r.filter(x=>!x.ok).length;
+  const badge=document.getElementById('intRegressaoBadge');
+  if(badge){
+    badge.textContent = falhas ? falhas+' problema(s) reapareceu(ram)' : 'tudo limpo';
+    badge.style.color = falhas ? 'var(--danger)' : 'var(--accent3)';
+  }
+  document.getElementById('intRegressaoPanel').innerHTML = `
+    <div style="font-size:11px;color:var(--text3);margin-bottom:8px">
+      Cada linha aqui já foi corrigida uma vez. O valor deste bloco é avisar quando voltar.
+    </div>
+    <table class="tbl"><tbody>${r.map(x=>`<tr>
+      <td style="width:26px;font-size:15px">${x.ok?'✅':'🔴'}</td>
+      <td style="font-size:12px;font-weight:${x.ok?'400':'700'}">${x.verificacao}
+        <div style="font-size:10px;color:var(--text3);font-weight:400">${x.detalhe}</div></td>
+      <td style="text-align:right;font-weight:700;color:${x.ok?'var(--accent3)':'var(--danger)'}">${x.valor}</td>
+    </tr>`).join('')}</tbody></table>`;
 }
 
 async function fetchJustificativasAuditoria(){
