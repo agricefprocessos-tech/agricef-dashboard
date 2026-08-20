@@ -1281,7 +1281,7 @@ function renderMetaOp(){
     // Paradas raramente têm operação associada, então usar capacidade global é mais honesto
     // Capacidade total = soma dias ativos × 8h (igual ao KPI principal)
     const funcDaysOp = {};
-    filtered.forEach(r2 => {
+    filteredCalc.forEach(r2 => {
       if(!funcDaysOp[r2.func]) funcDaysOp[r2.func] = new Set();
       funcDaysOp[r2.func].add(r2.ts.slice(0,10));
     });
@@ -1446,7 +1446,7 @@ const APPS_SCRIPT_URL='https://script.google.com/macros/s/AKfycbyHjHkisWX5z92qs6
 // navegador precisa aceitar manualmente o aviso de certificado não confiável (uma vez só).
 const APONTAMENTO_URL='https://192.168.10.70:3443/exec';
 const REFRESH_INTERVAL_MS=2*60*1000; // 2 min — reduzido para diminuir delay de aparecimento
-let RAW_DATA=[],ABSENCES=[],PLANT_OPEN_DAYS=[],ALL_WORKDAYS=[],filtered=[],_timelineItems=[];
+let RAW_DATA=[],ABSENCES=[],PLANT_OPEN_DAYS=[],ALL_WORKDAYS=[],filtered=[],filteredCalc=[],_timelineItems=[];
 let _refreshTimer=null,_lastUpdate=null;
 let _fcmIdx=null;
 // Cópia fixa do registro no momento em que o modal de Fechar abre — Fix#RaceRefreshFechar:
@@ -1748,6 +1748,10 @@ function parseSheetJSON(rows){
   const kQtyPlan=findCol('QTD PLANEJADA',['QTD PLANEJADA','QUANTIDADE PLANEJADA']);
   const kObs1=findCol('OBSERVAÇÃO 1',['OBSERVACAO 1','OBSERVAÇÃO 1']);
   const kAbertoId=findCol('Coluna 16',['COLUNA 16']);
+  // Marca vinda do backend (tabela eventos_suspeitos): apontamento cuja duração/quantidade a
+  // auditoria não confirma. Some de TODOS os cálculos, mas continua listado — o líder precisa
+  // conseguir achar o registro pra corrigir.
+  const kSuspeito=findCol('Coluna 3',['COLUNA 3']);
   const records=[];
   for(const row of rows){
     function g(k){return k?String(row[k]||'').trim():'';}
@@ -1755,6 +1759,7 @@ function parseSheetJSON(rows){
     const tipo=g(kTipo),op=g(kOp),item=g(kItem),qty=g(kQty);
     const tipoParada=g(kParada),tipoSetup=g(kSetup),tipoRet=g(kRetrab),op2=g(kOp2);
     const qtyPlan=g(kQtyPlan),obs1=g(kObs1),abertoId=g(kAbertoId);
+    const suspeito=g(kSuspeito)==='SUSPEITO';
     if(!tsRaw||!func||func==='NOME DO OPERADOR') continue;
     let tsNorm=tsRaw;
     if(tsRaw.includes('T')&&(tsRaw.includes('Z')||tsRaw.includes('+'))){
@@ -1768,7 +1773,7 @@ function parseSheetJSON(rows){
     records.push({ts:tsNorm,func,serie_raw:serieRaw,serie:(parts[0]||'').trim(),
       impl:(parts[1]||'').trim(),client:(parts[2]||'').trim(),
       tipo,op,item,qty,qtyPlan,obs1,tipoParada,tipoSetup,tipoRetrabalho:tipoRet,op2,
-      _abertoId:abertoId});
+      _abertoId:abertoId,_suspeito:suspeito});
   }
   console.log('Parsed:',records.length,'|Tipos:',[...new Set(records.map(r=>r.tipo))]);
   return records;
@@ -2032,7 +2037,12 @@ function pairRows(rows, openType, closeType){
   // Ordena por timestamp real antes de parear — a ordem de chegada em `rows` (id/inserção)
   // não é garantida cronológica para dados antigos migrados em lote, e o pareamento abaixo
   // só encontra uma ABERTURA se ela já tiver sido empilhada em `opens` neste loop.
-  const sorted = [...rows].sort((a,b) => tsToDate(a.ts) - tsToDate(b.ts));
+  //
+  // Apontamento marcado como suspeito pela auditoria sai aqui — este é o funil por onde passa
+  // quase todo cálculo do dashboard (KPIs, gráficos, Previsto × Realizado, ranking, paradas),
+  // então filtrar num lugar só cobre todos. A listagem de registros não usa pairRows e por
+  // isso continua mostrando tudo.
+  const sorted = [...rows].filter(r => !r._suspeito).sort((a,b) => tsToDate(a.ts) - tsToDate(b.ts));
   sorted.forEach(r => {
     if(r.tipo === openType){
       opens.push({...r, _used:false});
@@ -2142,7 +2152,15 @@ function applyFilters(){
     if(to   && d > to)   return false;
     return true;
   });
-  document.getElementById('recCount').textContent = filtered.length;
+  // `filtered` = tudo que passa nos filtros da tela, inclusive suspeito — é o que a LISTAGEM
+  // mostra. `filteredCalc` tira os suspeitos e é o que todo CÁLCULO usa (KPIs, capacidade,
+  // eficiência). Cálculo que passa por pairRows já é filtrado lá dentro; este aqui cobre as
+  // agregações que leem as linhas direto.
+  filteredCalc = filtered.filter(r => !r._suspeito);
+  const nSusp = filtered.length - filteredCalc.length;
+  document.getElementById('recCount').textContent = nSusp
+    ? filtered.length + ' (' + nSusp + ' fora do cálculo)'
+    : filtered.length;
   if(typeof _secoesJaRenderizadas !== 'undefined') _secoesJaRenderizadas.clear();
   renderAll();
   // renderAll() já processou (de forma síncrona) todas as seções visíveis na página atual —
@@ -2187,12 +2205,12 @@ function renderKPIs(){
   const fTo2   = document.getElementById('fTo')?.value   || '';
 
   // Active operators in the filtered period (apontaram ao menos 1 vez)
-  const activeFuncs = new Set(filtered.map(r=>r.func));
+  const activeFuncs = new Set(filteredCalc.map(r=>r.func));
 
   // Workdays in the period (Mon-Fri)
   function getWorkdays(){
-    if(!filtered.length) return 0;
-    const tsArr = filtered.map(r=>tsToDate(r.ts).getTime()).filter(t=>t>0);
+    if(!filteredCalc.length) return 0;
+    const tsArr = filteredCalc.map(r=>tsToDate(r.ts).getTime()).filter(t=>t>0);
     if(!tsArr.length) return 0;
     const minTs = fFrom2 ? tsToDate(fFrom2+' 00:00:00').getTime() : Math.min(...tsArr);
     const maxTs = fTo2   ? tsToDate(fTo2  +' 23:59:59').getTime() : Math.max(...tsArr);
@@ -2211,7 +2229,7 @@ function renderKPIs(){
   // Available capacity = sum over each func of (active days × 8h)
   // This avoids inflating capacity when an operator only worked some days
   const funcDays = {};
-  filtered.forEach(r => {
+  filteredCalc.forEach(r => {
     if(!funcDays[r.func]) funcDays[r.func] = new Set();
     funcDays[r.func].add(r.ts.slice(0,10));
   });
@@ -2230,12 +2248,12 @@ function renderKPIs(){
   // NEW efficiency formula: productive / capacity
   const eff = tCapacity > 0 ? Math.min(100, Math.round(tProd / tCapacity * 100)) : 0;
 
-  const series = new Set(filtered.map(r=>r.serie).filter(s=>s&&s[0]>='0'&&s[0]<='9'));
+  const series = new Set(filteredCalc.map(r=>r.serie).filter(s=>s&&s[0]>='0'&&s[0]<='9'));
   // Total operações concluídas (pares fechados) - métrica não-ambígua
   const opsConcluidas = prod.length;
   // Quantidade só faz sentido quando agregada por item, não somada entre operações diferentes
 
-  document.getElementById('k1').textContent = filtered.length;
+  document.getElementById('k1').textContent = filteredCalc.length;
   document.getElementById('k2').textContent = activeFuncs.size;
   document.getElementById('k3').textContent = series.size;
   document.getElementById('k4').textContent = fmtH(tProd);
@@ -3717,8 +3735,8 @@ function renderExtraKPIs(){
   // OEE: Disponibilidade × Performance (produtivo/disponível) × Qualidade (1-taxa retrabalho)
   const disponibilidade = tTotal>0 ? tProd/(tProd+tPara+tAbs) : 0;
   const performance     = 1; // sem tempo padrão definido, assume 100%
-  const nOpsTotal       = filtered.filter(r=>r.tipo==='FECHAMENTO').length;
-  const nOpsRet         = filtered.filter(r=>r.tipo==='TÉRMINO DE RETRABALHO').length;
+  const nOpsTotal       = filteredCalc.filter(r=>r.tipo==='FECHAMENTO').length;
+  const nOpsRet         = filteredCalc.filter(r=>r.tipo==='TÉRMINO DE RETRABALHO').length;
   const qualidade       = nOpsTotal>0 ? 1-(nOpsRet/nOpsTotal) : 1;
   const oee             = disponibilidade * performance * qualidade * 100;
   const el_oee = document.getElementById('k-oee');
@@ -3835,7 +3853,7 @@ function renderHeatmap(){
   if(!panel) return;
 
   const grid = Array.from({length:7}, () => Array(24).fill(0));
-  filtered.forEach(rec => {
+  filteredCalc.forEach(rec => {
     const d = tsToDate(rec.ts);
     if(d.getTime() === 0) return;
     grid[d.getDay()][d.getHours()]++;
@@ -3870,7 +3888,7 @@ function renderHeatmap(){
 
   out += '</table></div>';
   out += `<div style="margin-top:10px;font-size:11px;color:var(--text3)">
-    Mostrando horas 6h–18h | Total de apontamentos: ${filtered.length} | 
+    Mostrando horas 6h–18h | Total de apontamentos: ${filteredCalc.length} | 
     Pico: ${maxVal} apontamentos/hora
   </div>`;
 
@@ -3933,7 +3951,7 @@ function renderInsightsCruzados(){
   // 3. Paradas por Hora do Dia
   if(chartInstances['crossParadas']){chartInstances['crossParadas'].destroy();delete chartInstances['crossParadas'];}
   const horaCount = Array(24).fill(0);
-  filtered.forEach(r=>{
+  filteredCalc.forEach(r=>{
     if(r.tipo !== 'INÍCIO DE PARADA') return;
     const d = tsToDate(r.ts);
     if(d.getTime()===0) return;
@@ -5331,6 +5349,9 @@ function renderAudit3() {
   });
 
   // 3. Apontamentos simultâneos (mesmo func, mesmo horário, tipo ABERTURA)
+  // Este painel usa `filtered` (com suspeitos) de propósito, ao contrário do resto do
+  // dashboard: o trabalho dele é justamente encontrar anomalia. Esconder o que a auditoria
+  // marcou faria a tela de auditoria deixar de mostrar o que precisa ser corrigido.
   const aberturas = filtered.filter(r => r.tipo === 'ABERTURA').sort((a,b) => tsToDate(a.ts)-tsToDate(b.ts));
   const byFunc = {};
   aberturas.forEach(r => { if(!byFunc[r.func]) byFunc[r.func]=[]; byFunc[r.func].push(r); });
