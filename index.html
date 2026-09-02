@@ -248,6 +248,23 @@ main{padding:18px 24px;}
 .sec-card.drag-over-card{outline:2px solid var(--accent);outline-offset:4px;background:rgba(240,180,41,.04);}
 .sec-card{position:relative;transition:outline .15s,opacity .15s;}
 /* Audit tabs */
+.cad-tab{padding:9px 18px;font-size:12.5px;font-weight:600;cursor:pointer;border-bottom:2px solid transparent;color:var(--text2);transition:color .2s,border-color .2s;user-select:none;white-space:nowrap;}
+.cad-tab:hover{color:var(--text);}
+.cad-tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+.cad-btn{background:var(--surface2);border:1px solid var(--border);color:var(--text2);padding:3px 10px;border-radius:5px;font-size:11px;font-weight:600;cursor:pointer;font-family:'Barlow',sans-serif;transition:all .15s;white-space:nowrap;}
+.cad-btn:hover{border-color:var(--accent);color:var(--accent);}
+.cad-btn.primary{background:var(--accent);border-color:var(--accent);color:#000;}
+.cad-btn.primary:hover{filter:brightness(1.12);color:#000;}
+/* Tabela do cadastro: linhas altas o suficiente para respirar, cabecalho fixo ao rolar */
+.cad-tbl{width:100%;border-collapse:collapse;font-size:12.5px;}
+.cad-tbl th{position:sticky;top:0;background:var(--surface);text-align:left;padding:7px 10px;font-size:10px;
+  letter-spacing:.06em;text-transform:uppercase;color:var(--text3);font-weight:600;border-bottom:1px solid var(--border);z-index:1;}
+.cad-tbl td{padding:8px 10px;border-bottom:1px solid var(--border);vertical-align:middle;}
+.cad-tbl tbody tr:hover{background:var(--surface2);}
+.cad-tbl tbody tr:last-child td{border-bottom:none;}
+/* Marca discreta para dado deduzido pelo sistema — sem encher a linha de etiquetas */
+.inferido{border-bottom:1px dotted var(--warn,#fb923c);cursor:help;}
+.pt-dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:6px;vertical-align:middle;}
 .audit-tab{padding:8px 16px;font-size:12px;font-weight:600;cursor:pointer;border-bottom:2px solid transparent;color:var(--text2);transition:color .2s,border-color .2s;user-select:none;}
 .audit-tab:hover{color:var(--text);}
 
@@ -305,6 +322,23 @@ input[type="date"]{color-scheme:dark;}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 </head>
 <body>
+
+<!-- MODAL: Cadastro de Pessoas — um formulário só, montado por configuração.
+     Substitui correntes de prompt(): o líder preenche isto várias vezes por semana, e prompt
+     não mostra o que já está gravado, não valida antes de enviar e não deixa corrigir um campo
+     sem refazer todos. -->
+<div class="fcm-overlay" id="cadmOverlay">
+  <div class="fcm-box" style="width:520px">
+    <div class="fcm-title" id="cadmTitle">Editar</div>
+    <div id="cadmSub" style="font-size:12px;color:var(--text2);margin:-10px 0 14px;line-height:1.5"></div>
+    <div id="cadmCampos"></div>
+    <div class="fcm-err" id="cadmErr" style="display:none"></div>
+    <div style="display:flex;gap:9px;justify-content:flex-end;margin-top:16px">
+      <button class="cad-btn" onclick="fecharCadModal()">Cancelar</button>
+      <button class="cad-btn primary" id="cadmSalvar">Salvar</button>
+    </div>
+  </div>
+</div>
 
 <!-- MODAL: Fechar Apontamento -->
 <div class="fcm-overlay" id="fcmOverlay">
@@ -451,7 +485,7 @@ input[type="date"]{color-scheme:dark;}
         <input type="text" id="edmCliente" style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:6px;font-size:14px;font-family:'Barlow',sans-serif;outline:none;transition:border-color .2s;" onfocus="this.style.borderColor='#fbbf24'" onblur="this.style.borderColor='var(--border)'">
       </div>
     </div>
-    <div class="fcm-row" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+    <div class="fcm-row" id="edmQtdSimples" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
       <div>
         <label>Qtd Planejada</label>
         <input type="number" id="edmQtdPlanejada" min="0" step="1" style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:6px;font-size:14px;font-family:'Barlow',sans-serif;outline:none;transition:border-color .2s;" onfocus="this.style.borderColor='#fbbf24'" onblur="this.style.borderColor='var(--border)'">
@@ -460,6 +494,14 @@ input[type="date"]{color-scheme:dark;}
         <label>Qtd Realizada</label>
         <input type="number" id="edmQuantidade" min="0" step="1" style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:6px;font-size:14px;font-family:'Barlow',sans-serif;outline:none;transition:border-color .2s;" onfocus="this.style.borderColor='#fbbf24'" onblur="this.style.borderColor='var(--border)'">
       </div>
+    </div>
+    <!-- Lote: uma quantidade por série. A linha do painel mostra a soma das séries e leva o
+         número da primeira no rótulo; com um campo único o líder editava vendo o total e o
+         valor caía inteiro dentro da série 1 — e as demais séries eram inalcançáveis. -->
+    <div class="fcm-row" id="edmLoteBox" style="display:none;">
+      <label style="display:block;margin-bottom:6px;">Quantidade por série <span style="color:var(--text3);font-weight:400;text-transform:none;letter-spacing:0">— este apontamento é um lote</span></label>
+      <div id="edmLoteGrid" style="display:flex;flex-direction:column;gap:6px;"></div>
+      <div id="edmLoteSoma" style="margin-top:7px;font-size:11.5px;color:var(--text3);"></div>
     </div>
     <div class="fcm-row" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
       <div>
@@ -789,6 +831,8 @@ input[type="date"]{color-scheme:dark;}
   <button class="page-tab" data-page="qualidade" onclick="mudarPagina('qualidade')">⛔ Qualidade</button>
   <button class="page-tab" data-page="cruzados" onclick="mudarPagina('cruzados')">🔀 Insights Cruzados</button>
   <button class="page-tab" data-page="integridade" onclick="mudarPagina('integridade')">🔍 Integridade dos Dados</button>
+  <button class="page-tab" data-page="gestao-vista" onclick="mudarPagina('gestao-vista')">📺 Gestão à Vista</button>
+  <button class="page-tab" data-page="cadastro" onclick="mudarPagina('cadastro')">🗂️ Cadastro de Pessoas</button>
 </div>
 
 <main style="padding-top:4px">
@@ -802,7 +846,7 @@ input[type="date"]{color-scheme:dark;}
     <div class="kpi" id="kpi-horas-retrabalho" data-page="qualidade" style="--kc:#fb923c"><div class="kpi-lbl">Horas Retrabalho</div><div class="kpi-val" id="k6">—</div><div class="kpi-sub">Reprocessamento</div><div class="kpi-ico">🔄</div></div>
     <div class="kpi" id="kpi-eficiencia" data-page="visao-geral" style="--kc:#f0b429"><div class="kpi-lbl">Eficiência Geral</div><div class="kpi-val" id="k7">—</div><div class="kpi-sub">% tempo produtivo</div><div class="kpi-ico">📈</div></div>
     <div class="kpi" id="kpi-itens" data-page="planejamento" style="--kc:#4ade80"><div class="kpi-lbl">Itens Produzidos</div><div class="kpi-val" id="k8">—</div><div class="kpi-sub">Qtd. total apontada</div><div class="kpi-ico">📦</div></div>
-    <div class="kpi" id="kpi-ausencia" data-page="pessoas" style="--kc:#f87171"><div class="kpi-lbl">Horas Ausência</div><div class="kpi-val" id="k9">—</div><div class="kpi-sub">8h × dias sem apont.</div><div class="kpi-ico">📅</div></div>
+    <div class="kpi" id="kpi-ausencia" data-page="pessoas" style="--kc:#f87171"><div class="kpi-lbl">Horas Ausência</div><div class="kpi-val" id="k9">—</div><div class="kpi-sub">jornada × dias úteis sem apontamento</div><div class="kpi-ico">📅</div></div>
     <div class="kpi kpi-extra" style="--kc:#67e8f9" id="kpi-oee" data-page="eficiencia"><div class="kpi-lbl">OEE</div><div class="kpi-val" id="k-oee">—</div><div class="kpi-sub">Disponib. × Perf. × Qual.</div><div class="kpi-ico">🏭</div></div>
     <div class="kpi kpi-extra" style="--kc:#86efac" id="kpi-taxa-ret" data-page="qualidade"><div class="kpi-lbl">Taxa Retrabalho</div><div class="kpi-val" id="k-taxa-ret">—</div><div class="kpi-sub">% ops com retrabalho</div><div class="kpi-ico">🔄</div></div>
     <div class="kpi kpi-extra" style="--kc:#fca5a5" id="kpi-backlog" data-page="visao-geral"><div class="kpi-lbl">Backlog Aberto</div><div class="kpi-val" id="k-backlog">—</div><div class="kpi-sub">Aberturas s/ fechamento · todos os períodos</div><div class="kpi-ico">⏳</div></div>
@@ -826,6 +870,8 @@ input[type="date"]{color-scheme:dark;}
   <div class="page-grid" data-page-grid="qualidade"></div>
   <div class="page-grid" data-page-grid="cruzados"></div>
   <div class="page-grid" data-page-grid="integridade"></div>
+  <div class="page-grid" data-page-grid="gestao-vista"></div>
+  <div class="page-grid" data-page-grid="cadastro"></div>
 
   <!-- Funcionários -->
   <div class="card sec-card" id="sec-func" data-page="pessoas">
@@ -1271,6 +1317,62 @@ input[type="date"]{color-scheme:dark;}
     <div class="card-body" id="intRegressaoPanel"><div class="empty">Carregando…</div></div>
   </div>
 
+  <!-- ── Gestão à vista ──────────────────────────────────────────────────── -->
+  <div class="card sec-card" id="sec-gestao-vista" data-page="gestao-vista" data-full="true">
+    <div class="card-hd">
+      <div class="card-title">📺 Gestão à Vista <button class="help-btn" onclick="abrirAjuda('sec-gestao-vista')">ℹ️</button></div>
+      <div style="display:flex;gap:6px;align-items:center">
+        <div class="card-badge" id="gvBadge">—</div>
+        <button class="cad-btn" onclick="gvPeriodo(7)" id="gvBtn7">7 dias</button>
+        <button class="cad-btn" onclick="gvPeriodo(30)" id="gvBtn30">30 dias</button>
+        <button class="cad-btn" onclick="gvPeriodo(90)" id="gvBtn90">90 dias</button>
+        <button class="cad-btn primary" onclick="window.open('/painel/','_blank')"
+          title="Abre a versão de parede, sem menus e atualizando sozinha">📺 Modo parede</button>
+      </div>
+    </div>
+    <div class="card-body" id="gvPanel"><div class="empty">Carregando…</div></div>
+  </div>
+
+  <!-- ── Cadastro de pessoas ─────────────────────────────────────────────── -->
+  <!-- Uma seccao com abas internas, nao quatro secoes: a paginacao do painel poe cada
+       secao data-full na propria subpagina, e navegar de seta entre pessoas, afastamentos e
+       calendario quebra o fluxo de quem esta cadastrando. -->
+  <div class="card sec-card" id="sec-cad-pessoas" data-page="cadastro" data-full="true">
+    <div class="card-hd">
+      <div class="card-title">🗂️ Cadastro de Pessoas <button class="help-btn" onclick="abrirAjuda('sec-cad-pessoas')">ℹ️</button></div>
+      <div class="card-badge" id="cadPessoasBadge">—</div>
+    </div>
+    <div class="card-body">
+      <div id="cadTabs" style="display:flex;gap:2px;border-bottom:1px solid var(--border);margin-bottom:14px;overflow-x:auto">
+        <div class="cad-tab active" onclick="switchCadTab('cad-pessoas')">👷 Quadro de Pessoas</div>
+        <div class="cad-tab" onclick="switchCadTab('cad-afast')">🏥 Afastamentos</div>
+        <div class="cad-tab" onclick="switchCadTab('cad-cal')">📆 Calendário</div>
+        <div class="cad-tab" onclick="switchCadTab('cad-cat')">📚 Setores &amp; Funções</div>
+      </div>
+      <div class="cad-panel" id="cad-pessoas"><div id="cadPessoasPanel"><div class="empty">Carregando…</div></div></div>
+      <div class="cad-panel" id="cad-afast" style="display:none"><div id="cadAfastPanel"><div class="empty">Carregando…</div></div></div>
+      <div class="cad-panel" id="cad-cal" style="display:none"><div id="cadCalPanel"><div class="empty">Carregando…</div></div></div>
+      <div class="cad-panel" id="cad-cat" style="display:none"><div id="cadCatPanel"><div class="empty">Carregando…</div></div></div>
+    </div>
+  </div>
+
+  <!-- ── Indicadores que o cadastro destrava ─────────────────────────────── -->
+  <div class="card sec-card" id="sec-setores" data-page="eficiencia" data-full="true">
+    <div class="card-hd">
+      <div class="card-title">🏗️ Capacidade por Setor <button class="help-btn" onclick="abrirAjuda('sec-setores')">ℹ️</button></div>
+      <div class="card-badge" id="setoresBadge">—</div>
+    </div>
+    <div class="card-body" id="setoresPanel"><div class="empty">Carregando…</div></div>
+  </div>
+
+  <div class="card sec-card" id="sec-competencias" data-page="pessoas" data-full="true">
+    <div class="card-hd">
+      <div class="card-title">🎓 Matriz de Competências <button class="help-btn" onclick="abrirAjuda('sec-competencias')">ℹ️</button></div>
+      <div class="card-badge" id="compBadge">—</div>
+    </div>
+    <div class="card-body" id="compPanel"><div class="empty">Carregando…</div></div>
+  </div>
+
 </main>
 
 
@@ -1494,19 +1596,26 @@ function isParadaSistemica(tipoParada, tipoSetup){
 
 
 // ── CONFIG & GLOBALS
-// Aponta pro Apps Script "AGRICEF Dashboard - Espelho Leitura" (planilha-cópia sincronizada
-// pelo job dashboard-sync.ts do backend novo, a partir do Postgres) em vez do endpoint antigo
-// — só a leitura de KPIs/gráficos migrou; fechar/editar continua em APONTAMENTO_URL por enquanto.
-const APPS_SCRIPT_URL='https://script.google.com/macros/s/AKfycbyHjHkisWX5z92qs6DEiuzXI5lzcUaDtj4aM5jruOLtc7GLSQVAESltoCyWtuT7xK_5/exec';
-// Backend novo direto (Editar/Fechar/Excluir) — só alcançável de dentro da rede da AGRICEF,
-// diferente da leitura acima (que funciona de qualquer lugar via o espelho sincronizado).
-// HTTPS (porta 3443, cert auto-assinado) em vez de HTTP puro (:3100) — a dashboard é servida
-// por HTTPS (GitHub Pages) e todo navegador bloqueia por padrão uma página HTTPS chamando um
-// endpoint HTTP puro ("mixed content"), mesmo a rede sendo alcançável. Primeiro acesso de cada
-// navegador precisa aceitar manualmente o aviso de certificado não confiável (uma vez só).
-const APONTAMENTO_URL='https://192.168.10.70:3443/exec';
+// Onde esta dash esta sendo servida decide para onde ela fala.
+//
+// LOCAL (pelo proprio backend, na rede da fabrica) e o modo principal: mesma origem, HTTP
+// puro. Resolve de uma vez quatro problemas que o modo publico carregava — o certificado
+// auto-assinado (que fazia Editar/Fechar/Excluir falharem com "Failed to fetch" sem a
+// requisicao nem sair do navegador), o atraso de ate 30s do ciclo de sincronizacao, o limite
+// de 100KB por chave do cache do Apps Script, e a leitura parcial da planilha enquanto o job
+// a reescrevia (medido: 1 em cada 5 leituras vinha com um terco dos dados).
+//
+// PUBLICO (GitHub Pages) fica como fallback: de fora da rede a dash nao alcanca o backend,
+// entao le pelo espelho do Apps Script e escreve pelo HTTPS da 3443.
+const SERVIDO_LOCAL = !location.hostname.endsWith('github.io');
+const APPS_SCRIPT_URL = SERVIDO_LOCAL ? '/exec' : 'https://script.google.com/macros/s/AKfycbyHjHkisWX5z92qs6DEiuzXI5lzcUaDtj4aM5jruOLtc7GLSQVAESltoCyWtuT7xK_5/exec';
+const APONTAMENTO_URL = SERVIDO_LOCAL ? '/exec' : 'https://192.168.10.70:3443/exec';
 const REFRESH_INTERVAL_MS=2*60*1000; // 2 min — reduzido para diminuir delay de aparecimento
 let RAW_DATA=[],ABSENCES=[],PLANT_OPEN_DAYS=[],ALL_WORKDAYS=[],filtered=[],filteredCalc=[],_timelineItems=[];
+// Fix#FiltroRessuscitado: os filtros salvos só podem ser restaurados UMA vez, na primeira carga.
+// Restaurar a cada refresh fazia o auto-refresh (2 em 2 min) reaplicar por cima um filtro que o
+// usuário tinha acabado de remover — o select voltava sozinho para o operador antigo.
+let _filtrosRestaurados=false;
 let _refreshTimer=null,_lastUpdate=null;
 let _fcmIdx=null;
 // Cópia fixa do registro no momento em que o modal de Fechar abre — Fix#RaceRefreshFechar:
@@ -1520,7 +1629,7 @@ let _abertosData=null; // cache da aba Abertos (fonte de verdade para backlog)
 let _justificativasMap=new Map(); // chave (func||openTs||closeTs) -> {tipo,justificativa,detalhe,dataHora} — duração suspeita já justificada pelo líder
 const ESTIMADOS_DATA = [{"codigo": "509903", "desc": "ESTRUTURA CARROCERIA - CHASSI", "qty": 1.0, "horas_totais": 40.0, "horas_por_unid": 40.0}, {"codigo": "509904", "desc": "ESTRUTURA CARROCERIA - FECHAMENTO", "qty": 1.0, "horas_totais": 48.0, "horas_por_unid": 48.0}, {"codigo": "509905", "desc": "ESTRUTURA CARROCERIA - INTERNO", "qty": 1.0, "horas_totais": 48.0, "horas_por_unid": 48.0}, {"codigo": "509906", "desc": "ESTRUTURA CARROCERIA - PERIFÉRICOS", "qty": 1.0, "horas_totais": 80.0, "horas_por_unid": 80.0}, {"codigo": "509281", "desc": "SUPORTE ARTICULACAO DESCIDA", "qty": 4.0, "horas_totais": 4.0, "horas_por_unid": 1.0}, {"codigo": "509470", "desc": "PINO FIX MECANISMO FREIO", "qty": 12.0, "horas_totais": 1.0, "horas_por_unid": 0.083333}, {"codigo": "509686", "desc": "GANCHO DE FXACAO DO MEC. DESCAR", "qty": 4.0, "horas_totais": 1.0, "horas_por_unid": 0.25}, {"codigo": "509922", "desc": "ESTRUTURA CARROCERIA ABRAÇADEIRA", "qty": 1.0, "horas_totais": 88.0, "horas_por_unid": 88.0}, {"codigo": "509576", "desc": "ARTICULACAO RAMPA LATERAL", "qty": 2.0, "horas_totais": 1.0, "horas_por_unid": 0.5}, {"codigo": "509646", "desc": "GANCHO CORRENTE RAMPA LATERAL", "qty": 2.0, "horas_totais": 0.5, "horas_por_unid": 0.25}, {"codigo": "509569", "desc": "FECHAMENTO TRASEIRO - TELA 01", "qty": 2.0, "horas_totais": 0.5, "horas_por_unid": 0.25}, {"codigo": "509774", "desc": "SOLDAGEM DO PARACHOQUE 10T", "qty": 1.0, "horas_totais": 3.0, "horas_por_unid": 3.0}, {"codigo": "509778", "desc": "TUBO HASTE DO PARACHOQUE", "qty": 4.0, "horas_totais": 1.5, "horas_por_unid": 0.375}, {"codigo": "509202", "desc": "EIXO SUPERIOR COMPLETO ESTEIRA \nVERTICAL", "qty": 2.0, "horas_totais": 1.0, "horas_por_unid": 0.5}, {"codigo": "509204", "desc": "EIXO INFERIOR COMPLETO ESTEIRA VERTICAL - MOD3", "qty": 2.0, "horas_totais": 1.0, "horas_por_unid": 0.5}, {"codigo": "509205", "desc": "CONJUNTO EIXO SAIDA REDUTOR VERTICAL", "qty": 2.0, "horas_totais": 0.5, "horas_por_unid": 0.25}, {"codigo": "509244", "desc": "SUPORTE REDUTOR SUPERIOR", "qty": 2.0, "horas_totais": 0.5, "horas_por_unid": 0.25}, {"codigo": "509246", "desc": "SUPORTE REDUT. SUPT. - PERFIL 01", "qty": 2.0, "horas_totais": 0.17, "horas_por_unid": 0.085}, {"codigo": "509126", "desc": "TALISCA VERTICAL", "qty": 16.0, "horas_totais": 24.0, "horas_por_unid": 1.5}, {"codigo": "509122", "desc": "SUPORTE ROLAMENTO TALISCA VERTICAL", "qty": 32.0, "horas_totais": 3.0, "horas_por_unid": 0.09375}, {"codigo": "509248", "desc": "BATENTE CORRENTE VERTICAL", "qty": 4.0, "horas_totais": 0.5, "horas_por_unid": 0.125}, {"codigo": "508910", "desc": "ESTRUTURA ESTICADOR ESTEIRA \nHORIZONTAL - LD", "qty": 1.0, "horas_totais": 14.0, "horas_por_unid": 14.0}, {"codigo": "508932", "desc": "ESTRUTURA ESTICADOR ESTEIRA \nHORIZONTAL - LE", "qty": 1.0, "horas_totais": 14.0, "horas_por_unid": 14.0}, {"codigo": "507312", "desc": "BARRA DE AJUSTE DO ESTICADOR (PRÉ- MONTAGEM)", "qty": 4.0, "horas_totais": 0.5, "horas_por_unid": 0.125}, {"codigo": "509357", "desc": "CHASSI ABRACADEIRA", "qty": 1.0, "horas_totais": 20.0, "horas_por_unid": 20.0}, {"codigo": "509406", "desc": "CHASSI ABRACADEIRA OPOSTO", "qty": 1.0, "horas_totais": 20.0, "horas_por_unid": 20.0}, {"codigo": "509418", "desc": "CONJ. BRACO ARTICULACAO MEC. \nABRACADEIRA 01", "qty": 2.0, "horas_totais": 4.0, "horas_por_unid": 2.0}, {"codigo": "509419", "desc": "CONJ. BRACO ARTICULACAO MEC. \nABRACADEIRA 02", "qty": 6.0, "horas_totais": 9.0, "horas_por_unid": 1.5}, {"codigo": "508224", "desc": "CONJUNTO PINO BRACO FERRAMENTA", "qty": 16.0, "horas_totais": 2.5, "horas_por_unid": 0.15625}, {"codigo": "509395", "desc": "CONJ. EIXO MECANISMO DISTRIBUICAO ABRACADEIRA 01", "qty": 2.0, "horas_totais": 0.17, "horas_por_unid": 0.085}, {"codigo": "509396", "desc": "CONJ. EIXO MECANISMO DISTRIBUICAO ABRACADEIRA 02", "qty": 2.0, "horas_totais": 0.17, "horas_por_unid": 0.085}, {"codigo": "510216", "desc": "ESTICADOR CORRENTE ABRACADEIRA", "qty": 8.0, "horas_totais": 0.75, "horas_por_unid": 0.09375}, {"codigo": "510222", "desc": "ESTICADOR LD ENCOSTO EIXO", "qty": 2.0, "horas_totais": 0.17, "horas_por_unid": 0.085}, {"codigo": "510226", "desc": "ESTICADOR LD ENCOSTO EIXO OPOSTO", "qty": 2.0, "horas_totais": 0.17, "horas_por_unid": 0.085}, {"codigo": "510219", "desc": "ESTICADOR LD PORCA", "qty": 2.0, "horas_totais": 0.17, "horas_por_unid": 0.085}, {"codigo": "510225", "desc": "ESTICADOR LD PORCA", "qty": 2.0, "horas_totais": 0.17, "horas_por_unid": 0.085}, {"codigo": "510170", "desc": "SUPORTE SENSOR MOV. ABRAÇADEIRA", "qty": 2.0, "horas_totais": 0.5, "horas_por_unid": 0.25}, {"codigo": "509590", "desc": "CONJ. RAMPA ABRACADEIRA LATERAL 01", "qty": 1.0, "horas_totais": 1.5, "horas_por_unid": 1.5}, {"codigo": "509591", "desc": "CONJ. RAMPA ABRACADEIRA LATERAL 02", "qty": 1.0, "horas_totais": 1.5, "horas_por_unid": 1.5}, {"codigo": "509766", "desc": "CONJ. PINO C/ BATENTE ARTIC. RAMPA", "qty": 2.0, "horas_totais": 0.17, "horas_por_unid": 0.085}, {"codigo": "509589", "desc": "CONJ. RAMPA ABRACADEIRA CENTRAL", "qty": 1.0, "horas_totais": 2.0, "horas_por_unid": 2.0}, {"codigo": "509584", "desc": "ARTICULACAO RAMPA CENTRAL", "qty": 1.0, "horas_totais": 0.17, "horas_por_unid": 0.17}, {"codigo": "509580", "desc": "ALAVANCA RAMPA CENTRAL", "qty": 1.0, "horas_totais": 0.17, "horas_por_unid": 0.17}, {"codigo": "511224", "desc": "CONJ. PORTINHOLA ABRACADEIRAS 8", "qty": 1.0, "horas_totais": 7.0, "horas_por_unid": 7.0}, {"codigo": "511101", "desc": "CONJ. PORTINHOLA ABRACADEIRAS 5", "qty": 1.0, "horas_totais": 7.0, "horas_por_unid": 7.0}, {"codigo": "509080", "desc": "LIMITADOR CENTRAL", "qty": 2.0, "horas_totais": 20.0, "horas_por_unid": 10.0}, {"codigo": "509074", "desc": "LIMITADOR LATERAL", "qty": 4.0, "horas_totais": 6.5, "horas_por_unid": 1.625}, {"codigo": "509664", "desc": "FIXACAO DO LIMITADOR LATERAL", "qty": 4.0, "horas_totais": 1.0, "horas_por_unid": 0.25}, {"codigo": "509071", "desc": "TRAVE LATERAL", "qty": 3.0, "horas_totais": 3.0, "horas_por_unid": 1.0}, {"codigo": "510010", "desc": "ESTRUTURA CONVITE CARREGAMENTO", "qty": 2.0, "horas_totais": 1.0, "horas_por_unid": 0.5}, {"codigo": "510011", "desc": "ESTRUTURA CONVITE CARREGAMENTO \nOPOSTO", "qty": 2.0, "horas_totais": 1.0, "horas_por_unid": 0.5}, {"codigo": "509823", "desc": "CONJUNTO MECANISMO ABASTECIMENTO - MOD 3", "qty": 4.0, "horas_totais": 16.0, "horas_por_unid": 4.0}, {"codigo": "507525", "desc": "BARRA 1 MECANISMO AUXILIAR DE \nDESCARREGAMENTO", "qty": 4.0, "horas_totais": 1.5, "horas_por_unid": 0.375}, {"codigo": "505933", "desc": "CARENAGEM ENCODER EST. HORIZ.", "qty": 1.0, "horas_totais": 0.25, "horas_por_unid": 0.25}, {"codigo": "509902", "desc": "PROTEÇÃO DO ENCODER EST. VERT.", "qty": 1.0, "horas_totais": 0.25, "horas_por_unid": 0.25}, {"codigo": "508957", "desc": "CONJ. CARENAGEM REDUTOR ESTEIRA \nHORIZONTAL", "qty": 1.0, "horas_totais": 0.25, "horas_por_unid": 0.25}, {"codigo": "509926", "desc": "MECANISMO DESCARREGAMENTO A", "qty": 2.0, "horas_totais": 20.0, "horas_por_unid": 10.0}, {"codigo": "509927", "desc": "MECANISMO DESCARREGAMENTO B", "qty": 2.0, "horas_totais": 20.0, "horas_por_unid": 10.0}, {"codigo": "509936", "desc": "ARTICULAÇÃO T - REDUZIDA", "qty": 4.0, "horas_totais": 0.75, "horas_por_unid": 0.1875}, {"codigo": "510918", "desc": "PINO TRAVA MECANISMO DESCARREGAMENTO", "qty": 4.0, "horas_totais": 2.0, "horas_por_unid": 0.5}, {"codigo": "510413", "desc": "PINO TRAVA PERIFERICOS", "qty": 12.0, "horas_totais": 1.5, "horas_por_unid": 0.125}, {"codigo": "509456", "desc": "BARRA CAIXA PERIFERICOS", "qty": 6.0, "horas_totais": 0.5, "horas_por_unid": 0.083333}, {"codigo": "509425", "desc": "CONJ. CAIXA PERIFERICOS 02 MEDIA + PORTA", "qty": 1.0, "horas_totais": 23.0, "horas_por_unid": 23.0}, {"codigo": "510314", "desc": "FLANGE DE FIXACAO INTERCAMBIAVEL CX \nPERIFERICOS", "qty": 2.0, "horas_totais": 0.17, "horas_por_unid": 0.085}, {"codigo": "510017", "desc": "CONJ. CAIXA PERIFERICOS 3 + PORTAS", "qty": 1.0, "horas_totais": 24.0, "horas_por_unid": 24.0}, {"codigo": "509594", "desc": "CONJ. FIX PROTECAO LATERAL A", "qty": 2.0, "horas_totais": 0.17, "horas_por_unid": 0.085}, {"codigo": "ELET - 157 - 005", "desc": "PRÉ-MONTAGEM ELÉTRICA - PERIFÉRICOS", "qty": 27.0, "horas_totais": 12.0, "horas_por_unid": 0.444444}, {"codigo": "CALAFETAGEM 1", "desc": "CALAFETAGEM ESTRUTURA CARROCERIA", "qty": 1.0, "horas_totais": 8.0, "horas_por_unid": 8.0}, {"codigo": "CALAFETAGEM 2", "desc": "CALAFETAGEM ESTEIRAS VERTICAIS", "qty": 16.0, "horas_totais": 7.0, "horas_por_unid": 0.4375}, {"codigo": "CALAFETAGEM 3", "desc": "CALAFETAGEM ESTERIRAS HORIZONTAIS", "qty": 2.0, "horas_totais": 1.0, "horas_por_unid": 0.5}, {"codigo": "CALAFETAGEM 4", "desc": "CALAFETAGEM PERIFÉRICOS", "qty": 12.0, "horas_totais": 1.5, "horas_por_unid": 0.125}, {"codigo": "BORRACHA 1", "desc": "CORTE DE BORRACHAS ESTEIRA VERTICAL", "qty": 16.0, "horas_totais": 4.0, "horas_por_unid": 0.25}, {"codigo": "BORRACHA 2", "desc": "CORTE DE BORRACHAS ESTEIRA HORIZONTAL", "qty": 32.0, "horas_totais": 4.0, "horas_por_unid": 0.125}, {"codigo": "BORRACHA 3", "desc": "CORTE BORRACHÃO", "qty": 3.0, "horas_totais": 0.75, "horas_por_unid": 0.25}, {"codigo": "BORRACHA 4", "desc": "CORTE BOPRRACHA PARA-BARRO", "qty": 2.0, "horas_totais": 0.5, "horas_por_unid": 0.25}, {"codigo": "ENCAPSULAR", "desc": "ENCAPSULAMENTO LIMITADORES", "qty": 6.0, "horas_totais": 2.0, "horas_por_unid": 0.333333}, {"codigo": "401017", "desc": "PRÉ-MONTAGEM CONJ. ESTEIRA VERTICAL", "qty": 16.0, "horas_totais": 7.5, "horas_por_unid": 0.46875}, {"codigo": "400992", "desc": "PRÉ-MONTAGEM ESTEIRA HORIZONTAL LD", "qty": 1.0, "horas_totais": 8.0, "horas_por_unid": 8.0}, {"codigo": "400993", "desc": "PRÉ-MONTAGEM ESTEIRA HORIZONTAL LE", "qty": 1.0, "horas_totais": 8.0, "horas_por_unid": 8.0}, {"codigo": "401030", "desc": "PRÉ-MONTAGEM MECANISMO ABRAÇADEIRA", "qty": 1.0, "horas_totais": 6.0, "horas_por_unid": 6.0}, {"codigo": "401033", "desc": "PRÉ-MONTAGEM MECANISMO ABRAÇADEIRA OPOSTO", "qty": 1.0, "horas_totais": 6.0, "horas_por_unid": 6.0}, {"codigo": "401043", "desc": "PRÉ-MONTAGEM RAMPA CENTRAL", "qty": 1.0, "horas_totais": 0.5, "horas_por_unid": 0.5}, {"codigo": "401044", "desc": "PRÉ-MONTAGEM CONJ. RAMPA ABRAÇADEIRA LATERAL 01", "qty": 1.0, "horas_totais": 0.5, "horas_por_unid": 0.5}, {"codigo": "401045", "desc": "PRÉ-MONTAGEM CONJ. RAMPA ABRAÇADEIRA LATERAL 02", "qty": 1.0, "horas_totais": 0.5, "horas_por_unid": 0.5}, {"codigo": "PORTINHOLAS", "desc": "PRÉ-MONTAGEM CONJ. PORTINHOLAS", "qty": 2.0, "horas_totais": 1.0, "horas_por_unid": 0.5}, {"codigo": "PERIFÉRICOS", "desc": "PRÉ-MONTAGEM CONJ. PERIFÉRICOS", "qty": 12.0, "horas_totais": 1.5, "horas_por_unid": 0.125}, {"codigo": "PROTEÇÃO", "desc": "PROTEÇÃO DE BORRACHA + STRETCH", "qty": 2.0, "horas_totais": 0.5, "horas_por_unid": 0.25}, {"codigo": "INFRA ELÉTRICA", "desc": "INSTALAÇÃO CALHAS ELÉTRICAS", "qty": 6.0, "horas_totais": 2.0, "horas_por_unid": 0.333333}, {"codigo": "ELET - 157 - 000", "desc": "INSTALAÇÃO ELÉTRICA", "qty": 1.0, "horas_totais": 21.0, "horas_por_unid": 21.0}, {"codigo": "HIDRÁULICA", "desc": "INSTALAÇÃO HIDRÁULICA", "qty": 1.0, "horas_totais": 21.0, "horas_por_unid": 21.0}, {"codigo": "401021", "desc": "INSTALAÇÃO CONJ. ESTEIRA VERTICAL", "qty": 16.0, "horas_totais": 12.0, "horas_por_unid": 0.75}, {"codigo": "400991", "desc": "INSTALAÇÃO CONJ. ESTEIRA HORIZONTAL", "qty": 2.0, "horas_totais": 2.0, "horas_por_unid": 1.0}, {"codigo": "INSTAL. ABRAÇ.", "desc": "INSTALAÇÃO CONJ. MECANISMO ABRAÇADEIRA", "qty": 2.0, "horas_totais": 2.0, "horas_por_unid": 1.0}, {"codigo": "INSTAL. RAMPA", "desc": "INSTALAÇÃO CONJ. RAMPA ABRAÇADEIRA", "qty": 3.0, "horas_totais": 1.0, "horas_por_unid": 0.333333}, {"codigo": "INSTAL. PORT.", "desc": "INSTALAÇÃO PORTINHOLAS", "qty": 2.0, "horas_totais": 5.0, "horas_por_unid": 2.5}, {"codigo": "INSTAL. PERIF.", "desc": "INSTALAÇÃO CONJ. PERIFÉRICOS", "qty": 26.0, "horas_totais": 8.0, "horas_por_unid": 0.307692}, {"codigo": "FECHAMENTO", "desc": "INSTALAÇÃO CHAPAS DE FECHAMENTO", "qty": 7.0, "horas_totais": 2.0, "horas_por_unid": 0.285714}, {"codigo": "CAB AUX.", "desc": "INSTALAÇÃO CABINE AUXILIAR", "qty": 1.0, "horas_totais": 4.0, "horas_por_unid": 4.0}, {"codigo": "LIMPEZA", "desc": "LIMPEZA E PINTURA FINAL", "qty": 1.0, "horas_totais": 5.0, "horas_por_unid": 5.0}, {"codigo": "ADESIVOS", "desc": "APLICAÇÃO ADESIVOS", "qty": 84.0, "horas_totais": 5.0, "horas_por_unid": 0.059524}, {"codigo": "TESTE", "desc": "TESTE | CHECK LIST DE MONTAGEM", "qty": 1.0, "horas_totais": 16.0, "horas_por_unid": 16.0}];
 
-const SECTIONS_META=[{"id":"sec-flow","icon":"📈","name":"Panorama de Produção Anual","desc":"Throughput mensal, entradas e CFD — visão de fluxo completa","default":false},{"id":"sec-prazo","icon":"🎯","name":"Dentro/Fora do Prazo","desc":"Operações dentro e fora do prazo estimado por tipo","default":false},{"id":"sec-projects","icon":"🔩","name":"Tabela de Projetos por Série","desc":"Status, datas, horas e operações agrupadas por Nº de Série","default":false},{"id": "sec-func", "icon": "👷", "name": "Eficiência por Funcionário", "desc": "Horas produtivas, paradas, retrabalho e eficiência %", "default": true}, {"id": "sec-ops-op", "icon": "⚙️", "name": "Tempo por Operação", "desc": "Tempo total por tipo de operação", "default": true}, {"id": "sec-ops-item", "icon": "🏷️", "name": "Top Códigos de Item", "desc": "Itens com maior tempo de operação", "default": true}, {"id": "sec-serie", "icon": "🔩", "name": "Produção por Nº de Série", "desc": "Horas por série com detalhamento por operação e item", "default": true}, {"id": "sec-paradas", "icon": "⛔", "name": "Paradas & Retrabalhos", "desc": "Tempo perdido por tipo de parada e retrabalho", "default": true}, {"id": "sec-rank", "icon": "🏆", "name": "Ranking de Produtividade", "desc": "Ranking de horas produtivas por funcionário", "default": true}, {"id": "sec-timeline", "icon": "📋", "name": "Últimos Apontamentos", "desc": "Feed dos apontamentos mais recentes", "default": true}, {"id": "sec-pv", "icon": "📊", "name": "Previsto × Realizado", "desc": "Comparação entre tempo estimado e real por código de item", "default": true}, {"id": "sec-att", "icon": "📅", "name": "Assiduidade & Ausências", "desc": "Calendário heatmap por funcionário", "default": true}, {"id": "sec-oee", "icon": "🏭", "name": "OEE & Tempo de Ciclo", "desc": "Ciclo completo por série", "default": false}, {"id": "sec-trend", "icon": "📈", "name": "Tendência Semanal", "desc": "Evolução da eficiência semana a semana", "default": false}, {"id": "sec-heatmap", "icon": "🕐", "name": "Heatmap por Hora do Dia", "desc": "Intensidade de apontamentos por hora", "default": false}, {"id": "sec-backlog", "icon": "⏳", "name": "Backlog — Ordens em Aberto", "desc": "ABERTURAs sem FECHAMENTO correspondente", "default": false}, {"id": "sec-backlog-saldos", "icon": "🧮", "name": "Backlog — Lotes com Saldo Pendente", "desc": "Lotes já fechados com quantidade restante não produzida", "default": true}, {"id": "sec-weekday", "icon": "📅", "name": "Produtividade por Dia da Semana", "desc": "Média de horas produtivas por dia", "default": false}, {"id": "sec-audit", "icon": "🔍", "name": "Auditoria & Validação", "desc": "Valide pares, analise por funcionário e detecte inconsistências", "default": false}, {"id": "sec-perf", "icon": "🏅", "name": "Análise de Desempenho Individual", "desc": "EE, velocidade vs peers, consistência e retrabalho por operador", "default": false}, {"id": "sec-int-indice", "icon": "🔍", "name": "Índice de Confiabilidade", "desc": "Quanto do apontamento serve para medir", "default": true}, {"id": "sec-int-revisao", "icon": "📋", "name": "Fila de Revisão", "desc": "Apontamentos suspeitos aguardando decisão", "default": true}, {"id": "sec-int-tendencia", "icon": "📈", "name": "Tendência da Disciplina", "desc": "A qualidade do apontamento melhora ou piora mês a mês", "default": true}, {"id": "sec-int-cobertura", "icon": "🔢", "name": "Cobertura de Quantidade", "desc": "Fechamentos que informam quantidade produzida", "default": true}, {"id": "sec-int-operadores", "icon": "🤝", "name": "Quem Precisa de Apoio", "desc": "Padrão de registro por pessoa", "default": true}, {"id": "sec-int-cadastro", "icon": "📚", "name": "Lacunas de Cadastro", "desc": "Itens sem tempo de referência e cadastros sem uso", "default": true}, {"id": "sec-int-regressao", "icon": "🛡️", "name": "Sentinela de Regressão", "desc": "Problemas já corrigidos que possam ter voltado", "default": true}];
+const SECTIONS_META=[{"id":"sec-flow","icon":"📈","name":"Panorama de Produção Anual","desc":"Throughput mensal, entradas e CFD — visão de fluxo completa","default":false},{"id":"sec-prazo","icon":"🎯","name":"Dentro/Fora do Prazo","desc":"Operações dentro e fora do prazo estimado por tipo","default":false},{"id":"sec-projects","icon":"🔩","name":"Tabela de Projetos por Série","desc":"Status, datas, horas e operações agrupadas por Nº de Série","default":false},{"id": "sec-func", "icon": "👷", "name": "Eficiência por Funcionário", "desc": "Horas produtivas, paradas, retrabalho e eficiência %", "default": true}, {"id": "sec-ops-op", "icon": "⚙️", "name": "Tempo por Operação", "desc": "Tempo total por tipo de operação", "default": true}, {"id": "sec-ops-item", "icon": "🏷️", "name": "Top Códigos de Item", "desc": "Itens com maior tempo de operação", "default": true}, {"id": "sec-serie", "icon": "🔩", "name": "Produção por Nº de Série", "desc": "Horas por série com detalhamento por operação e item", "default": true}, {"id": "sec-paradas", "icon": "⛔", "name": "Paradas & Retrabalhos", "desc": "Tempo perdido por tipo de parada e retrabalho", "default": true}, {"id": "sec-rank", "icon": "🏆", "name": "Ranking de Produtividade", "desc": "Ranking de horas produtivas por funcionário", "default": true}, {"id": "sec-timeline", "icon": "📋", "name": "Últimos Apontamentos", "desc": "Feed dos apontamentos mais recentes", "default": true}, {"id": "sec-pv", "icon": "📊", "name": "Previsto × Realizado", "desc": "Comparação entre tempo estimado e real por código de item", "default": true}, {"id": "sec-att", "icon": "📅", "name": "Assiduidade & Ausências", "desc": "Calendário heatmap por funcionário", "default": true}, {"id": "sec-oee", "icon": "🏭", "name": "OEE & Tempo de Ciclo", "desc": "Ciclo completo por série", "default": false}, {"id": "sec-trend", "icon": "📈", "name": "Tendência Semanal", "desc": "Evolução da eficiência semana a semana", "default": false}, {"id": "sec-heatmap", "icon": "🕐", "name": "Heatmap por Hora do Dia", "desc": "Intensidade de apontamentos por hora", "default": false}, {"id": "sec-backlog", "icon": "⏳", "name": "Backlog — Ordens em Aberto", "desc": "ABERTURAs sem FECHAMENTO correspondente", "default": false}, {"id": "sec-backlog-saldos", "icon": "🧮", "name": "Backlog — Lotes com Saldo Pendente", "desc": "Lotes já fechados com quantidade restante não produzida", "default": true}, {"id": "sec-weekday", "icon": "📅", "name": "Produtividade por Dia da Semana", "desc": "Média de horas produtivas por dia", "default": false}, {"id": "sec-audit", "icon": "🔍", "name": "Auditoria & Validação", "desc": "Valide pares, analise por funcionário e detecte inconsistências", "default": false}, {"id": "sec-perf", "icon": "🏅", "name": "Análise de Desempenho Individual", "desc": "EE, velocidade vs peers, consistência e retrabalho por operador", "default": false}, {"id": "sec-int-indice", "icon": "🔍", "name": "Índice de Confiabilidade", "desc": "Quanto do apontamento serve para medir", "default": true}, {"id": "sec-int-revisao", "icon": "📋", "name": "Fila de Revisão", "desc": "Apontamentos suspeitos aguardando decisão", "default": true}, {"id": "sec-int-tendencia", "icon": "📈", "name": "Tendência da Disciplina", "desc": "A qualidade do apontamento melhora ou piora mês a mês", "default": true}, {"id": "sec-int-cobertura", "icon": "🔢", "name": "Cobertura de Quantidade", "desc": "Fechamentos que informam quantidade produzida", "default": true}, {"id": "sec-int-operadores", "icon": "🤝", "name": "Quem Precisa de Apoio", "desc": "Padrão de registro por pessoa", "default": true}, {"id": "sec-int-cadastro", "icon": "📚", "name": "Lacunas de Cadastro", "desc": "Itens sem tempo de referência e cadastros sem uso", "default": true}, {"id": "sec-int-regressao", "icon": "🛡️", "name": "Sentinela de Regressão", "desc": "Problemas já corrigidos que possam ter voltado", "default": true}, {"id": "sec-gestao-vista", "icon": "📺", "name": "Gestão à Vista", "desc": "Indicadores por setor, sem expor pessoa — o mesmo que vai para o monitor da produção", "default": true}, {"id": "sec-cad-pessoas", "icon": "🗂️", "name": "Cadastro de Pessoas", "desc": "Vínculo, setor, função, afastamentos e calendário da fábrica", "default": true}, {"id": "sec-setores", "icon": "🏗️", "name": "Capacidade por Setor", "desc": "Hora esperada, realizada e ocupação de cada setor", "default": true}, {"id": "sec-competencias", "icon": "🎓", "name": "Matriz de Competências", "desc": "Quem sabe fazer cada operação e onde a cobertura está fina", "default": true}];
 const KPIS_META=[{"id": "kpi-oee", "icon": "🏭", "name": "OEE", "desc": "Disponibilidade × Performance × Qualidade"}, {"id": "kpi-taxa-ret", "icon": "🔄", "name": "Taxa de Retrabalho", "desc": "% de operações que geraram retrabalho"}, {"id": "kpi-backlog", "icon": "⏳", "name": "Backlog Aberto", "desc": "Ordens com abertura mas sem fechamento"}, {"id": "kpi-custo", "icon": "💸", "name": "% Improdutividade", "desc": "Proporção de horas não produtivas"},{"id":"kpi-wip","icon":"🔄","name":"WIP Médio","desc":"Work In Progress médio (Lei de Little)"},{"id":"kpi-throughput","icon":"🚀","name":"Throughput Médio","desc":"Operações fechadas por mês em média"},{"id":"kpi-cv","icon":"📉","name":"Coef. Variação","desc":"Variabilidade do throughput mensal"},{"id":"kpi-leadtime2","icon":"⏳","name":"Lead Time Médio","desc":"Tempo médio abertura→fechamento em horas"}];
 const DEFAULT_HALF_WIDTH = ["sec-ops-op", "sec-ops-item", "sec-serie", "sec-paradas", "sec-rank", "sec-timeline"];
 
@@ -1604,6 +1713,10 @@ function fecharAjuda(){
 // gráfico/tabela nunca é desenhado (ficou em branco até a primeira vez que essa seção
 // aparecer durante o fetchData() inicial).
 const RENDER_POR_SECAO = {
+  'sec-gestao-vista': ['renderGestaoVista'],
+  'sec-cad-pessoas': ['renderCadastro'],
+  'sec-setores': ['renderSetores'],
+  'sec-competencias': ['renderCompetencias'],
   'sec-oee': ['renderLeadTime','renderOEE'],
   'sec-trend': ['renderTrend'],
   'sec-heatmap': ['renderHeatmap'],
@@ -1826,6 +1939,10 @@ function parseSheetJSON(rows){
   // auditoria não confirma. Some de TODOS os cálculos, mas continua listado — o líder precisa
   // conseguir achar o registro pra corrigir.
   const kSuspeito=findCol('Coluna 3',['COLUNA 3']);
+  // Séries do lote. A linha do painel mostra a SOMA das séries mas é rotulada com a primeira —
+  // sem essa lista a tela de edição não tem como saber quantas séries existem nem quanto cada
+  // uma produziu, e acabava gravando o total inteiro dentro da primeira série.
+  const kLote=findCol('Coluna 1',['COLUNA 1']);
   const records=[];
   for(const row of rows){
     function g(k){return k?String(row[k]||'').trim():'';}
@@ -1834,6 +1951,12 @@ function parseSheetJSON(rows){
     const tipoParada=g(kParada),tipoSetup=g(kSetup),tipoRet=g(kRetrab),op2=g(kOp2);
     const qtyPlan=g(kQtyPlan),obs1=g(kObs1),abertoId=g(kAbertoId);
     const suspeito=g(kSuspeito)==='SUSPEITO';
+    let loteSeries=null;
+    const loteRaw=g(kLote);
+    if(loteRaw && loteRaw.charAt(0)==='['){
+      try{ const arr=JSON.parse(loteRaw); if(Array.isArray(arr)&&arr.length) loteSeries=arr; }
+      catch(e){ /* linha antiga sem JSON válido — segue como apontamento simples */ }
+    }
     if(!tsRaw||!func||func==='NOME DO OPERADOR') continue;
     let tsNorm=tsRaw;
     if(tsRaw.includes('T')&&(tsRaw.includes('Z')||tsRaw.includes('+'))){
@@ -1847,7 +1970,7 @@ function parseSheetJSON(rows){
     records.push({ts:tsNorm,func,serie_raw:serieRaw,serie:(parts[0]||'').trim(),
       impl:(parts[1]||'').trim(),client:(parts[2]||'').trim(),
       tipo,op,item,qty,qtyPlan,obs1,tipoParada,tipoSetup,tipoRetrabalho:tipoRet,op2,
-      _abertoId:abertoId,_suspeito:suspeito});
+      _abertoId:abertoId,_suspeito:suspeito,_loteSeries:loteSeries});
   }
   console.log('Parsed:',records.length,'|Tipos:',[...new Set(records.map(r=>r.tipo))]);
   return records;
@@ -1863,9 +1986,12 @@ function computeAbsences(records){
   const mx=new Date(sorted[sorted.length-1]+'T12:00:00');
   while(d<=mx){if(d.getDay()>=1&&d.getDay()<=5)wdays.push(d.toISOString().slice(0,10));d.setDate(d.getDate()+1);}
   const openDays=wdays.filter(day=>dwr.has(day));
-  const absences=[];
-  Object.keys(fd).forEach(func=>openDays.forEach(day=>{if(!fd[func].has(day))absences.push({func,date:day,hours:8});}));
-  return {absences,openDays,workdays:wdays};
+  // As faltas NÃO saem mais daqui. Marcar ausência para todo operador em todo dia útil desde o
+  // começo da base ignorava quando cada um entrou e saiu: 443 das 787 faltas (56%, 3.544h) eram
+  // de gente que ainda não tinha sido contratada ou já tinha saído. Agora vêm de
+  // getDisponibilidade, que conhece vínculo, afastamento e calendário. Até a primeira resposta
+  // chegar, a lista fica vazia — melhor não mostrar número nenhum do que mostrar um errado.
+  return {absences:[],openDays,workdays:wdays};
 }
 
 // Requisições de fetchData() podem se sobrepor: o backend (Apps Script) leva 14-37s sob carga
@@ -1900,7 +2026,13 @@ async function fetchData(){
     _lastUpdate=new Date();
     const [pF,pS,pO,pI,pFrom,pTo]=['fFunc','fSerie','fOp','fItem','fFrom','fTo'].map(id=>document.getElementById(id)?.value||'');
     populateFilters(pF,pS,pO,pI,pFrom,pTo);
-    if(typeof restoreFilters==='function') restoreFilters();
+    // Só na PRIMEIRA carga. Do segundo refresh em diante, populateFilters() logo acima já
+    // preservou o que está na tela (pF/pS/pO/pI são lidos do DOM neste instante); reaplicar o
+    // localStorage aqui só servia para ressuscitar filtro removido.
+    if(!_filtrosRestaurados){
+      if(typeof restoreFilters==='function') restoreFilters();
+      _filtrosRestaurados=true;
+    }
     applyFilters();
     updateLastUpdated();
     showLoadingState(false);
@@ -1910,6 +2042,10 @@ async function fetchData(){
     fetchAnaliseIA(); // idem — análise de IA é independente do feed principal
     fetchSaldosPendentes(); // idem — lotes com saldo pendente (backlog de saldos)
     fetchQualidade(); // idem — painel de integridade e qualidade dos dados
+    fetchGestaoVista();      // indicadores por setor da gestão à vista
+    fetchPessoas();          // cadastro: vínculo, setor, função, calendário
+    fetchAfastamentos();     // idem — lista para a tela de afastamentos
+    fetchDisponibilidade();  // hora esperada e faltas, calculadas no backend
     if(typeof renderInsightsCruzados==='function') renderInsightsCruzados(); // só tem efeito se a página atual for 'cruzados'
   }catch(err){showLoadingState(false,err.message);console.error('Erro fetchData:',err);}
 }
@@ -1935,11 +2071,39 @@ async function fetchAbertos(){
 // inteira e o dado muda devagar.
 let _qualidadeData = null;
 
+// Os filtros da tela vao junto para o backend calcular os blocos ja filtrados. O calculo NAO e
+// refeito aqui: "fechamento util", "curto" e "marcado" tem uma definicao so, e ela mora no
+// servico. Codigo de operacao e de operador sao extraidos do rotulo exibido ("0030 - MONTAR
+// CALDEIRARIA" -> "0030"), que e o que o banco guarda.
+function _filtrosDaTela(){
+  const v = id => (document.getElementById(id)?.value || '').trim();
+  const cod = s => String(s||'').split(/[\s\-—]+/)[0].trim();
+  const de = v('fFrom'), ate = v('fTo');
+  // Periodo so viaja se for mais estreito que a base inteira — senao todo refresh reclassifica
+  // como "filtrado" sem o usuario ter filtrado nada.
+  const datas = RAW_DATA.map(r=>tsToDateStr(r.ts)).sort();
+  const p = new URLSearchParams();
+  if(v('fItem')) p.set('item', v('fItem'));
+  if(v('fSerie')) p.set('serie', v('fSerie'));
+  if(v('fOp')) p.set('operacao', cod(v('fOp')));
+  if(v('fFunc')) p.set('operador', cod(v('fFunc')));
+  if(de && datas.length && de > datas[0]) p.set('inicio', de);
+  if(ate && datas.length && ate < datas[datas.length-1]) p.set('fim', ate);
+  return p;
+}
+
+let _qualidadeSeq = 0;
 async function fetchQualidade(){
+  const meu = ++_qualidadeSeq;
   try{
-    const resp = await fetch(APPS_SCRIPT_URL+'?action=getQualidade&_='+Date.now());
+    const p = _filtrosDaTela();
+    p.set('action','getQualidade'); p.set('_', Date.now());
+    const resp = await fetch(APPS_SCRIPT_URL+'?'+p.toString());
     if(!resp.ok) return;
     const json = await resp.json();
+    // Descarta resposta atrasada: trocar de filtro rapido dispara varias buscas, e a que
+    // RESOLVE por ultimo nao e necessariamente a do filtro atual.
+    if(meu !== _qualidadeSeq) return;
     if(json && json.success){
       _qualidadeData = json;
       const sec = document.getElementById('sec-int-indice');
@@ -1951,6 +2115,19 @@ async function fetchQualidade(){
 // Uma função só desenha os 7 blocos: eles vêm do mesmo payload e sempre mudam juntos.
 // RENDER_POR_SECAO aponta todas as seções pra cá; o guard de _secoesJaRenderizadas evita
 // redesenhar 7 vezes ao abrir a página.
+// Descreve em palavras o recorte aplicado, para o número nunca aparecer sem escopo.
+function _descreverFiltro(f){
+  if(!f) return 'recorte atual';
+  const p = [];
+  if(f.item) p.push('item ' + f.item);
+  if(f.serie) p.push('série ' + f.serie);
+  if(f.operacao) p.push('operação ' + f.operacao);
+  if(f.operador) p.push('operador ' + f.operador);
+  if(f.inicio || f.fim) p.push('de ' + (f.inicio ? f.inicio.split('-').reverse().join('/') : 'início')
+    + ' até ' + (f.fim ? f.fim.split('-').reverse().join('/') : 'hoje'));
+  return p.length ? p.join(', ') : 'recorte atual';
+}
+
 function renderIntegridade(){
   const q = _qualidadeData;
   if(!q){ return; }
@@ -1971,10 +2148,18 @@ function renderIntIndice(q){
   const i = q.indice;
   const badge = document.getElementById('intIndiceBadge');
   const quando = q.geradoEm ? new Date(q.geradoEm).toLocaleString('pt-BR') : '—';
-  if(badge) badge.textContent = 'Recalculado em '+quando;
+  if(badge) badge.textContent = q.filtrado ? 'sobre o filtro atual' : 'base inteira · '+quando;
 
   const cor = _corPct(i.pct, false);
-  document.getElementById('intIndicePanel').innerHTML = `
+  // Sem dizer o escopo, um índice de 40% num item específico parece contradizer os 62% da base
+  // inteira — e o leitor não tem como saber qual dos dois está olhando.
+  const escopo = q.filtrado
+    ? `<div style="background:var(--accent)18;border-left:3px solid var(--accent);padding:8px 12px;
+        border-radius:0 6px 6px 0;margin-bottom:12px;font-size:12px">
+        <strong>Números do filtro atual</strong> — ${_esc(_descreverFiltro(q.filtros))}.
+        Limpe os filtros para ver a base inteira.</div>`
+    : '';
+  document.getElementById('intIndicePanel').innerHTML = escopo + `
     <div style="display:flex;gap:22px;align-items:center;flex-wrap:wrap">
       <div style="text-align:center;min-width:150px">
         <div style="font-size:52px;font-weight:800;line-height:1;color:${cor}">${i.pct}%</div>
@@ -2181,7 +2366,8 @@ function renderIntCadastro(q){
   const badge=document.getElementById('intCadastroBadge');
   if(badge) badge.textContent = semEst.length+' de '+itens.length+' itens sem estimativa';
 
-  document.getElementById('intCadastroPanel').innerHTML = `
+  const _global = q.filtrado ? '<div style="font-size:11px;color:var(--text3);margin-bottom:8px">⚲ Este bloco sempre olha a <strong>base inteira</strong> — não acompanha o filtro.</div>' : '';
+  document.getElementById('intCadastroPanel').innerHTML = _global + `
     <div style="font-size:11px;color:var(--text3);margin-bottom:10px">
       O Previsto × Realizado só consegue opinar sobre item com tempo de referência cadastrado.
       Hoje <strong>${Math.round(usosSemEst/usosTotal*100)}% dos apontamentos</strong> são de itens sem referência.
@@ -2214,7 +2400,8 @@ function renderIntRegressao(q){
     badge.textContent = falhas ? falhas+' problema(s) reapareceu(ram)' : 'tudo limpo';
     badge.style.color = falhas ? 'var(--danger)' : 'var(--accent3)';
   }
-  document.getElementById('intRegressaoPanel').innerHTML = `
+  const _global = q.filtrado ? '<div style="font-size:11px;color:var(--text3);margin-bottom:8px">⚲ Este bloco sempre olha a <strong>base inteira</strong> — não acompanha o filtro.</div>' : '';
+  document.getElementById('intRegressaoPanel').innerHTML = _global + `
     <div style="font-size:11px;color:var(--text3);margin-bottom:8px">
       Cada linha aqui já foi corrigida uma vez. O valor deste bloco é avisar quando voltar.
     </div>
@@ -2376,12 +2563,23 @@ function funcName(funcStr) {
 // antes do backend gravar esse elo) ou nenhuma abertura com esse ID foi encontrada.
 function _encontrarMelhorAberturaIdx(opens, r, rTs){
   if(r._abertoId){
-    for(let i=0;i<opens.length;i++){
-      const o=opens[i];
-      if(o._used) continue;
-      if(!sameFunc(o.func, r.func)) continue;
-      if(tsToDate(o.ts) > rTs) continue;
-      if(o._abertoId && o._abertoId === r._abertoId) return i;
+    // Duas passadas. A primeira exige a MESMA série: numa sessão com várias séries há N
+    // aberturas e N fechamentos sob o mesmo abertoId, e pegar a primeira livre casaria a
+    // abertura de uma série com o fechamento de outra, inventando durações trocadas.
+    // A segunda passada roda sem a série e cobre o caso de UMA abertura e UM fechamento em
+    // que o operador trocou a série ao fechar — aí não há ambiguidade, o par é real, e sem
+    // ela o par sumia inteiro. Mesma regra de src/db/pareamento.ts no backend; ela vive nos
+    // dois lugares porque são runtimes diferentes, e já divergiu uma vez em silêncio.
+    for(let exigeSerie=1; exigeSerie>=0; exigeSerie--){
+      for(let i=0;i<opens.length;i++){
+        const o=opens[i];
+        if(o._used) continue;
+        if(!sameFunc(o.func, r.func)) continue;
+        if(tsToDate(o.ts) > rTs) continue;
+        if(!(o._abertoId && o._abertoId === r._abertoId)) continue;
+        if(exigeSerie && (o.serie||'') !== (r.serie||'')) continue;
+        return i;
+      }
     }
   }
   let best=null, bestScore=-1;
@@ -2485,6 +2683,14 @@ function populateFilters(prevFunc='',prevSerie='',prevOp='',prevItem='',prevFrom
 }
 
 
+// Fix#FiltroEntreAbas: filtro é estado DA ABA, mas ficava só no localStorage, que é
+// compartilhado por todas as abas da mesma origem. Com dois painéis abertos, o auto-refresh de
+// um reescrevia a chave a cada 2 minutos e o outro herdava aquele filtro ao recarregar —
+// comprovado pelo evento `storage`, que só dispara quando OUTRA aba grava.
+//
+// Agora são dois lugares com papéis diferentes:
+//   sessionStorage = a verdade DESTA aba, sobrevive ao F5, morre com a aba
+//   localStorage   = só o "último filtro usado", ponto de partida de uma aba NOVA
 function saveFilters(){
   try{
     const f={
@@ -2493,12 +2699,15 @@ function saveFilters(){
       op:document.getElementById('fOp')?.value||'',
       item:document.getElementById('fItem')?.value||''
     };
-    localStorage.setItem('agricef-filters',JSON.stringify(f));
+    const txt=JSON.stringify(f);
+    sessionStorage.setItem('agricef-filters',txt);
+    localStorage.setItem('agricef-filters',txt);
   }catch(e){}
 }
 function restoreFilters(){
   try{
-    const s=localStorage.getItem('agricef-filters');
+    // A aba manda em si mesma: se ela já tem estado próprio, o que outra aba gravou não entra.
+    const s=sessionStorage.getItem('agricef-filters') || localStorage.getItem('agricef-filters');
     if(!s) return;
     const f=JSON.parse(s);
     // Fix#FiltroDataAtual: fFrom/fTo NÃO são restaurados daqui de propósito — só
@@ -2508,7 +2717,10 @@ function restoreFilters(){
     ['fFunc','fSerie','fOp','fItem'].forEach(id=>{
       const k=id.slice(1).toLowerCase();
       const el=document.getElementById(id);
-      if(el && f[k]!==undefined && f[k]!=='') el.value=f[k];
+      // Sem o `!==''`: valor salvo vazio significa "sem filtro" e precisa valer como tal. Com o
+      // guard, um filtro salvo antigo sobrevivia a qualquer caminho que limpasse o select sem
+      // passar por saveFilters().
+      if(el && f[k]!==undefined) el.value=f[k];
     });
   }catch(e){}
 }
@@ -2520,6 +2732,12 @@ function applyFilters(){
   const item = document.getElementById('fItem').value;
   const from = document.getElementById('fFrom').value;
   const to   = document.getElementById('fTo').value;
+
+  // Persiste ANTES de renderizar. Quando saveFilters() era a última linha desta função, uma
+  // exceção em qualquer seção do renderAll() abortava antes de salvar: o localStorage ficava
+  // com o filtro anterior e o próximo auto-refresh o trazia de volta. O que o usuário escolheu
+  // não pode depender de todas as seções renderizarem sem erro.
+  saveFilters();
 
   filtered = RAW_DATA.filter(r => {
     if(func  && r.func.trim()  !== func.trim())  return false;
@@ -2541,17 +2759,24 @@ function applyFilters(){
     ? filtered.length + ' (' + nSusp + ' fora do cálculo)'
     : filtered.length;
   if(typeof _secoesJaRenderizadas !== 'undefined') _secoesJaRenderizadas.clear();
-  renderAll();
-  // renderAll() já processou (de forma síncrona) todas as seções visíveis na página atual —
-  // marca essas como "feitas" para que mudarPagina() não as recalcule de novo ao navegar.
-  if(typeof RENDER_POR_SECAO !== 'undefined'){
-    Object.keys(RENDER_POR_SECAO).forEach(secId=>{
-      const el=document.getElementById(secId);
-      if(el && el.style.display!=='none') _secoesJaRenderizadas.add(secId);
-    });
+  // Integridade e disponibilidade sao calculadas no backend e precisam ser refeitas quando o
+  // filtro muda — nao basta redesenhar com o payload antigo.
+  if(typeof fetchQualidade === 'function') fetchQualidade();
+  // Uma seção que quebre não pode derrubar o resto do painel nem o estado do filtro. O erro vai
+  // pro console (para aparecer numa investigação) em vez de sumir com a página inteira.
+  try{
+    renderAll();
+    // renderAll() já processou (de forma síncrona) todas as seções visíveis na página atual —
+    // marca essas como "feitas" para que mudarPagina() não as recalcule de novo ao navegar.
+    if(typeof RENDER_POR_SECAO !== 'undefined'){
+      Object.keys(RENDER_POR_SECAO).forEach(secId=>{
+        const el=document.getElementById(secId);
+        if(el && el.style.display!=='none') _secoesJaRenderizadas.add(secId);
+      });
+    }
+  }catch(e){
+    console.error('applyFilters: renderAll() falhou —', e);
   }
-
-  saveFilters();
 }
 
 // Fix#LimparQuebrado: referenciava prevFrom/prevTo, que nunca foram parâmetros nem variáveis
@@ -2622,7 +2847,7 @@ function renderKPIs(){
     if(fTo2   && a.date > fTo2)   return false;
     return true;
   });
-  const tAbs = absFiltered.length * 8 * 60;
+  const tAbs = absFiltered.reduce((soma,a)=>soma+(a.hours??8)*60, 0);
 
   // NEW efficiency formula: productive / capacity
   const eff = tCapacity > 0 ? Math.min(100, Math.round(tProd / tCapacity * 100)) : 0;
@@ -4000,7 +4225,7 @@ function renderChart(cardId) {
     pairs.forEach(p=>{if(!fm[p.func])fm[p.func]={name:funcName(p.func),prod:0,par:0,ret:0,abs:0};fm[p.func].prod+=p.dur;});
     para.forEach(p=>{if(!fm[p.func]){const r=RAW_DATA.find(r=>r.func===p.func);fm[p.func]={name:funcName(r?.func||p.func),prod:0,par:0,ret:0,abs:0};}fm[p.func].par+=p.dur;});
     retrab.forEach(p=>{if(!fm[p.func]){const r=RAW_DATA.find(r=>r.func===p.func);fm[p.func]={name:funcName(r?.func||p.func),prod:0,par:0,ret:0,abs:0};}fm[p.func].ret+=p.dur;});
-    absF.forEach(a=>{if(!fm[a.func]){const r=RAW_DATA.find(r=>r.func===a.func);fm[a.func]={name:funcName(r?.func||a.func),prod:0,par:0,ret:0,abs:0};}fm[a.func].abs+=8*60;});
+    absF.forEach(a=>{if(!fm[a.func]){const r=RAW_DATA.find(r=>r.func===a.func);fm[a.func]={name:funcName(r?.func||a.func),prod:0,par:0,ret:0,abs:0};}fm[a.func].abs+=(a.hours??8)*60;});
 
     const sorted=Object.values(fm).sort((a,b)=>b.prod-a.prod);
     const labels=sorted.map(v=>v.name.split(' ')[0]+' '+v.name.split(' ')[1]);
@@ -4135,7 +4360,7 @@ function renderExtraKPIs(){
   const tProd = pairs.reduce((a,p)=>a+p.dur,0);
   const tPara = para.reduce((a,p)=>a+p.dur,0);
   const tRet  = retrab.reduce((a,p)=>a+p.dur,0);
-  const tAbs  = absF.length * 8 * 60;
+  const tAbs  = absF.reduce((soma,a)=>soma+(a.hours??8)*60, 0);
   const tTotal= tProd+tPara+tRet+tAbs;
 
   // OEE: Disponibilidade × Performance (produtivo/disponível) × Qualidade (1-taxa retrabalho)
@@ -5117,6 +5342,57 @@ const TIPO_TERMINO_MAP = {
   'INÍCIO DE PARADA': 'TERMINO_PARADA',
 };
 let _edmContext = null;
+let _edmLoteSeries = null;   // séries do lote sendo editado; null quando é apontamento simples
+
+// Desenha uma linha por série do lote. Sem isso o líder só alcançava a primeira série, porque é
+// ela que rotula a linha do painel — e o campo de quantidade mostrava a soma das três.
+function montarGridLoteEdicao(origem){
+  const box = document.getElementById('edmLoteBox');
+  const simples = document.getElementById('edmQtdSimples');
+  const grid = document.getElementById('edmLoteGrid');
+  if(!_edmLoteSeries){
+    box.style.display = 'none';
+    simples.style.display = 'grid';
+    return;
+  }
+  simples.style.display = 'none';
+  box.style.display = '';
+
+  const inp = 'background:var(--surface2);border:1px solid var(--border);color:var(--text);'
+            + 'padding:6px 9px;border-radius:5px;font-size:13px;font-family:'Barlow',sans-serif;'
+            + 'outline:none;width:100%;';
+  grid.innerHTML = _edmLoteSeries.map((sr, i) => {
+    const plan = sr.qtdPlanejada != null ? sr.qtdPlanejada : '';
+    // Numa abertura ainda em aberto não existe realizada — o campo nasce vazio, como antes.
+    const real = origem==='backlog' ? '' : (sr.qtdRealizada != null ? sr.qtdRealizada : '');
+    const desc = [sr.implemento, sr.cliente].filter(Boolean).join(' · ');
+    return `<div style="display:grid;grid-template-columns:1fr 88px 88px;gap:8px;align-items:center">
+      <div style="min-width:0">
+        <div style="font-size:13px;font-weight:600;color:var(--accent2)">${_esc(sr.nrSerie||'—')}</div>
+        ${desc ? `<div style="font-size:10.5px;color:var(--text3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${_esc(desc)}</div>` : ''}
+      </div>
+      <div><div style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px">Planej.</div>
+        <input type="number" min="0" step="1" style="${inp}" data-edm-lote="plan" data-i="${i}" value="${plan}"></div>
+      <div><div style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px">Realiz.</div>
+        <input type="number" min="0" step="1" style="${inp}" data-edm-lote="real" data-i="${i}" value="${real}"
+          oninput="atualizarSomaLoteEdicao()"></div>
+    </div>`;
+  }).join('');
+  atualizarSomaLoteEdicao();
+}
+
+// A soma é o número que aparece na linha do painel — mostrar enquanto ele digita evita a
+// surpresa de salvar 4 numa série e ver 8 na tela.
+function atualizarSomaLoteEdicao(){
+  const el = document.getElementById('edmLoteSoma');
+  if(!el || !_edmLoteSeries) return;
+  let soma = 0;
+  document.querySelectorAll('#edmLoteGrid input[data-edm-lote="real"]').forEach(i=>{
+    soma += Number(i.value) || 0;
+  });
+  el.textContent = 'Total do apontamento: ' + soma + ' peça' + (soma===1?'':'s')
+    + ' — é este número que aparece na linha do painel.';
+}
 
 function abrirModalEdicao(origem, idx){
   const r = origem==='backlog' ? _computedBacklog[idx] : _timelineItems[idx];
@@ -5143,6 +5419,11 @@ function abrirModalEdicao(origem, idx){
   document.getElementById('edmCliente').value = r.client || '';
   document.getElementById('edmQtdPlanejada').value = (origem==='backlog' ? r.qty : r.qtyPlan) || '';
   document.getElementById('edmQuantidade').value = (origem==='backlog' ? '' : r.qty) || '';
+
+  // Lote: troca o par de campos únicos por uma linha para cada série.
+  const series = origem==='backlog' ? (r.isLote===true ? r.loteSeries : null) : r._loteSeries;
+  _edmLoteSeries = Array.isArray(series) && series.length ? series : null;
+  montarGridLoteEdicao(origem);
   document.getElementById('edmObs').value = r.obs1 || '';
 
   const ts = tsToDate(r.ts);
@@ -5164,6 +5445,7 @@ function fecharModalEdicao(){
 // confirmarEdicao() só monta e valida os campos; quem realmente envia é confirmarSenhaEdicao(),
 // depois da senha confirmada.
 let _edmPendingValores = null;
+let _edmPendingLote = null;   // uma entrada por série quando o apontamento é um lote
 
 function confirmarEdicao(){
   if(!_edmContext) return;
@@ -5179,6 +5461,25 @@ function confirmarEdicao(){
   const qtdPlVal = document.getElementById('edmQtdPlanejada').value;
   const qtdVal = document.getElementById('edmQuantidade').value;
 
+  // Num lote, quantidade não é um número só: cada série tem a sua. Os campos únicos ficam de
+  // fora do payload base e cada série vira uma chamada própria em confirmarSenhaEdicao().
+  _edmPendingLote = null;
+  if(_edmLoteSeries){
+    const leia = (tipo, i) => {
+      const el = document.querySelector('#edmLoteGrid input[data-edm-lote="'+tipo+'"][data-i="'+i+'"]');
+      return el && el.value !== '' ? Number(el.value) : '';
+    };
+    _edmPendingLote = _edmLoteSeries.map((sr, i) => ({
+      nrSerie: String(sr.nrSerie||'').trim(),
+      quantidade: leia('real', i),
+      qtdPlanejada: leia('plan', i),
+    })).filter(x => x.nrSerie);
+    if(!_edmPendingLote.length){
+      document.getElementById('edmErr').textContent = 'Nenhuma série identificada neste lote.';
+      return;
+    }
+  }
+
   _edmPendingValores = {
     carimbo: carimbo,
     operador: document.getElementById('edmOperador').value.trim(),
@@ -5189,8 +5490,8 @@ function confirmarEdicao(){
     nrSerie: document.getElementById('edmNrSerie').value.trim(),
     implemento: document.getElementById('edmImplemento').value.trim(),
     cliente: document.getElementById('edmCliente').value.trim(),
-    qtdPlanejada: qtdPlVal===''?'':Number(qtdPlVal),
-    quantidade: qtdVal===''?'':Number(qtdVal),
+    qtdPlanejada: _edmPendingLote ? undefined : (qtdPlVal===''?'':Number(qtdPlVal)),
+    quantidade:   _edmPendingLote ? undefined : (qtdVal===''?'':Number(qtdVal)),
     obs1: document.getElementById('edmObs').value.trim(),
   };
 
@@ -5224,18 +5525,37 @@ async function confirmarSenhaEdicao(){
   errEl.textContent = 'Salvando…';
   const avisoDemoraEdicao = setTimeout(()=>{ errEl.textContent = 'Ainda salvando… (pode levar até 20s)'; }, 5000);
 
-  try{
+  // Cada envio edita UMA série. Num apontamento simples é uma chamada; num lote é uma por
+  // série, em sequência — o backend recalcula o total do apontamento a cada gravação.
+  const enviar = async (nrSerieAlvo, valores) => {
     const payload = {
       action: 'editarApontamento', key: 'AGF2026',
       abertoId: _edmContext.abertoId,
       tipoAlvo: _edmContext.tipoAlvo,
-      nrSerieAlvo: _edmContext.nrSerieAlvo,
-      novosValores: novosValores,
+      nrSerieAlvo: nrSerieAlvo,
+      novosValores: valores,
     };
     const url = APONTAMENTO_URL+'?payload='+encodeURIComponent(JSON.stringify(payload))+'&_='+Date.now();
     const resp = await fetch(url);
     const json = await resp.json();
     if(!json.success) throw new Error(json.message||'Erro desconhecido');
+  };
+
+  try{
+    if(_edmPendingLote){
+      for(let i=0; i<_edmPendingLote.length; i++){
+        const sr = _edmPendingLote[i];
+        errEl.textContent = 'Salvando série '+(i+1)+' de '+_edmPendingLote.length+'…';
+        // Os campos comuns (horário, operador, operação) valem para o apontamento inteiro e vão
+        // só na primeira chamada; as demais mexem apenas na quantidade da própria série.
+        const valores = i === 0
+          ? Object.assign({}, novosValores, { quantidade: sr.quantidade, qtdPlanejada: sr.qtdPlanejada })
+          : { quantidade: sr.quantidade, qtdPlanejada: sr.qtdPlanejada };
+        await enviar(sr.nrSerie, valores);
+      }
+    } else {
+      await enviar(_edmContext.nrSerieAlvo, novosValores);
+    }
 
     errEl.style.color = 'var(--accent3)';
     errEl.textContent = '✔ Apontamento atualizado!';
@@ -5701,8 +6021,13 @@ function renderAudit3() {
   // botão de ação (só existiam aqui, nunca no backlog real).
   const _openOrds = computeOpenOrders(); // opera sobre RAW_DATA completo, sem filtro
   const _abertosIdsAtivos = new Set((_abertosData||[]).map(a=>a.abertoId).filter(Boolean));
+  // Apontamento aberto HOJE nao e inconsistencia: e trabalho em andamento. Um item aberto as
+  // 9h da manha nao tem nada de errado as 10h — so vira sinal se atravessar o dia sem fechar.
+  // Mesmo criterio de "envelhecido" ja usado no relatorio diario.
+  const _hojeInicio = new Date(); _hojeInicio.setHours(0,0,0,0);
   _openOrds.forEach(r => {
     if (r._abertoId && !_abertosIdsAtivos.has(r._abertoId)) return; // falso positivo — já fechado
+    if (tsToDate(r.ts) >= _hojeInicio) return; // aberto hoje — em andamento, nao e anomalia
 
     const name = funcName(r.func);
     const dt = tsToDate(r.ts).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
@@ -6426,6 +6751,1191 @@ function applySettingsCostCheckbox(){
 
 
 
+
+
+// ═══════════════════════════════════════════════════════════════════════════
+// CADASTRO DE PESSOAS — vínculo, setor, função, afastamento e calendário
+//
+// A hora esperada de cada operador passa a vir PRONTA do backend
+// (pessoas.service.ts). O cálculo antigo daqui marcava falta para todo operador
+// em todo dia útil desde o começo da base, sem saber quando ninguém entrou nem
+// saiu: 443 das 787 faltas (56%, 3.544h) eram de gente que ainda não tinha sido
+// contratada ou já tinha saído. Repetir a regra nos dois lados é como backend e
+// dashboard passaram meses discordando sobre o que era um par de apontamento.
+// ═══════════════════════════════════════════════════════════════════════════
+
+let PESSOAS = null;      // cadastro completo (setores, funções, operadores…)
+let DISPONIB = null;     // hora esperada e faltas, calculadas no backend
+let AFASTAMENTOS = [];   // lista completa, para a tela de afastamentos
+
+async function fetchPessoas(){
+  try{
+    const r = await fetch(APPS_SCRIPT_URL+'?action=getPessoas&_='+Date.now());
+    if(!r.ok) return;
+    const j = await r.json();
+    if(j && j.success){
+      PESSOAS = j;
+      console.log('✓ Cadastro de pessoas:', j.operadores.length, 'operadores,', j.resumo.pendencias, 'pendência(s)');
+      _rerenderCadastro();
+    }
+  }catch(e){ console.warn('fetchPessoas falhou:', e.message); }
+}
+
+async function fetchAfastamentos(){
+  try{
+    const r = await fetch(APPS_SCRIPT_URL+'?action=listarAfastamentos&_='+Date.now());
+    if(!r.ok) return;
+    const j = await r.json();
+    if(j && j.success){ AFASTAMENTOS = j.afastamentos; _rerenderCadastro(); }
+  }catch(e){ console.warn('fetchAfastamentos falhou:', e.message); }
+}
+
+// Busca a disponibilidade do MESMO período que os filtros da tela usam — senão as horas
+// esperadas descrevem um intervalo e as horas realizadas outro.
+async function fetchDisponibilidade(){
+  try{
+    const de  = document.getElementById('fFrom')?.value;
+    const ate = document.getElementById('fTo')?.value;
+    if(!de || !ate) return;
+    const r = await fetch(APPS_SCRIPT_URL+'?action=getDisponibilidade&inicio='+de+'&fim='+ate+'&_='+Date.now());
+    if(!r.ok) return;
+    const j = await r.json();
+    if(!j || !j.success) return;
+    DISPONIB = j;
+    aplicarAusenciasDoServidor();
+    console.log('✓ Disponibilidade:', j.totais.horasEsperadas+'h esperadas,', j.totais.diasFalta, 'falta(s)');
+    if(typeof _secoesJaRenderizadas !== 'undefined') _secoesJaRenderizadas.clear();
+    renderAll();
+    // renderAll() só toca em seção VISÍVEL. Quem estava noutra página foi desenhada antes com
+    // "Carregando…" e marcada como pronta — ficaria assim até um F5. As seções do cadastro são
+    // redesenhadas direto, sem passar pelo cache.
+    _rerenderCadastro();
+  }catch(e){ console.warn('fetchDisponibilidade falhou:', e.message); }
+}
+
+// Converte as faltas do backend para o formato que o resto do painel já consome
+// ({func, date, hours}). O `func` precisa casar com a string que vem no apontamento
+// ("121 — JOÃO PEDRO…"), então o casamento é pelo CÓDIGO normalizado — o mesmo cuidado que já
+// existe em funcCodeNorm por causa das variantes de hífen e travessão.
+function aplicarAusenciasDoServidor(){
+  if(!DISPONIB) return;
+  const porCodigo = {};
+  RAW_DATA.forEach(r=>{ const c = funcCodeNorm(r.func); if(c && !porCodigo[c]) porCodigo[c] = r.func; });
+  ABSENCES = DISPONIB.faltas.map(f=>({
+    func: porCodigo[funcCodeNorm(f.operadorCodigo || f.codigo || '')] || f.nome,
+    date: f.data,
+    hours: f.horas,
+    setor: f.setor
+  }));
+}
+
+function _rerenderCadastro(){
+  ['renderCadastro','renderSetores','renderCompetencias'].forEach(fn=>{
+    try{ if(typeof window[fn]==='function') window[fn](); }catch(e){ console.error(fn, e); }
+  });
+}
+
+function switchCadTab(id){
+  document.querySelectorAll('.cad-panel').forEach(p=>p.style.display='none');
+  const alvo = document.getElementById(id);
+  if(alvo) alvo.style.display='block';
+  document.querySelectorAll('#cadTabs .cad-tab').forEach((t,i)=>{
+    t.classList.toggle('active', ['cad-pessoas','cad-afast','cad-cal','cad-cat'][i]===id);
+  });
+}
+
+// Ponto de entrada da seção. As quatro abas renderizam juntas: são tabelas pequenas, e
+// renderizar sob demanda deixaria a troca de aba com um piscar sem ganho nenhum.
+function renderCadastro(){
+  renderCadPessoas(); renderCadAfastamentos(); renderCadCalendario(); renderCadCatalogos();
+}
+
+// ── helpers de tela ────────────────────────────────────────────────────────
+const _br = d => d ? String(d).split('-').reverse().join('/') : '—';
+const _esc = s => String(s??'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const _chip = (txt, cor) => `<span style="display:inline-block;font-size:10px;padding:1px 6px;border-radius:3px;`
+  + `background:${cor}22;color:${cor};border:1px solid ${cor}55;white-space:nowrap">${_esc(txt)}</span>`;
+// Dado deduzido pelo sistema fica com sublinhado pontilhado e explicação no title — uma etiqueta
+// por célula repetiria a mesma informação 17 vezes e afogaria o que é exceção.
+const _inf = (txt, motivo) => `<span class="inferido" title="${_esc(motivo)}">${_esc(txt)}</span>`;
+const _vazio = msg => `<div style="padding:26px 14px;text-align:center;color:var(--text3);font-size:12.5px">${msg}</div>`;
+
+// ── 1. Quadro de pessoas ───────────────────────────────────────────────────
+function renderCadPessoas(){
+  const el = document.getElementById('cadPessoasPanel');
+  const badge = document.getElementById('cadPessoasBadge');
+  if(!el) return;
+  if(!PESSOAS){ el.innerHTML = '<div class="empty">Carregando…</div>'; return; }
+
+  const R = PESSOAS.resumo;
+  const pendentes = (R.incompletos||0) + (R.aConfirmar||0);
+  if(badge) badge.textContent = pendentes
+    ? pendentes + ' de ' + R.total + ' a revisar' : 'cadastro completo';
+
+  const cards = [
+    ['Operadores', R.total, '', 'var(--text)'],
+    ['Confirmados', R.total - pendentes, '/'+R.total, pendentes?'var(--text)':'#4ade80'],
+    ['A confirmar', R.aConfirmar||0, '', (R.aConfirmar||0)?'#fb923c':'var(--text3)'],
+    ['Incompletos', R.incompletos||0, '', (R.incompletos||0)?'#f87171':'var(--text3)'],
+    ['Afastados hoje', R.afastadosHoje, '', R.afastadosHoje?'#fb923c':'var(--text3)'],
+  ].map(([l,v,suf,c])=>`<div style="background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:10px 14px">
+      <div style="font-size:9.5px;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:2px">${l}</div>
+      <div style="font-size:23px;font-weight:700;color:${c};line-height:1.1">${v}<span style="font-size:13px;color:var(--text3);font-weight:500">${suf}</span></div>
+    </div>`).join('');
+
+  const linhas = PESSOAS.operadores.map(o=>{
+    // Estado numa marca só, em vez de três etiquetas repetidas em toda linha. A gravidade vem
+    // do backend — quem sabe o que bloqueia o cálculo é quem faz o cálculo.
+    const SEV = {
+      ok:         ['#4ade80','confirmado'],
+      confirmar:  ['#fb923c','a confirmar'],
+      incompleto: ['#f87171','incompleto'],
+    };
+    const st = [...(SEV[o.severidade] || SEV.confirmar), o.pendencias.join(' · ')];
+
+    const vinculo = o.dataAdmissao
+      ? (o.datasInferidas
+          ? _inf(_br(o.dataAdmissao), 'Deduzido do primeiro apontamento — confirmar com o RH')
+          : _br(o.dataAdmissao))
+        + (o.dataDesligamento ? ' <span style="color:var(--text3)">→</span> ' + _br(o.dataDesligamento) : '')
+      : '<span style="color:#f87171">sem admissão</span>';
+
+    const lot = o.lotacao
+      ? (o.lotacao.confirmada ? _esc(o.lotacao.setor)
+          : _inf(o.lotacao.setor, o.lotacao.observacao || 'Deduzido pelas operações apontadas'))
+        + (o.lotacao.funcao ? `<div style="font-size:10.5px;color:var(--text3)">${_esc(o.lotacao.funcao)}</div>`
+                            : '<div style="font-size:10.5px;color:var(--text3)">sem função</div>')
+      : '<span style="color:#f87171">sem setor</span>';
+
+    const af = o.afastamentoAtual
+      ? _chip(o.afastamentoAtual.tipo, o.afastamentoAtual.cor || '#fb923c') : '';
+
+    return `<tr>
+      <td style="min-width:190px">
+        <div style="font-weight:600">${_esc(o.nome)}</div>
+        <div style="font-size:10.5px;color:var(--text3)">${_esc(o.codigo)}${o.matricula?' · mat. '+_esc(o.matricula):''}</div>
+      </td>
+      <td style="white-space:nowrap">${o.ativo?_chip('ativo','#4ade80'):_chip('desligado','#8b949e')}${af?' '+af:''}</td>
+      <td style="white-space:nowrap">${vinculo}</td>
+      <td style="min-width:120px">${lot}</td>
+      <td style="text-align:right;white-space:nowrap">${o.lotacao?o.lotacao.jornadaDiariaH.toFixed(1).replace('.',',')+'h':'—'}</td>
+      <td style="white-space:nowrap" title="${_esc(st[2])}">
+        <span class="pt-dot" style="background:${st[0]}"></span><span style="color:${st[0]};font-size:11.5px">${st[1]}</span>
+      </td>
+      <td style="white-space:nowrap;text-align:right">
+        <button class="cad-btn" onclick="abrirVinculo(${o.id})" title="Admissão, desligamento, matrícula">Vínculo</button>
+        <button class="cad-btn" onclick="abrirLotacao(${o.id})" title="Setor, função e jornada">Setor</button>
+        <button class="cad-btn" onclick="abrirHistorico(${o.id})" title="Histórico de lotação">↻</button>
+      </td></tr>`;
+  }).join('');
+
+  el.innerHTML = `
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:9px;margin-bottom:13px">${cards}</div>
+    ${pendentes ? `<div style="background:#fb923c14;border-left:3px solid #fb923c;padding:9px 13px;border-radius:0 6px 6px 0;margin-bottom:12px;font-size:12px;line-height:1.55">
+      <strong>O que está <span class="inferido">sublinhado</span> foi deduzido, não informado.</strong>
+      As datas vieram do primeiro apontamento de cada um e o setor veio da operação que cada um mais
+      executa. Confirmar substitui o palpite pelo dado real — e as horas esperadas mudam junto.
+    </div>` : ''}
+    <div style="overflow:auto;max-height:56vh"><table class="cad-tbl">
+      <thead><tr>
+        <th>Operador</th><th>Situação</th><th>Vínculo</th><th>Setor / Função</th>
+        <th style="text-align:right">Jornada</th><th>Cadastro</th><th style="text-align:right">Ações</th>
+      </tr></thead><tbody>${linhas}</tbody></table></div>`;
+}
+
+// ── 2. Afastamentos ────────────────────────────────────────────────────────
+function renderCadAfastamentos(){
+  const el = document.getElementById('cadAfastPanel');
+  if(!el) return;
+  if(!PESSOAS){ el.innerHTML = '<div class="empty">Carregando…</div>'; return; }
+
+  const hoje = new Date().toISOString().slice(0,10);
+  const ordenados = [...AFASTAMENTOS].sort((a,b)=>b.inicio.localeCompare(a.inicio));
+
+  const linhas = ordenados.map(a=>{
+    const ativo = a.inicio<=hoje && (!a.fim || a.fim>=hoje);
+    const futuro = a.inicio>hoje;
+    const sit = ativo?['#fb923c','em curso']:futuro?['#38bdf8','programado']:['#8b949e','encerrado'];
+    return `<tr${ativo?' style="background:var(--surface2)"':''}>
+      <td style="font-weight:600">${_esc(a.operador)}</td>
+      <td>${_chip(a.tipo, a.cor||'#8b949e')}</td>
+      <td style="white-space:nowrap">${_br(a.inicio)} <span style="color:var(--text3)">→</span> ${a.fim?_br(a.fim):'<span style="color:#fb923c">em aberto</span>'}</td>
+      <td style="white-space:nowrap"><span class="pt-dot" style="background:${sit[0]}"></span><span style="color:${sit[0]};font-size:11.5px">${sit[1]}</span></td>
+      <td style="font-size:11.5px;color:var(--text3)">${_esc(a.observacao||'')}</td>
+      <td style="white-space:nowrap;text-align:right">
+        <button class="cad-btn" onclick="editarAfastamento(${a.id})">Editar</button>
+        <button class="cad-btn" onclick="excluirAfastamento(${a.id})">Excluir</button>
+      </td></tr>`;
+  }).join('');
+
+  el.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:14px;margin-bottom:12px;flex-wrap:wrap">
+      <div style="font-size:12px;color:var(--text2);max-width:64ch;line-height:1.55">
+        Férias, atestado e licença <strong>tiram o dia do denominador</strong> — a pessoa deixa de
+        acumular falta naquele período. Treinamento externo e atividade de campo contam como
+        presença: ela está trabalhando, só não está apontando produção.
+      </div>
+      <button class="cad-btn primary" onclick="editarAfastamento(null)">+ Registrar afastamento</button>
+    </div>
+    ${ordenados.length ? `<div style="overflow:auto;max-height:56vh"><table class="cad-tbl">
+      <thead><tr><th>Operador</th><th>Tipo</th><th>Período</th><th>Situação</th>
+        <th>Observação</th><th style="text-align:right">Ações</th></tr></thead>
+      <tbody>${linhas}</tbody></table></div>`
+    : _vazio('Nenhum afastamento registrado.<br><span style="font-size:11.5px">Enquanto não houver registro, todo dia útil dentro do vínculo conta como esperado.</span>')}`;
+}
+
+// ── 3. Calendário ──────────────────────────────────────────────────────────
+function renderCadCalendario(){
+  const el = document.getElementById('cadCalPanel');
+  if(!el) return;
+  if(!PESSOAS){ el.innerHTML = '<div class="empty">Carregando…</div>'; return; }
+
+  const CORES = {FERIADO:'#4ade80', PARADA:'#fb923c', PONTO_FACULTATIVO:'#38bdf8', UTIL_EXCEPCIONAL:'#c084fc'};
+  const ROTULO = {FERIADO:'feriado', PARADA:'parada', PONTO_FACULTATIVO:'ponto facultativo', UTIL_EXCEPCIONAL:'dia útil extra'};
+  const cal = [...PESSOAS.calendario].sort((a,b)=>a.data.localeCompare(b.data));
+  const aClassificar = cal.filter(c=>/classificar/i.test(c.descricao));
+
+  // Agrupa por mês: 18 datas soltas numa lista viram uma parede; por mês dá para ver a
+  // distribuição do ano de relance.
+  const porMes = {};
+  cal.forEach(c=>{
+    const d = new Date(c.data+'T12:00:00');
+    const k = d.toLocaleDateString('pt-BR',{month:'long',year:'numeric'});
+    (porMes[k] ||= []).push({...c, d});
+  });
+
+  const blocos = Object.entries(porMes).map(([mes,itens])=>`
+    <div style="break-inside:avoid">
+      <div style="font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);margin-bottom:6px;padding-bottom:3px;border-bottom:1px solid var(--border)">${_esc(mes)}</div>
+      <div style="display:flex;flex-wrap:wrap;gap:7px">
+        ${itens.map(c=>{
+          const cor = CORES[c.tipo]||'#8b949e';
+          const dia = ['dom','seg','ter','qua','qui','sex','sáb'][c.d.getDay()];
+          const pend = /classificar/i.test(c.descricao);
+          return `<div style="border:1px solid ${cor}44;background:${cor}12;border-radius:7px;padding:7px 11px;min-width:158px">
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+              <span style="font-weight:700;font-size:13px">${c.d.getDate().toString().padStart(2,'0')}</span>
+              <span style="font-size:10px;color:var(--text3)">${dia}</span>
+            </div>
+            <div style="font-size:10px;color:${cor};text-transform:uppercase;letter-spacing:.04em;margin:2px 0">${ROTULO[c.tipo]||c.tipo}</div>
+            <div style="font-size:11px;color:${pend?'#fb923c':'var(--text2)'};line-height:1.35">${_esc(pend?'a classificar':c.descricao)}</div>
+            <div style="margin-top:6px;display:flex;gap:4px">
+              <button class="cad-btn" style="padding:2px 7px;font-size:10px" onclick="editarCalendario('${c.data}')">Editar</button>
+              <button class="cad-btn" style="padding:2px 7px;font-size:10px" onclick="excluirCalendario('${c.data}')">✕</button>
+            </div></div>`;
+        }).join('')}
+      </div></div>`).join('');
+
+  el.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:14px;margin-bottom:12px;flex-wrap:wrap">
+      <div style="font-size:12px;color:var(--text2);max-width:64ch;line-height:1.55">
+        Sem calendário, o sistema deduz que um dia foi útil porque alguém apontou nele — e num
+        feriado a fábrica inteira leva falta. <strong>Dia útil extra</strong> é o contrário:
+        sábado trabalhado que deve contar.
+      </div>
+      <button class="cad-btn primary" onclick="editarCalendario(null)">+ Adicionar dia</button>
+    </div>
+    ${aClassificar.length ? `<div style="background:#fb923c14;border-left:3px solid #fb923c;padding:9px 13px;border-radius:0 6px 6px 0;margin-bottom:12px;font-size:12px;line-height:1.55">
+      <strong>${aClassificar.length} dia(s) sem produção nenhuma</strong> entraram como parada
+      automaticamente. Vale classificar: feriado local, parada programada ou emenda?
+    </div>` : ''}
+    ${cal.length ? `<div style="overflow:auto;max-height:52vh">
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(184px,1fr));gap:16px;align-items:start">${blocos}</div>
+      </div>`
+      : _vazio('Calendário vazio — todo dia de semana conta como útil.')}`;
+}
+
+// ── 4. Catálogos ───────────────────────────────────────────────────────────
+function renderCadCatalogos(){
+  const el = document.getElementById('cadCatPanel');
+  if(!el) return;
+  if(!PESSOAS){ el.innerHTML = '<div class="empty">Carregando…</div>'; return; }
+
+  const setores = PESSOAS.setores.map(s=>{
+    const pessoas = PESSOAS.operadores.filter(o=>_mesmoId(o.lotacao?.setorId,s.id)).length;
+    return `<tr>
+      <td><span style="font-weight:600">${_esc(s.nome)}</span>
+        <div style="font-size:10px;color:var(--text3)">${_esc(s.codigo)}</div></td>
+      <td>${s.produtivo?_chip('produtivo','#4ade80'):_chip('apoio','#8b949e')}</td>
+      <td style="text-align:right">${pessoas||'<span style="color:var(--text3)">0</span>'}</td>
+      <td style="text-align:right">${s.operacoes}</td>
+      <td style="text-align:right"><button class="cad-btn" onclick="editarSetor(${s.id})">Editar</button></td>
+    </tr>`;
+  }).join('');
+
+  const funcoes = PESSOAS.funcoes.map(f=>{
+    const s = PESSOAS.setores.find(x=>_mesmoId(x.id,f.setorPadraoId));
+    const usos = PESSOAS.operadores.filter(o=>_mesmoId(o.lotacao?.funcaoId,f.id)).length;
+    return `<tr>
+      <td style="font-weight:600">${_esc(f.nome)}</td>
+      <td style="color:var(--text2)">${s?_esc(s.nome):'—'}</td>
+      <td style="text-align:right">${usos||'<span style="color:var(--text3)">0</span>'}</td>
+      <td style="text-align:right"><button class="cad-btn" onclick="editarFuncao(${f.id})">Editar</button></td>
+    </tr>`;
+  }).join('');
+
+  // Operação → setor: é esse vínculo que faz a hora realizada chegar no setor certo.
+  const ops = (PESSOAS.operacoesSetor||[]).map(o=>`<tr>
+      <td style="white-space:nowrap"><span style="color:var(--text3);font-size:11px">${_esc(o.codigo)}</span> ${_esc(o.nome)}</td>
+      <td>${o.setor?_esc(o.setor):'<span style="color:#f87171">sem setor</span>'}</td>
+    </tr>`).join('');
+
+  const bloco = (titulo, sub, cab, corpo, botao) => `
+    <div style="flex:1;min-width:280px">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:3px">
+        <div style="font-size:12.5px;font-weight:700">${titulo}</div>${botao||''}
+      </div>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:7px">${sub}</div>
+      <div style="overflow:auto;max-height:40vh"><table class="cad-tbl"><thead><tr>${cab}</tr></thead><tbody>${corpo}</tbody></table></div>
+    </div>`;
+
+  el.innerHTML = `<div style="display:flex;gap:22px;flex-wrap:wrap">
+    ${bloco('Setores', 'Setor de apoio consome hora mas não gera peça — fica fora da conta de produção.',
+      '<th>Setor</th><th>Tipo</th><th style="text-align:right">Pessoas</th><th style="text-align:right">Operações</th><th></th>',
+      setores, '<button class="cad-btn primary" onclick="editarSetor(null)">+ Novo</button>')}
+    ${bloco('Funções', 'O catálogo abaixo é ponto de partida — renomeie ou remova o que não existir na fábrica.',
+      '<th>Função</th><th>Setor padrão</th><th style="text-align:right">Pessoas</th><th></th>',
+      funcoes, '<button class="cad-btn primary" onclick="editarFuncao(null)">+ Nova</button>')}
+  </div>
+  <div style="margin-top:18px">
+    ${bloco('Operações por setor', 'A hora realizada vai para o setor da operação apontada, não o da pessoa: quem é da Caldeiraria e passou o dia na Montagem entregou hora para a Montagem.',
+      '<th>Operação</th><th>Setor</th>', ops, '')}
+  </div>`;
+}
+
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Ações de gravação do cadastro de pessoas.
+// ═══════════════════════════════════════════════════════════════════════════
+
+// O painel tem DUAS coisas distintas, e confundi-las custou uma rodada de "não autorizado":
+//   SENHA_LIDER  — o que a pessoa digita; conferido aqui no navegador
+//   CHAVE_BACKEND— o que vai no payload; ninguém digita, o servidor compara com ADMIN_KEY
+// As telas antigas (editar, fechar, excluir apontamento) já funcionam assim. O cadastro de
+// pessoas segue o mesmo caminho: o líder tem UMA senha para lembrar, não duas.
+const SENHA_LIDER = 'Agricef123';
+const CHAVE_BACKEND = 'AGF2026';
+
+// Validada uma vez e lembrada pela sessão DA ABA — sessionStorage, não localStorage: permissão
+// de escrita não deve vazar para outra aba nem sobreviver ao fechamento do navegador.
+function chaveLider(){
+  if(sessionStorage.getItem('agricef-liberado') === '1') return CHAVE_BACKEND;
+  const s = prompt('Senha do líder para gravar alterações:');
+  if(s === null) return '';
+  if(s.trim() !== SENHA_LIDER){ alert('Senha incorreta.'); return ''; }
+  sessionStorage.setItem('agricef-liberado', '1');
+  return CHAVE_BACKEND;
+}
+function esquecerChave(){ sessionStorage.removeItem('agricef-liberado'); }
+
+// ── modal genérico ─────────────────────────────────────────────────────────
+let _cadmSalvarFn = null;
+
+function fecharCadModal(){
+  document.getElementById('cadmOverlay').classList.remove('open');
+  _cadmSalvarFn = null;
+}
+
+function cadmErro(msg){
+  const e = document.getElementById('cadmErr');
+  e.textContent = msg || '';
+  e.style.display = msg ? 'block' : 'none';
+}
+
+// campos: [{id, label, tipo:'texto'|'data'|'numero'|'select'|'area', valor, opcoes:[{v,t}],
+//           dica, obrigatorio}]
+function abrirCadModal({titulo, sub, campos, salvar}){
+  document.getElementById('cadmTitle').textContent = titulo;
+  document.getElementById('cadmSub').innerHTML = sub || '';
+  cadmErro('');
+
+  const est = "width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);"
+    + "padding:8px 11px;border-radius:6px;font-size:14px;font-family:'Barlow',sans-serif;outline:none;";
+  document.getElementById('cadmCampos').innerHTML = campos.map(c=>{
+    let ctrl;
+    if(c.tipo === 'select'){
+      ctrl = `<select id="cadm_${c.id}" style="${est}">`
+        + c.opcoes.map(o=>`<option value="${_esc(o.v)}"${String(o.v)===String(c.valor??'')?' selected':''}>${_esc(o.t)}</option>`).join('')
+        + '</select>';
+    } else if(c.tipo === 'area'){
+      ctrl = `<textarea id="cadm_${c.id}" rows="2" style="${est};resize:vertical">${_esc(c.valor??'')}</textarea>`;
+    } else {
+      const t = c.tipo==='data' ? 'date' : c.tipo==='numero' ? 'number' : 'text';
+      const extra = c.tipo==='numero' ? ' step="0.5" min="0.5" max="24"' : '';
+      ctrl = `<input type="${t}" id="cadm_${c.id}" value="${_esc(c.valor??'')}"${extra} style="${est}">`;
+    }
+    return `<div class="fcm-row">
+      <label>${_esc(c.label)}${c.obrigatorio?' <span style="color:#f87171">*</span>':''}</label>
+      ${ctrl}
+      ${c.dica?`<div style="font-size:11px;color:var(--text3);margin-top:4px">${c.dica}</div>`:''}
+    </div>`;
+  }).join('');
+
+  // Campos com `criar` ganham a opção "+ cadastrar…" no fim da lista: escolhê-la abre o
+  // cadastro sem fechar este formulário, para o líder não perder o que já preencheu só porque
+  // a função que ele precisa ainda não existia.
+  campos.filter(c=>c.criar).forEach(c=>{
+    const sel = document.getElementById('cadm_'+c.id);
+    if(!sel) return;
+    let anterior = sel.value;
+    sel.addEventListener('change', async ()=>{
+      if(sel.value !== '__novo__'){ anterior = sel.value; return; }
+      sel.value = anterior;                      // desfaz a seleção do item-ação
+      const nome = prompt(c.criar.rotulo);
+      if(!nome || !nome.trim()) return;
+      sel.disabled = true;
+      const novo = await c.criar.salvar(nome.trim());
+      sel.disabled = false;
+      if(!novo) return;
+      // Insere antes da opção "+ cadastrar…", que fica sempre por último.
+      const opt = new Option(novo.nome, String(novo.id));
+      sel.add(opt, sel.options.length - 1);
+      sel.value = String(novo.id);
+      anterior = sel.value;
+      cadmErro('');
+    });
+  });
+
+  _cadmSalvarFn = () => {
+    const v = {};
+    campos.forEach(c=>{ v[c.id] = document.getElementById('cadm_'+c.id).value.trim(); });
+    const faltando = campos.find(c=>c.obrigatorio && !v[c.id]);
+    // "Descrição é obrigatório" — concordância errada em metade dos campos. Frase neutra
+    // resolve sem precisar marcar gênero em cada rótulo.
+    if(faltando){ cadmErro(`Preencha o campo "${faltando.label}".`); return; }
+    salvar(v);
+  };
+  document.getElementById('cadmOverlay').classList.add('open');
+  const p = campos[0] && document.getElementById('cadm_'+campos[0].id);
+  if(p) setTimeout(()=>p.focus(), 60);
+}
+
+document.addEventListener('DOMContentLoaded', ()=>{
+  const b = document.getElementById('cadmSalvar');
+  if(b) b.addEventListener('click', ()=>{ if(_cadmSalvarFn) _cadmSalvarFn(); });
+  const o = document.getElementById('cadmOverlay');
+  if(o) o.addEventListener('click', e=>{ if(e.target===o) fecharCadModal(); });
+  document.addEventListener('keydown', e=>{
+    if(e.key==='Escape' && o && o.classList.contains('open')) fecharCadModal();
+  });
+});
+
+// ── gravação ───────────────────────────────────────────────────────────────
+async function _gravar(payload){
+  const key = chaveLider();
+  if(!key){ cadmErro('Senha do líder não confirmada — a alteração não foi gravada.'); return false; }
+  const btn = document.getElementById('cadmSalvar');
+  if(btn){ btn.disabled = true; btn.textContent = 'Salvando…'; }
+  try{
+    const r = await fetch(APONTAMENTO_URL, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({...payload, key})
+    });
+    const j = await r.json();
+    if(!j.success){
+      // Chave errada não pode ficar guardada, senão toda ação seguinte falha em silêncio.
+      if(/autoriza/i.test(j.message||'')) esquecerChave();
+      cadmErro(j.message || 'Não foi possível gravar.');
+      return false;
+    }
+    fecharCadModal();
+    await Promise.all([fetchPessoas(), fetchAfastamentos()]);
+    fetchDisponibilidade();
+    return true;
+  }catch(e){
+    cadmErro('Erro de conexão: '+e.message);
+    return false;
+  }finally{
+    if(btn){ btn.disabled = false; btn.textContent = 'Salvar'; }
+  }
+}
+
+// Ações sem formulário (exclusões) — confirmam e recarregam.
+async function _gravarGet(url, aoOk){
+  const key = chaveLider();
+  if(!key) return;
+  try{
+    const r = await fetch(url + '&key=' + encodeURIComponent(key));
+    const j = await r.json();
+    if(!j.success){
+      if(/autoriza/i.test(j.message||'')) esquecerChave();
+      alert(j.message || 'Não foi possível concluir.');
+      return;
+    }
+    await Promise.all([fetchPessoas(), fetchAfastamentos()]);
+    fetchDisponibilidade();
+    if(aoOk) aoOk(j);
+  }catch(e){ alert('Erro de conexão: '+e.message); }
+}
+
+// Comparação de id tolerante a tipo. O backend devolvia BIGINT como string e o onclick
+// injetava número: `x.id === id` dava falso e o botão não fazia nada, sem erro no console.
+// Corrigido na origem, mas a comparação aqui não depende mais disso.
+const _mesmoId = (a, b) => a !== undefined && a !== null && Number(a) === Number(b);
+
+// Grava um item de catálogo sem fechar o formulário em que o líder está. `_gravar` não serve
+// aqui porque ele fecha o modal ao dar certo — o que faria perder o cadastro em andamento.
+async function _criarNoLugar(payload, achar){
+  const key = chaveLider();
+  if(!key){ cadmErro('Senha do líder não confirmada.'); return null; }
+  try{
+    const r = await fetch(APONTAMENTO_URL, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({...payload, key})
+    });
+    const j = await r.json();
+    if(!j.success){
+      if(/autoriza/i.test(j.message||'')) esquecerChave();
+      cadmErro(j.message || 'Não foi possível cadastrar.');
+      return null;
+    }
+    await fetchPessoas();   // recarrega os catálogos para o novo item existir na lista
+    return achar();
+  }catch(e){ cadmErro('Erro de conexão: '+e.message); return null; }
+}
+
+// ── vínculo ────────────────────────────────────────────────────────────────
+function abrirVinculo(id){
+  const o = PESSOAS?.operadores.find(x=>_mesmoId(x.id,id));
+  if(!o) return;
+  abrirCadModal({
+    titulo: '📋 Vínculo — ' + o.nome,
+    sub: o.datasInferidas
+      ? 'As datas atuais foram <strong>deduzidas do primeiro apontamento</strong>. Salvar aqui marca como confirmado pelo RH.'
+      : 'Alterar a admissão muda quantos dias são esperados desta pessoa.',
+    campos: [
+      {id:'dataAdmissao', label:'Data de admissão', tipo:'data', valor:o.dataAdmissao||'', obrigatorio:true},
+      {id:'dataDesligamento', label:'Data de desligamento', tipo:'data', valor:o.dataDesligamento||'',
+       dica:'Deixe vazio se a pessoa continua na empresa. Preenchido, ela deixa de acumular falta a partir daí.'},
+      {id:'motivoDesligamento', label:'Motivo do desligamento', tipo:'texto', valor:o.motivoDesligamento||''},
+      {id:'matricula', label:'Matrícula', tipo:'texto', valor:o.matricula||''},
+    ],
+    salvar: v => _gravar({action:'salvarVinculo', operadorId:id, ...v})
+  });
+}
+
+// ── lotação ────────────────────────────────────────────────────────────────
+function abrirLotacao(id){
+  const o = PESSOAS?.operadores.find(x=>_mesmoId(x.id,id));
+  if(!o) return;
+  const setores = PESSOAS.setores.filter(s=>s.ativo);
+  const funcoes = PESSOAS.funcoes.filter(f=>f.ativo);
+  const hoje = new Date().toISOString().slice(0,10);
+  const temLotacao = !!o.lotacao;
+
+  abrirCadModal({
+    titulo: '🏗️ Setor e função — ' + o.nome,
+    sub: !o.lotacao
+      ? 'Sem setor, esta pessoa fica fora da conta de capacidade.'
+      : !o.lotacao.confirmada
+        ? 'A lotação atual foi <strong>deduzida pelas operações apontadas</strong>. Salvar aqui corrige o período que já existe — não cria um novo.'
+        : 'Mudar de setor <strong>não apaga o histórico</strong>: o período anterior é fechado na véspera e um novo começa na data informada.',
+    campos: [
+      {id:'setorId', label:'Setor', tipo:'select', valor:o.lotacao?.setorId??'', obrigatorio:true,
+       opcoes:[{v:'',t:'— selecione —'}, ...setores.map(s=>({v:s.id,t:s.nome})),
+               {v:'__novo__', t:'＋ Cadastrar novo setor…'}],
+       criar:{
+         rotulo:'Nome do novo setor:',
+         salvar: async (nome)=>{
+           // Setor novo entra como produtivo — é o caso comum. Apoio se ajusta em Catálogos.
+           const ok = await _criarNoLugar({action:'salvarSetor', nome, produtivo:true, ativo:true},
+             ()=> PESSOAS.setores.find(x=>x.nome.toLowerCase()===nome.toLowerCase()));
+           return ok || null;
+         }}},
+      {id:'funcaoId', label:'Função', tipo:'select', valor:o.lotacao?.funcaoId??'',
+       opcoes:[{v:'',t:'— não definir —'}, ...funcoes.map(f=>({v:f.id,t:f.nome})),
+               {v:'__novo__', t:'＋ Cadastrar nova função…'}],
+       dica:'Não encontrou a função? A última opção da lista cadastra uma nova sem sair daqui.',
+       criar:{
+         rotulo:'Nome da nova função:',
+         salvar: async (nome)=>{
+           // Herda como setor padrão o que estiver selecionado acima — é quase sempre o certo,
+           // e continua editável em Catálogos.
+           const setorId = document.getElementById('cadm_setorId')?.value || '';
+           const ok = await _criarNoLugar(
+             {action:'salvarFuncao', nome, setorPadraoId:setorId, ativo:true},
+             ()=> PESSOAS.funcoes.find(x=>x.nome.toLowerCase()===nome.toLowerCase()));
+           return ok || null;
+         }}},
+      {id:'jornadaDiariaH', label:'Jornada diária (horas)', tipo:'numero',
+       valor:o.lotacao?.jornadaDiariaH??8, obrigatorio:true,
+       dica:'É esta jornada que define a hora esperada por dia útil.'},
+      // Para quem já saiu, sugerir "hoje" produzia lotação começando depois do desligamento —
+      // aconteceu com o Elenilton, desligado em 14/05 e com período aberto a partir de 25/08.
+      // E enquanto a lotação ainda é inferida, editar CORRIGE o período existente em vez de
+      // abrir outro, então a data certa a mostrar é a que já está lá.
+      {id:'vigenciaInicio', label:'Vale a partir de', tipo:'data',
+       valor: (!o.ativo || !o.lotacao?.confirmada)
+         ? (o.lotacao?.vigenciaInicio || o.dataAdmissao || hoje)
+         : hoje,
+       obrigatorio:true,
+       dica: !o.ativo
+         ? 'Operador desligado — a vigência precisa caber dentro do vínculo dele.'
+         : !o.lotacao?.confirmada
+           ? 'Como a lotação ainda é deduzida, editar corrige o período atual em vez de abrir outro.'
+           : temLotacao
+             ? 'Data em que a mudança passa a valer. O período anterior fica no histórico.'
+             : 'Normalmente a data de admissão.'},
+    ],
+    salvar: v => _gravar({action:'salvarLotacao', operadorId:id, ...v})
+  });
+}
+
+async function abrirHistorico(id){
+  const o = PESSOAS?.operadores.find(x=>_mesmoId(x.id,id));
+  try{
+    const r = await fetch(APPS_SCRIPT_URL+'?action=getHistoricoLotacao&operadorId='+id+'&_='+Date.now());
+    const j = await r.json();
+    if(!j.success){ alert(j.message); return; }
+    const corpo = j.historico.length
+      ? `<div style="display:flex;flex-direction:column;gap:8px">${j.historico.map(h=>`
+          <div style="background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:9px 12px">
+            <div style="font-size:11px;color:var(--text3)">${_esc(h.vigenciaInicio)} → ${_esc(h.vigenciaFim)}</div>
+            <div style="font-weight:600;margin-top:2px">${_esc(h.setor)}${h.funcao?' · '+_esc(h.funcao):''}
+              <span style="font-weight:400;color:var(--text2)">· ${h.jornadaDiariaH}h/dia</span></div>
+            ${h.confirmada?'':'<div style="font-size:11px;color:#fb923c;margin-top:3px">deduzido pelo sistema</div>'}
+            ${h.observacao?`<div style="font-size:11px;color:var(--text3);margin-top:3px">${_esc(h.observacao)}</div>`:''}
+          </div>`).join('')}</div>`
+      : '<div style="color:var(--text3);font-size:12.5px">Sem histórico de lotação.</div>';
+    document.getElementById('cadmTitle').textContent = '↻ Histórico — ' + (o?.nome||'');
+    document.getElementById('cadmSub').innerHTML = 'Cada linha é um período fechado. Trocar de setor cria um novo em vez de sobrescrever o anterior.';
+    document.getElementById('cadmCampos').innerHTML = corpo;
+    cadmErro('');
+    _cadmSalvarFn = () => fecharCadModal();
+    document.getElementById('cadmSalvar').textContent = 'Fechar';
+    document.getElementById('cadmOverlay').classList.add('open');
+  }catch(e){ alert('Erro: '+e.message); }
+}
+
+// ── afastamentos ───────────────────────────────────────────────────────────
+function editarAfastamento(id){
+  if(!PESSOAS) return;
+  const a = id ? AFASTAMENTOS.find(x=>_mesmoId(x.id,id)) : null;
+  const tipos = PESSOAS.tiposAfastamento.filter(t=>t.ativo);
+  abrirCadModal({
+    titulo: a ? '🏥 Editar afastamento' : '🏥 Registrar afastamento',
+    sub: 'Férias, atestado e licença <strong>tiram o dia do denominador</strong>. Treinamento externo e atividade de campo contam como presença.',
+    campos: [
+      {id:'operadorId', label:'Operador', tipo:'select', valor:a?.operadorId??'', obrigatorio:true,
+       opcoes:[{v:'',t:'— selecione —'}, ...PESSOAS.operadores.map(o=>({v:o.id,t:o.nome}))]},
+      {id:'tipoId', label:'Tipo', tipo:'select', valor:a?.tipoId??'', obrigatorio:true,
+       opcoes:[{v:'',t:'— selecione —'}, ...tipos.map(t=>({
+         v:t.id, t:t.nome + (t.contaComoPresenca?'  (conta como presença)':'')}))]},
+      {id:'inicio', label:'Início', tipo:'data', valor:a?.inicio||new Date().toISOString().slice(0,10), obrigatorio:true},
+      {id:'fim', label:'Fim', tipo:'data', valor:a?.fim||'',
+       dica:'Vazio = ainda em aberto. Enquanto estiver assim, todo dia útil a partir do início sai da conta.'},
+      {id:'observacao', label:'Observação', tipo:'area', valor:a?.observacao||''},
+    ],
+    salvar: v => _gravar({action:'salvarAfastamento', id: id||'', registradoPor:'dashboard', ...v})
+  });
+}
+
+function excluirAfastamento(id){
+  const a = AFASTAMENTOS.find(x=>_mesmoId(x.id,id));
+  if(!a) return;
+  if(!confirm(`Excluir "${a.tipo}" de ${a.operador} (${_br(a.inicio)})?\n\n`
+    + 'Os dias voltam a contar como esperados, e podem virar falta.')) return;
+  _gravarGet(APPS_SCRIPT_URL+'?action=removerAfastamento&id='+id);
+}
+
+// ── calendário ─────────────────────────────────────────────────────────────
+function editarCalendario(data){
+  const c = data ? PESSOAS?.calendario.find(x=>x.data===data) : null;
+  abrirCadModal({
+    titulo: c ? '📆 Editar dia' : '📆 Adicionar dia',
+    sub: 'Feriado, parada e ponto facultativo <strong>zeram a hora esperada</strong> de todo mundo. Dia útil extra faz o contrário: um sábado passa a contar.',
+    campos: [
+      {id:'data', label:'Data', tipo:'data', valor:c?.data||new Date().toISOString().slice(0,10), obrigatorio:true},
+      {id:'tipo', label:'Tipo', tipo:'select', valor:c?.tipo||'FERIADO', obrigatorio:true,
+       opcoes:[{v:'FERIADO',t:'Feriado'},{v:'PARADA',t:'Parada de fábrica'},
+               {v:'PONTO_FACULTATIVO',t:'Ponto facultativo'},{v:'UTIL_EXCEPCIONAL',t:'Dia útil extra (sábado trabalhado)'}]},
+      {id:'descricao', label:'Descrição', tipo:'texto', valor:c?.descricao||'', obrigatorio:true},
+    ],
+    salvar: v => _gravar({action:'salvarCalendario', ...v})
+  });
+}
+
+function excluirCalendario(data){
+  if(!confirm(`Remover ${_br(data)} do calendário?\n\nVolta a valer a regra normal: dia de semana é útil.`)) return;
+  _gravarGet(APPS_SCRIPT_URL+'?action=removerCalendario&data='+data);
+}
+
+// ── catálogos ──────────────────────────────────────────────────────────────
+function editarSetor(id){
+  const s = id ? PESSOAS.setores.find(x=>_mesmoId(x.id,id)) : null;
+  abrirCadModal({
+    titulo: s ? '🏗️ Editar setor' : '🏗️ Novo setor',
+    sub: 'Setor <strong>de apoio</strong> consome hora mas não gera peça — fica fora da conta de produção.',
+    campos: [
+      {id:'nome', label:'Nome do setor', tipo:'texto', valor:s?.nome||'', obrigatorio:true},
+      {id:'produtivo', label:'Tipo', tipo:'select', valor:s?(s.produtivo?'true':'false'):'true', obrigatorio:true,
+       opcoes:[{v:'true',t:'Produtivo — gera peça'},{v:'false',t:'Apoio — não gera peça'}]},
+      {id:'ativo', label:'Situação', tipo:'select', valor:s?(s.ativo?'true':'false'):'true',
+       opcoes:[{v:'true',t:'Ativo'},{v:'false',t:'Inativo'}]},
+    ],
+    salvar: v => _gravar({action:'salvarSetor', id: id||'', ...v})
+  });
+}
+
+function editarFuncao(id){
+  const f = id ? PESSOAS.funcoes.find(x=>_mesmoId(x.id,id)) : null;
+  abrirCadModal({
+    titulo: f ? '👔 Editar função' : '👔 Nova função',
+    sub: 'O setor padrão é só uma sugestão ao lotar alguém — não impede escolher outro.',
+    campos: [
+      {id:'nome', label:'Nome da função', tipo:'texto', valor:f?.nome||'', obrigatorio:true},
+      {id:'setorPadraoId', label:'Setor padrão', tipo:'select', valor:f?.setorPadraoId??'',
+       opcoes:[{v:'',t:'— nenhum —'}, ...PESSOAS.setores.filter(x=>x.ativo).map(x=>({v:x.id,t:x.nome}))]},
+      {id:'ativo', label:'Situação', tipo:'select', valor:f?(f.ativo?'true':'false'):'true',
+       opcoes:[{v:'true',t:'Ativa'},{v:'false',t:'Inativa'}]},
+    ],
+    salvar: v => _gravar({action:'salvarFuncao', id: id||'', ...v})
+  });
+}
+
+
+// ═══════════════════════════════════════════════════════════════════════════
+// GESTÃO À VISTA — a mesma leitura que vai para o monitor da produção.
+//
+// Consome o MESMO endpoint da página de parede (/painel/). O número que o líder discute aqui
+// tem de ser idêntico ao que a equipe vê exposto; recalcular no dashboard abriria espaço para
+// as duas telas divergirem, que foi o que já aconteceu com o pareamento de apontamentos.
+//
+// Aqui há período selecionável — na parede ele alterna sozinho, porque lá ninguém clica.
+// ═══════════════════════════════════════════════════════════════════════════
+
+let GV_DADOS = null;
+let _gvDias = 7;
+let _gvSeq = 0;
+
+async function fetchGestaoVista(){
+  const meu = ++_gvSeq;
+  try{
+    const r = await fetch(APPS_SCRIPT_URL+'?action=getGestaoVista&dias='+_gvDias+'&_='+Date.now());
+    if(!r.ok) return;
+    const j = await r.json();
+    if(meu !== _gvSeq) return;         // resposta atrasada de um período já trocado
+    if(j && j.success){ GV_DADOS = j; renderGestaoVista(); }
+  }catch(e){ console.warn('fetchGestaoVista:', e.message); }
+}
+
+function gvPeriodo(dias){
+  _gvDias = dias;
+  ['7','30','90'].forEach(d=>{
+    const b = document.getElementById('gvBtn'+d);
+    if(b) b.classList.toggle('primary', String(dias)===d);
+  });
+  const el = document.getElementById('gvPanel');
+  if(el) el.style.opacity = '.5';
+  fetchGestaoVista();
+}
+
+const _gvH = v => (v >= 100 ? Math.round(v) : v.toFixed(1).replace('.',',')) + 'h';
+
+
+// ── Placar entre setores ───────────────────────────────────────────────────
+// Indicadores NORMALIZADOS, nunca horas absolutas: a Caldeiraria tem 8 pessoas e a Pintura 1,
+// e ordenar por horas classificaria tamanho de equipe. As três parcelas ficam visíveis porque
+// um índice único não responde "por que estamos em segundo?".
+function gvPlacar(d){
+  const noPlacar = d.setores.filter(s => s.posicao).sort((a,b)=>a.posicao-b.posicao);
+  const fora = d.setores.filter(s => !s.posicao && s.produtivo);
+  if(!noPlacar.length) return '';
+
+  const medalha = p => p===1 ? '🥇' : p===2 ? '🥈' : p===3 ? '🥉' : p+'º';
+  const corNota = n => n >= 85 ? '#4ade80' : n >= 60 ? '#fb923c' : '#f87171';
+  const alvo = (v, meta, invertido) => {
+    if(v === null) return '<span style="color:var(--text3)">—</span>';
+    const ok = invertido ? v <= meta : v >= meta;
+    return `<span style="color:${ok?'#4ade80':'#fb923c'};font-weight:700">${v}%</span>`;
+  };
+
+  const linhas = noPlacar.map(s=>`
+    <tr>
+      <td style="padding:9px 10px;font-size:22px;text-align:center;width:52px">${medalha(s.posicao)}</td>
+      <td style="padding:9px 10px">
+        <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:19px">${_esc(s.setor)}</div>
+        <div style="font-size:10.5px;color:var(--text3)">${s.pessoas} pessoas</div>
+      </td>
+      <td style="padding:9px 10px;text-align:right">${alvo(s.coberturaPct, d.metas.coberturaPct, false)}
+        <div style="font-size:10px;color:var(--text3)">nota ${s.notaCobertura ?? '—'}</div></td>
+      <td style="padding:9px 10px;text-align:right">${alvo(s.retrabalhoPct, d.metas.retrabalhoPct, true)}
+        <div style="font-size:10px;color:var(--text3)">nota ${s.notaRetrabalho ?? '—'}</div></td>
+      <td style="padding:9px 10px;text-align:right">
+        <span style="color:${s.variacaoPct===null?'var(--text3)':s.variacaoPct>=0?'#4ade80':'#f87171'};font-weight:700">
+          ${s.variacaoPct===null?'—':(s.variacaoPct>=0?'+':'')+s.variacaoPct+'%'}</span>
+        <div style="font-size:10px;color:var(--text3)">nota ${s.notaTendencia ?? '—'}</div></td>
+      <td style="padding:9px 10px;text-align:right">
+        <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:26px;
+          color:${corNota(s.nota)};line-height:1">${s.nota}</div></td>
+    </tr>`).join('');
+
+  return `<div style="margin-bottom:16px">
+    <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;flex-wrap:wrap;gap:8px">
+      <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:16px;
+        text-transform:uppercase;letter-spacing:.07em;color:var(--text2)">Placar entre setores</div>
+      <div style="font-size:11px;color:var(--text3)">
+        metas: cobertura ≥${d.metas.coberturaPct}% · retrabalho ≤${d.metas.retrabalhoPct}%</div>
+    </div>
+    <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:13px;
+      background:var(--surface2);border:1px solid var(--border);border-radius:8px;overflow:hidden">
+      <thead><tr style="font-size:9.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--text3)">
+        <th style="padding:7px 10px"></th><th style="padding:7px 10px;text-align:left">Setor</th>
+        <th style="padding:7px 10px;text-align:right">Cobertura</th>
+        <th style="padding:7px 10px;text-align:right">Retrabalho</th>
+        <th style="padding:7px 10px;text-align:right">Tendência</th>
+        <th style="padding:7px 10px;text-align:right">Nota</th>
+      </tr></thead><tbody>${linhas}</tbody></table></div>
+    ${fora.length ? `<div style="font-size:11px;color:var(--text3);margin-top:7px;line-height:1.5">
+      ${fora.map(s=>_esc(s.setor)).join(', ')} ${fora.length>1?'ficam':'fica'} fora do placar —
+      setor com menos de ${d.metas.minPessoasPlacar} pessoas seria classificar um indivíduo, e é
+      justamente o que este painel não faz. Os números ${fora.length>1?'deles':'dele'} continuam
+      nos cartões acima.</div>` : ''}
+  </div>`;
+}
+
+// ── Pareto de paradas ──────────────────────────────────────────────────────
+// Barra por causa + linha do acumulado. É o gráfico que responde "onde atacar primeiro".
+function gvPareto(d){
+  if(!d.travas.length) return '';
+  const maior = d.travas[0].horas || 1;
+  const iCorte0 = d.travas.findIndex(t => t.acumuladoPct >= 80);
+  const ate80 = iCorte0 < 0 ? d.travas.length : iCorte0 + 1;
+  const linhas = d.travas.map((t, i) => {
+    const larg = t.horas / maior * 100;
+    const corte = i < ate80;   // a faixa que concentra o problema
+    return `<div style="display:grid;grid-template-columns:minmax(150px,1.4fr) 3fr 88px 62px;
+      gap:10px;align-items:center;padding:5px 0">
+      <div style="font-size:12.5px;${corte?'font-weight:600':'color:var(--text2)'}">${_esc(t.motivo)}</div>
+      <div style="background:var(--surface2);border-radius:4px;height:20px;position:relative">
+        <div style="width:${larg}%;height:100%;border-radius:4px;
+          background:${corte?'#fb923c':'#5a6470'}"></div>
+      </div>
+      <div style="text-align:right;font-size:12.5px;font-weight:600">${t.horas}h
+        <span style="color:var(--text3);font-weight:400">${t.ocorrencias}×</span></div>
+      <div style="text-align:right;font-size:12px;color:${corte?'#fb923c':'var(--text3)'};font-weight:600">
+        ${t.acumuladoPct}%</div>
+    </div>`;
+  }).join('');
+
+
+  return `<div style="margin-bottom:16px">
+    <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:16px;
+      text-transform:uppercase;letter-spacing:.07em;color:var(--text2);margin-bottom:8px">
+      Pareto — onde o tempo se perde</div>
+    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px 16px">
+      ${linhas}
+      <div style="border-top:1px solid var(--border);margin-top:9px;padding-top:9px;
+        font-size:12px;color:var(--text2);line-height:1.5">
+        <strong style="color:#fb923c">${ate80===1?'Uma causa concentra':ate80+' causas concentram'} 80% do tempo parado.</strong>
+        Atacar as demais antes destas rende pouco.
+      </div>
+    </div>
+  </div>`;
+}
+
+// ── Tendência semanal ──────────────────────────────────────────────────────
+// Barras agrupadas por semana. Sem tendência o painel só sabe dizer "hoje".
+function gvTendencia(d){
+  if(!d.tendencia || d.tendencia.length < 2) return '';
+  const setores = [...new Set(d.tendencia.flatMap(t=>Object.keys(t.porSetor)))];
+  const cores = {'Caldeiraria':'#38bdf8','Montagem':'#4ade80','Pintura':'#fb923c',
+                 'Qualidade':'#a78bfa','Apoio':'#8b949e','Sem setor':'#5a6470'};
+  const max = Math.max(...d.tendencia.map(t=>Object.values(t.porSetor).reduce((a,b)=>a+b,0))) || 1;
+
+  // A semana corrente está incompleta e a barra dela SEMPRE parece queda. Sem marcar, todo
+  // painel de tendência conta a mesma mentira toda segunda-feira.
+  const hoje = new Date();
+  const segundaDestaSemana = new Date(hoje);
+  segundaDestaSemana.setDate(hoje.getDate() - ((hoje.getDay() + 6) % 7));
+  const semanaCorrente = segundaDestaSemana.toISOString().slice(0,10);
+
+  const colunas = d.tendencia.map(t=>{
+    const total = Object.values(t.porSetor).reduce((a,b)=>a+b,0);
+    const parcial = t.semana === semanaCorrente;
+    const pilha = setores.filter(s=>t.porSetor[s]).map(s=>`
+      <div title="${_esc(s)}: ${t.porSetor[s]}h"
+        style="height:${t.porSetor[s]/max*100}%;background:${cores[s]||'#5a6470'};
+        ${parcial?'opacity:.45':''}"></div>`).join('');
+    return `<div style="display:flex;flex-direction:column;align-items:center;gap:5px;flex:1;min-width:0">
+      <div style="font-size:10.5px;color:${parcial?'var(--text3)':'var(--text2)'};font-weight:600">
+        ${Math.round(total)}h</div>
+      <div style="width:100%;max-width:46px;height:110px;display:flex;flex-direction:column-reverse;
+        justify-content:flex-start;border-radius:3px;overflow:hidden;
+        background:var(--surface);border:1px solid var(--border);
+        ${parcial?'border-style:dashed':''}">${pilha}</div>
+      <div style="font-size:10px;color:${parcial?'#fb923c':'var(--text2)'};${parcial?'font-weight:600':''}">
+        ${t.rotulo}</div>
+    </div>`;
+  }).join('');
+
+  return `<div style="margin-bottom:16px">
+    <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;flex-wrap:wrap;gap:8px">
+      <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:16px;
+        text-transform:uppercase;letter-spacing:.07em;color:var(--text2)">Horas registradas por semana</div>
+      <div style="display:flex;gap:13px;font-size:11px;color:var(--text2)">
+        ${setores.map(s=>`<span><i style="display:inline-block;width:9px;height:9px;border-radius:2px;
+          background:${cores[s]||'#5a6470'};margin-right:4px"></i>${_esc(s)}</span>`).join('')}
+      </div>
+    </div>
+    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;
+      padding:14px 16px;display:flex;gap:8px;align-items:flex-end">${colunas}</div>
+    <div style="font-size:11px;color:var(--text3);margin-top:6px">
+      A última coluna é a <strong style="color:#fb923c">semana em curso</strong> — ainda
+      incompleta, então a queda aparente não é queda.</div>
+  </div>`;
+}
+
+function renderGestaoVista(){
+  const el = document.getElementById('gvPanel');
+  const badge = document.getElementById('gvBadge');
+  if(!el) return;
+  el.style.opacity = '1';
+  if(!GV_DADOS){ el.innerHTML = '<div class="empty">Carregando…</div>'; fetchGestaoVista(); return; }
+
+  const d = GV_DADOS, f = d.fabrica;
+  if(badge) badge.textContent = d.periodo.label;
+  ['7','30','90'].forEach(x=>{
+    const b = document.getElementById('gvBtn'+x);
+    if(b) b.classList.toggle('primary', String(_gvDias)===x);
+  });
+
+  const seta = p => p === null ? '—' : (p >= 0 ? '▲ +' : '▼ ') + p + '%';
+  const corVar = p => p === null ? 'var(--text3)' : p >= 0 ? '#4ade80' : '#f87171';
+
+  const kpi = (rot, val, cor, sub) => `
+    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:11px 14px">
+      <div style="font-size:9.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--text3)">${rot}</div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:30px;
+        line-height:1.05;color:${cor};font-variant-numeric:tabular-nums">${val}</div>
+      <div style="font-size:11px;color:var(--text2);margin-top:2px">${sub}</div>
+    </div>`;
+
+  // Barra da composição do tempo. As quatro fatias somam a hora esperada do setor — é essa
+  // soma que torna o "sem registro" visível em vez de escondido numa ocupação baixa.
+  const barra = s => {
+    const total = Math.max(s.horasEsperadas, s.horasProdutivas+s.horasParada+s.horasRetrabalho) || 1;
+    const seg = [
+      ['Produtiva', s.horasProdutivas, '#4ade80'],
+      ['Parada', s.horasParada, '#fb923c'],
+      ['Retrabalho', s.horasRetrabalho, '#a78bfa'],
+      ['Sem registro', s.horasNaoApontadas, '#3d4754'],
+    ].filter(x=>x[1] > 0);
+    return `<div style="display:flex;height:26px;border-radius:5px;overflow:hidden;background:var(--surface2)">
+      ${seg.map(([rot,v,c])=>{
+        const pct = v/total*100;
+        return `<div title="${rot}: ${_gvH(v)}" style="width:${pct}%;background:${c};
+          display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;
+          color:#0d1117;overflow:hidden;white-space:nowrap">${pct>=12?_gvH(v):''}</div>`;
+      }).join('')}
+    </div>
+    <div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:7px;font-size:11.5px;color:var(--text2)">
+      ${seg.map(([rot,v,c])=>`<span><i style="display:inline-block;width:9px;height:9px;
+        border-radius:2px;background:${c};margin-right:5px"></i>${rot} ${_gvH(v)}</span>`).join('')}
+      ${s.horasAcimaDoEsperado > 0 ? `<span style="color:#a78bfa">+${_gvH(s.horasAcimaDoEsperado)} além da jornada prevista</span>` : ''}
+    </div>`;
+  };
+
+  const setores = d.setores.map(s=>`
+    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;
+      padding:14px 16px;display:grid;grid-template-columns:minmax(150px,1fr) 2fr minmax(190px,1fr);
+      gap:18px;align-items:center">
+      <div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:24px;line-height:1.05">
+          ${_esc(s.setor)}</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:2px">
+          ${s.pessoasComRegistro} de ${s.pessoas} registraram · ${s.operacoesConcluidas} operações</div>
+        <div style="display:inline-block;margin-top:6px;font-weight:700;font-size:13px;
+          padding:2px 9px;border-radius:5px;color:${corVar(s.variacaoPct)};
+          background:${s.variacaoPct===null?'transparent':(s.variacaoPct>=0?'#4ade8022':'#f8717122')}">
+          ${seta(s.variacaoPct)} <span style="font-weight:400;font-size:11px">vs período anterior</span></div>
+      </div>
+      <div>${barra(s)}</div>
+      <div>${s.topParada ? `
+        <div style="background:var(--surface);border-left:3px solid #fb923c;border-radius:0 6px 6px 0;padding:9px 12px">
+          <div style="font-size:9.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--text3)">O que mais parou</div>
+          <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:17px;line-height:1.15;margin-top:2px">
+            ${_esc(s.topParada.motivo)}</div>
+          <div style="font-size:11.5px;color:var(--text2);margin-top:2px">
+            ${_gvH(s.topParada.horas)} em ${s.topParada.ocorrencias} ocorrência${s.topParada.ocorrencias>1?'s':''}</div>
+        </div>` : '<div style="color:var(--text3);font-size:12px;font-style:italic">Nenhuma parada registrada.</div>'}
+      </div>
+    </div>`).join('');
+
+  el.innerHTML = `
+    <div style="font-size:12px;color:var(--text2);margin-bottom:12px;max-width:78ch;line-height:1.55">
+      Os mesmos números que vão para o monitor da produção. <strong>Nenhuma pessoa é nomeada</strong> —
+      o objetivo é discutir o setor, não expor quem está nele. E hora perdida sempre aparece com o
+      motivo: parada sem causa vira acusação, com causa vira pauta.
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:9px;margin-bottom:16px">
+      ${kpi('Horas registradas', _gvH(f.horasProdutivas), '#4ade80',
+            `<span style="color:${corVar(f.variacaoPct)}">${seta(f.variacaoPct)} vs anterior</span>`)}
+      ${kpi('Operações concluídas', f.operacoesConcluidas, 'var(--text)', f.pecas + ' peças')}
+      ${kpi('Horas paradas', _gvH(f.horasParada), '#fb923c', 'com motivo registrado')}
+      ${kpi('Retrabalho', _gvH(f.horasRetrabalho), '#a78bfa', f.horasProdutivas > 0
+            ? (f.horasRetrabalho/f.horasProdutivas*100).toFixed(1).replace('.',',')+'% das horas' : '—')}
+      ${kpi('Sem registro', _gvH(f.horasNaoApontadas), 'var(--text2)', 'de '+_gvH(f.horasEsperadas)+' previstas')}
+    </div>
+
+    ${gvPlacar(d)}
+
+    <div style="display:flex;flex-direction:column;gap:11px;margin-bottom:16px">${setores}</div>
+
+    ${gvTendencia(d)}
+    ${gvPareto(d)}
+
+
+    <div style="margin-top:14px;font-size:11px;color:var(--text3);max-width:78ch;line-height:1.5">
+      <strong>Sem registro</strong> é hora prevista pela jornada que não virou apontamento de
+      produção, parada nem retrabalho. Pode ser trabalho não registrado — por isso a coluna diz
+      "registradas", não "trabalhadas".
+    </div>`;
+}
+
+// ── 5. Capacidade por setor ────────────────────────────────────────────────
+function renderSetores(){
+  const el = document.getElementById('setoresPanel');
+  const badge = document.getElementById('setoresBadge');
+  if(!el) return;
+  if(!PESSOAS || !DISPONIB){ el.innerHTML = '<div class="empty">Carregando cadastro de pessoas…</div>'; return; }
+
+  // Hora realizada por setor: soma dos pares de produção, atribuídos pelo setor da OPERAÇÃO
+  // apontada — não pelo setor da pessoa. Quem é da Caldeiraria e passou o dia na Montagem
+  // entregou hora para a Montagem.
+  const setorDaOperacao = {};
+  PESSOAS.setores.forEach(s=>{ setorDaOperacao[s.id] = s.nome; });
+  const pares = pairRows(filteredCalc, 'ABERTURA', 'FECHAMENTO');
+  const realizado = {};
+  pares.forEach(p=>{
+    const nome = _setorDeOperacaoLabel(p.op);
+    if(!nome) return;
+    realizado[nome] = (realizado[nome]||0) + p.dur;
+  });
+
+  const esperadoPorSetor = {};
+  DISPONIB.operadores.forEach(o=>{
+    if(!o.setor) return;
+    esperadoPorSetor[o.setor] = (esperadoPorSetor[o.setor]||0) + o.horasEsperadas;
+  });
+
+  const nomes = [...new Set([...Object.keys(esperadoPorSetor), ...Object.keys(realizado)])];
+  if(!nomes.length){ el.innerHTML = '<div class="empty">Sem dados de setor no período.</div>'; return; }
+
+  const linhas = nomes.map(nome=>{
+    const esp = esperadoPorSetor[nome] || 0;
+    const real = (realizado[nome]||0)/60;
+    const ocup = esp>0 ? Math.round(real/esp*100) : null;
+    const pessoas = DISPONIB.operadores.filter(o=>o.setor===nome);
+    const cor = ocup===null ? '#8b949e' : ocup>=70 ? '#4ade80' : ocup>=45 ? '#fb923c' : '#f87171';
+    return {nome, esp, real, ocup, pessoas: pessoas.length, cor};
+  }).sort((a,b)=>b.esp-a.esp);
+
+  const totalEsp = linhas.reduce((s,l)=>s+l.esp,0);
+  if(badge) badge.textContent = Math.round(totalEsp)+'h esperadas no período';
+
+  el.innerHTML = `
+    <div style="font-size:12px;color:var(--txt2);margin-bottom:10px;max-width:70ch">
+      <strong>Hora esperada</strong> vem do vínculo de cada pessoa do setor (jornada × dias úteis,
+      descontando afastamento). <strong>Hora realizada</strong> é atribuída pelo setor da operação
+      apontada, não pelo setor da pessoa — quem é da Caldeiraria e passou o dia na Montagem entregou
+      hora para a Montagem.
+    </div>
+    <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px">
+      <thead><tr style="text-align:left;color:var(--txt2);font-size:10px;text-transform:uppercase">
+        <th style="padding:6px 8px">Setor</th><th style="padding:6px 8px;text-align:right">Pessoas</th>
+        <th style="padding:6px 8px;text-align:right">Hora esperada</th>
+        <th style="padding:6px 8px;text-align:right">Hora produtiva</th>
+        <th style="padding:6px 8px;text-align:right">Ocupação</th>
+        <th style="padding:6px 8px;width:34%">&nbsp;</th>
+      </tr></thead><tbody>${linhas.map(l=>`<tr>
+        <td style="padding:6px 8px"><strong>${_esc(l.nome)}</strong></td>
+        <td style="padding:6px 8px;text-align:right">${l.pessoas}</td>
+        <td style="padding:6px 8px;text-align:right">${Math.round(l.esp)}h</td>
+        <td style="padding:6px 8px;text-align:right">${Math.round(l.real)}h</td>
+        <td style="padding:6px 8px;text-align:right;color:${l.cor};font-weight:700">${l.ocup===null?'—':l.ocup+'%'}</td>
+        <td style="padding:6px 8px">
+          <div style="background:var(--surface2);border-radius:3px;height:9px;overflow:hidden">
+            <div style="width:${Math.min(100,l.ocup||0)}%;height:100%;background:${l.cor}"></div>
+          </div></td></tr>`).join('')}</tbody></table></div>
+    <div style="margin-top:10px;font-size:11.5px;color:var(--txt2)">
+      Ocupação baixa não significa ociosidade: hora de parada, retrabalho e apontamento não
+      registrado também ficam fora da hora produtiva.
+    </div>`;
+}
+
+// Descobre a que setor uma operação pertence, pela string exibida no apontamento
+// ("0040 - SOLDAR"). O casamento é pelo código, que é o que não muda.
+let _mapaOperacaoSetor = null;
+function _setorDeOperacaoLabel(opLabel){
+  if(!PESSOAS) return null;
+  if(!_mapaOperacaoSetor){
+    _mapaOperacaoSetor = {};
+    // A relação operação→setor vem do backend junto do cadastro; aqui basta o código.
+    (PESSOAS.operacoesSetor||[]).forEach(o=>{ _mapaOperacaoSetor[String(o.codigo)] = o.setor; });
+  }
+  const cod = String(opLabel||'').split(/[\s\-—]+/)[0].trim();
+  return _mapaOperacaoSetor[cod] || null;
+}
+
+// ── 6. Matriz de competências ──────────────────────────────────────────────
+function renderCompetencias(){
+  const el = document.getElementById('compPanel');
+  const badge = document.getElementById('compBadge');
+  if(!el) return;
+  if(!PESSOAS){ el.innerHTML = '<div class="empty">Carregando cadastro de pessoas…</div>'; return; }
+
+  // Quem já executou cada operação, e quantos desses ainda estão na casa. Cobertura fina é o
+  // risco que ninguém enxerga até a pessoa sair.
+  const ativos = new Set(PESSOAS.operadores.filter(o=>o.ativo).map(o=>funcCodeNorm(o.codigo)));
+  const porOp = {};
+  RAW_DATA.forEach(r=>{
+    if(r.tipo!=='ABERTURA' || !r.op) return;
+    (porOp[r.op] ||= {pessoas:new Set(), n:0});
+    porOp[r.op].pessoas.add(funcCodeNorm(r.func));
+    porOp[r.op].n++;
+  });
+
+  const linhas = Object.entries(porOp).map(([op,d])=>{
+    const total = d.pessoas.size;
+    const viv = [...d.pessoas].filter(c=>ativos.has(c)).length;
+    return {op, total, ativos:viv, n:d.n, saiu: total-viv};
+  }).sort((a,b)=>a.ativos-b.ativos || b.n-a.n);
+
+  const risco = linhas.filter(l=>l.ativos<=2);
+  if(badge) badge.textContent = risco.length ? risco.length+' com cobertura fina' : 'cobertura folgada';
+
+  el.innerHTML = `
+    <div style="font-size:12px;color:var(--txt2);margin-bottom:10px;max-width:70ch">
+      Quantas pessoas <strong>já executaram</strong> cada operação, e quantas dessas ainda estão na
+      empresa. Uma operação com uma ou duas pessoas ativas é risco de parada: basta uma férias
+      coincidir com um pedido urgente.
+    </div>
+    ${risco.length ? `<div style="background:#f8717118;border-left:3px solid #f87171;padding:9px 12px;border-radius:0 5px 5px 0;margin-bottom:10px;font-size:12px">
+      <strong>${risco.length} operação(ões) com no máximo 2 pessoas ativas:</strong>
+      ${risco.map(l=>_esc(l.op.replace(/^\d+\s*-\s*/,''))).join(', ')}.
+    </div>` : ''}
+    <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px">
+      <thead><tr style="text-align:left;color:var(--txt2);font-size:10px;text-transform:uppercase">
+        <th style="padding:6px 8px">Operação</th>
+        <th style="padding:6px 8px;text-align:right">Já fizeram</th>
+        <th style="padding:6px 8px;text-align:right">Ainda ativos</th>
+        <th style="padding:6px 8px;text-align:right">Saíram</th>
+        <th style="padding:6px 8px;text-align:right">Apontamentos</th>
+        <th style="padding:6px 8px">Cobertura</th>
+      </tr></thead><tbody>${linhas.map(l=>{
+        const cor = l.ativos<=1 ? '#f87171' : l.ativos<=2 ? '#fb923c' : l.ativos<=4 ? '#fde68a' : '#4ade80';
+        const rot = l.ativos<=1 ? 'ponto único de falha' : l.ativos<=2 ? 'fina' : l.ativos<=4 ? 'aceitável' : 'folgada';
+        return `<tr>
+          <td style="padding:6px 8px">${_esc(l.op)}</td>
+          <td style="padding:6px 8px;text-align:right">${l.total}</td>
+          <td style="padding:6px 8px;text-align:right;font-weight:700;color:${cor}">${l.ativos}</td>
+          <td style="padding:6px 8px;text-align:right;color:var(--txt2)">${l.saiu||''}</td>
+          <td style="padding:6px 8px;text-align:right;color:var(--txt2)">${l.n}</td>
+          <td style="padding:6px 8px">${_chip(rot, cor)}</td></tr>`;
+      }).join('')}</tbody></table></div>`;
+}
 
 </script>
 </body>
