@@ -3261,10 +3261,11 @@ function renderTimeline(){
     const name=funcName(r.func);
     const detail=[r.op,r.item,r.serie&&r.serie[0]>='0'?r.serie:''].filter(Boolean).join(' · ');
     const btnEditar=r._abertoId?`<button class="editar-btn" style="padding:2px 8px;font-size:10px;margin-left:8px" onclick="abrirModalEdicao('timeline',${idx})">Editar</button>`:'';
+    const btnExcluir=r._abertoId?`<button class="excluir-btn" style="padding:2px 8px;font-size:10px;margin-left:6px" onclick="excluirApontamento('timeline',${idx})">Excluir</button>`:'';
     html+=`<div class="tl-item">
       <div class="tl-dot" style="background:${c}"></div>
       <div style="flex:1">
-        <div class="tl-main">${name} <span style="color:${c};font-size:11px">${r.tipo}</span>${btnEditar}</div>
+        <div class="tl-main">${name} <span style="color:${c};font-size:11px">${r.tipo}</span>${btnEditar}${btnExcluir}</div>
         <div class="tl-sub">${detail||r.tipoParada||r.tipoSetup||'—'}</div>
       </div>
       <div class="tl-time">${date} ${time}</div>
@@ -5269,9 +5270,11 @@ document.addEventListener('keydown',e=>{
 // da planilha) para apagar de uma vez ABERTURA + FECHAMENTO (ou todas as séries de
 // um lote), tanto do histórico (Respostas) quanto da aba Abertos. Protegido por
 // confirmação + senha (mesma senha de configuração do dashboard).
-async function excluirApontamento(idx){
-  if(idx>=_computedBacklog.length) return;
-  const r=_computedBacklog[idx];
+async function excluirApontamento(origem, idx){
+  // Compatibilidade com chamadas antigas que só passavam idx (sempre indexavam _computedBacklog).
+  if(idx===undefined){ idx=origem; origem='backlog'; }
+  const r = origem==='timeline' ? _timelineItems[idx] : _computedBacklog[idx];
+  if(!r) return;
   const abertoId=r._abertoId||'';
   if(!abertoId){
     alert('Este registro não tem um ID de rastreamento (abertoId) — exclusão automática não está disponível para ele. Peça para remover manualmente na planilha.');
