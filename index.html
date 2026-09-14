@@ -1044,7 +1044,7 @@ input[type="date"]{color-scheme:dark;}
           <button class="vt-btn" onclick="setView('att','chart')" title="Gráfico">📈</button>
         </div>
       </div>
-      <div class="card-badge">Dias sem apontamento = 8h imputadas como ausência</div>
+      <div class="card-badge" title="Considera admissão, desligamento e afastamentos do cadastro de pessoas">Falta = dia útil com vínculo ativo e sem apontamento (afastamento não conta)</div>
     </div>
     <div class="card-body">
       <div id="attKpis" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:16px;"></div>
@@ -4035,87 +4035,66 @@ function pvSort(col){
 
 
 // ── ASSIDUIDADE ───────────────────────────────────────────────────────────────
+// Fonte é DISPONIB (getDisponibilidade, calculada no backend a partir do cadastro de
+// pessoas) — não mais RAW_DATA/PLANT_OPEN_DAYS direto. A versão antiga contava falta em
+// todo dia útil do período pra QUALQUER um que já apareceu numa base de 7000+ apontamentos,
+// sem saber se a pessoa tinha sido contratada, já tinha saído, ou estava de férias/atestado
+// naquele dia — um operador desligado em julho aparecia com "2% de assiduidade" cravando
+// falta até setembro. `DISPONIB.diasDetalhe` (um dia por linha, só nos dias em que a pessoa
+// estava vinculada e a planta operava) é o que faz o heatmap desenhar só os dias em que a
+// pessoa realmente podia ter apontado.
 function getAbsenceData(){
-  const fFunc  = document.getElementById('fFunc')?.value  || '';
-  const fFrom  = document.getElementById('fFrom')?.value  || '';
-  const fTo    = document.getElementById('fTo')?.value    || '';
-  const fSerie = document.getElementById('fSerie')?.value || '';
-  const fOp    = document.getElementById('fOp')?.value    || '';
-  const fItem  = document.getElementById('fItem')?.value  || '';
-
-  // Normalize fFunc to code for comparison (handles hyphen vs em-dash variants)
+  const fFunc = document.getElementById('fFunc')?.value || '';
   const fFuncCode = fFunc ? (funcCodeNorm(fFunc) || fFunc) : '';
 
-  // Absence should be based on ALL records (not filtered by serie/op/item)
-  // because a worker may be present but working on a different serie/op
-  // Only filter by func (by code) and date for absence calculation
-  const absenceBase = RAW_DATA.filter(r => {
-    if(fFuncCode && (funcCodeNorm(r.func)||r.func) !== fFuncCode) return false;
-    const d = tsToDateStr(r.ts);
-    if(fFrom && d < fFrom) return false;
-    if(fTo   && d > fTo)   return false;
-    return true;
+  if(!DISPONIB || !Array.isArray(DISPONIB.operadores)) return { rows: [], loading: true };
+
+  const diasPorOperador = {};
+  (DISPONIB.diasDetalhe||[]).forEach(d=>{
+    (diasPorOperador[d.operadorId] ??= []).push(d);
+  });
+  const faltasPorOperador = {};
+  (DISPONIB.faltas||[]).forEach(f=>{
+    (faltasPorOperador[f.operadorId] ??= []).push(f);
   });
 
-  // Plant open days within date window
-  const openDays = PLANT_OPEN_DAYS.filter(d => {
-    if(fFrom && d < fFrom) return false;
-    if(fTo   && d > fTo)   return false;
-    return true;
-  });
-  const totalOpen = openDays.length;
+  let operadores = DISPONIB.operadores;
+  if(fFuncCode) operadores = operadores.filter(o => o.codigo === fFuncCode);
 
-  // Days each func was present — keyed by NORMALIZED CODE (not raw string)
-  // This merges "130 - EDERSON" and "130 — EDERSON" under the same key "130"
-  const funcPresent  = {};
-  const funcCanonical = {}; // best display label per code (prefer em-dash form = newer records)
-  absenceBase.forEach(r => {
-    const code = funcCodeNorm(r.func) || r.func;
-    const d = tsToDateStr(r.ts);
-    if(!funcPresent[code]) {
-      funcPresent[code]  = new Set();
-      funcCanonical[code] = r.func;
-    } else if(r.func.includes('—') && !funcCanonical[code].includes('—')) {
-      funcCanonical[code] = r.func; // upgrade to em-dash form when found
-    }
-    funcPresent[code].add(d);
+  const rows = operadores.map(o => {
+    const dias = (diasPorOperador[o.operadorId]||[]).sort((a,b)=>a.data.localeCompare(b.data));
+    const faltas = (faltasPorOperador[o.operadorId]||[]);
+    return {
+      code: o.codigo, name: o.nome, setor: o.setor,
+      totalOpen: o.diasEsperados, presentDays: o.diasComApontamento,
+      absentDays: faltas.map(f=>f.data),
+      absentH: Math.round(faltas.reduce((s,f)=>s+f.horas,0)),
+      attPct: o.presencaPct, dias,
+    };
   });
 
-  // All unique funcs — deduplicated by code to avoid duplicate rows
-  // (old records may have hyphen, new records em-dash — same operator, one row)
-  const seenCodes = new Set();
-  const funcCodes = fFuncCode
-    ? [fFuncCode]
-    : RAW_DATA.reduce((acc, r) => {
-        const code = funcCodeNorm(r.func) || r.func;
-        if(!seenCodes.has(code)) { seenCodes.add(code); acc.push(code); }
-        return acc;
-      }, []).sort();
-
-  const rows = funcCodes.map(code => {
-    const present     = funcPresent[code] || new Set();
-    const absentDays  = openDays.filter(d => !present.has(d));
-    const presentDays = openDays.filter(d =>  present.has(d));
-    const func = funcCanonical[code] || code; // use best-known label
-    const name = funcName(func) || code;
-    const attPct = totalOpen > 0 ? Math.round(presentDays.length / totalOpen * 100) : 100;
-    return { func, name, code, totalOpen, presentDays: presentDays.length, absentDays, attPct, absentH: absentDays.length * 8 };
-  });
-
-  return { rows, openDays };
+  return { rows, loading: false };
 }
 
 function renderAttendance(){
-  const { rows, openDays } = getAbsenceData();
+  const { rows, loading } = getAbsenceData();
+  const attGrid = document.getElementById('attGrid');
+  if(loading){
+    document.getElementById('attKpis').innerHTML = '';
+    attGrid.innerHTML = '<div class="empty">Carregando disponibilidade (cadastro de pessoas)…</div>';
+    return;
+  }
+
   const totalAbsH = rows.reduce((a,r)=>a+r.absentH,0);
   const avgAtt = rows.length ? Math.round(rows.reduce((a,r)=>a+r.attPct,0)/rows.length) : 0;
   const worstFuncs = [...rows].sort((a,b)=>b.absentDays.length-a.absentDays.length).slice(0,1);
+  const diasUteisPeriodo = Math.max(0, ...rows.map(r=>r.totalOpen), 0);
 
   // KPIs
   document.getElementById('attKpis').innerHTML = `
-    <div class="pv-kpi"><div class="pv-kpi-lbl">Dias Úteis Período</div><div class="pv-kpi-val" style="color:var(--accent2)">${openDays.length}</div><div class="pv-kpi-sub">planta em operação</div></div>
+    <div class="pv-kpi"><div class="pv-kpi-lbl">Dias Úteis Período</div><div class="pv-kpi-val" style="color:var(--accent2)">${diasUteisPeriodo}</div><div class="pv-kpi-sub">planta em operação</div></div>
     <div class="pv-kpi"><div class="pv-kpi-lbl">Ausências Totais</div><div class="pv-kpi-val status-over">${rows.reduce((a,r)=>a+r.absentDays.length,0)}</div><div class="pv-kpi-sub">dias × funcionários</div></div>
-    <div class="pv-kpi"><div class="pv-kpi-lbl">Horas Imputadas</div><div class="pv-kpi-val status-over">${totalAbsH}h</div><div class="pv-kpi-sub">8h por dia ausente</div></div>
+    <div class="pv-kpi"><div class="pv-kpi-lbl">Horas Imputadas</div><div class="pv-kpi-val status-over">${totalAbsH}h</div><div class="pv-kpi-sub">hora da jornada, por dia ausente</div></div>
     <div class="pv-kpi"><div class="pv-kpi-lbl">Assiduidade Média</div><div class="pv-kpi-val ${avgAtt>=95?'status-ok':avgAtt>=85?'status-warn':'status-over'}">${avgAtt}%</div><div class="pv-kpi-sub">% dias com apontamento</div></div>
     <div class="pv-kpi"><div class="pv-kpi-lbl">Mais Ausências</div><div class="pv-kpi-val status-over">${worstFuncs[0]?.absentDays.length||0}d</div><div class="pv-kpi-sub">${worstFuncs[0]?.name.split(' ')[0]||'—'}</div></div>
   `;
@@ -4125,26 +4104,31 @@ function renderAttendance(){
 
   const attColor = pct => pct>=95?'#4ade80':pct>=85?'#f0b429':'#f87171';
 
-  // Build calendar heatmap per func
-  function calHtml(openDays, absentSet){
-    return openDays.map(d => {
-      const absent = absentSet.has(d);
-      const dt = new Date(d+'T12:00:00');
+  // Um quadrado por dia em que a pessoa estava vinculada e a planta operava — nada antes da
+  // admissão, nada depois do desligamento. Afastamento (qualquer tipo) ganha cor própria em
+  // vez de contar como falta.
+  function calHtml(dias){
+    return dias.map(d => {
+      const dt = new Date(d.data+'T12:00:00');
       const label = dt.toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit',month:'2-digit'});
-      const color = absent ? '#f87171' : '#4ade80';
-      const opacity = absent ? '0.85' : '0.5';
-      return `<div class="cal-day" style="background:${color};opacity:${opacity}" data-tip="${label}: ${absent?'AUSENTE':'presente'}"></div>`;
+      const estado = d.apontou ? 'presente' : d.afastado ? 'afastado' : 'AUSENTE';
+      const color = d.apontou ? '#4ade80' : d.afastado ? '#38bdf8' : '#f87171';
+      const opacity = d.apontou ? '0.5' : '0.85';
+      return `<div class="cal-day" style="background:${color};opacity:${opacity}" data-tip="${label}: ${estado}"></div>`;
     }).join('');
   }
 
   let html = '';
+  if(!sorted.length){
+    attGrid.innerHTML = '<div class="empty">Nenhum operador com vínculo cadastrado neste período.</div>';
+    return;
+  }
   sorted.forEach(r => {
     const c = attColor(r.attPct);
-    const absentSet = new Set(r.absentDays);
     html += `
       <div class="att-card" style="border-color:${r.absentDays.length>5?'rgba(248,113,113,.3)':r.absentDays.length>2?'rgba(240,180,41,.3)':'var(--border)'}">
         <div class="att-name">${r.name}</div>
-        <div class="att-code">${r.code}</div>
+        <div class="att-code">${r.code}${r.setor?' · '+r.setor:''}</div>
         <div class="att-row">
           <span class="att-lbl">Dias presentes</span>
           <span class="att-val" style="color:var(--accent3)">${r.presentDays} / ${r.totalOpen}</span>
@@ -4157,11 +4141,11 @@ function renderAttendance(){
           <div class="att-bar-bg"><div class="att-bar-fill" style="width:${r.attPct}%;background:${c}"></div></div>
           <div class="att-pct-lbl">Assiduidade: <strong style="color:${c}">${r.attPct}%</strong></div>
         </div>
-        <div class="calendar-heatmap">${calHtml(openDays, absentSet)}</div>
+        <div class="calendar-heatmap">${calHtml(r.dias)}</div>
         ${r.absentDays.length>0 ? `<div style="font-size:10px;color:var(--text3);margin-top:5px">📅 Ausente em: ${r.absentDays.map(d=>{const dt=new Date(d+'T12:00:00');return dt.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});}).join(', ')}</div>` : '<div style="font-size:10px;color:var(--accent3);margin-top:5px">✅ Sem ausências no período</div>'}
       </div>`;
   });
-  document.getElementById('attGrid').innerHTML = html;
+  attGrid.innerHTML = html;
 }
 
 // ── VIEW TOGGLE ENGINE ────────────────────────────────────────────────────────
