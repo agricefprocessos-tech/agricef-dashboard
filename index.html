@@ -2811,25 +2811,6 @@ function renderKPIs(){
   // Active operators in the filtered period (apontaram ao menos 1 vez)
   const activeFuncs = new Set(filteredCalc.map(r=>r.func));
 
-  // Workdays in the period (Mon-Fri)
-  function getWorkdays(){
-    if(!filteredCalc.length) return 0;
-    const tsArr = filteredCalc.map(r=>tsToDate(r.ts).getTime()).filter(t=>t>0);
-    if(!tsArr.length) return 0;
-    const minTs = fFrom2 ? tsToDate(fFrom2+' 00:00:00').getTime() : Math.min(...tsArr);
-    const maxTs = fTo2   ? tsToDate(fTo2  +' 23:59:59').getTime() : Math.max(...tsArr);
-    let wd = 0;
-    const cur = new Date(minTs); cur.setHours(0,0,0,0);
-    const endDt = new Date(maxTs);
-    while(cur <= endDt){
-      const day = cur.getDay();
-      if(day >= 1 && day <= 5) wd++;
-      cur.setDate(cur.getDate()+1);
-    }
-    return wd;
-  }
-  const workdaysCount = getWorkdays();
-
   // Available capacity = sum over each func of (active days × 8h)
   // This avoids inflating capacity when an operator only worked some days
   const funcDays = {};
@@ -2883,9 +2864,17 @@ function renderKPIs(){
     const prevRets  = pairRows(prevData,'INÍCIO DE RETRABALHO','TÉRMINO DE RETRABALHO');
     const prevTProd = prevProd.reduce((a,p)=>a+p.dur,0);
     const prevTPara = prevPara.reduce((a,p)=>a+p.dur,0);
-    const prevActiveFuncs = new Set(prevData.map(r=>r.func));
-    const prevWorkdays = workdaysCount; // same span length
-    const prevCapacity = prevActiveFuncs.size * prevWorkdays * 8 * 60;
+    // Mesma regra de capacidade do período atual (dias ativos observados por operador, não
+    // "todo mundo ativo × todo dia útil do intervalo") — sem isso, um operador que só entrou
+    // no meio do período anterior inflava a capacidade dele igual ao que já foi corrigido
+    // acima, e a seta de tendência da Eficiência comparava contra uma base errada.
+    const prevFuncDays = {};
+    prevData.forEach(r => {
+      if(!prevFuncDays[r.func]) prevFuncDays[r.func] = new Set();
+      prevFuncDays[r.func].add(r.ts.slice(0,10));
+    });
+    let prevCapacity = 0;
+    Object.values(prevFuncDays).forEach(days => { prevCapacity += days.size * 8 * 60; });
     const prevEff = prevCapacity > 0 ? prevTProd/prevCapacity*100 : 0;
     
     const effTrend = calcTrend(eff, prevEff);
@@ -5915,10 +5904,16 @@ function renderAudit2() {
   const tPara  = parada.reduce((a,p) => a+p.dur, 0);
   const tRet   = retrab.reduce((a,p) => a+p.dur, 0);
 
-  // Find absence days
-  const funcDays = new Set(rows.map(r => tsToDateStr(r.ts)));
-  const absDays  = PLANT_OPEN_DAYS.filter(d => !funcDays.has(d));
-  const tAbs     = absDays.length * 8 * 60;
+  // Ausência: mesma fonte do painel de Assiduidade (getDisponibilidade) — respeita admissão,
+  // desligamento e afastamento do cadastro de pessoas, em vez de cravar falta em todo dia
+  // útil de TODA a base (o que fazia um operador admitido há 2 semanas aparecer com dezenas
+  // de "faltas" antes mesmo de ter sido contratado).
+  const funcCode = funcCodeNorm(func) || func;
+  const opDisp = DISPONIB?.operadores?.find(o => o.codigo === funcCode);
+  const semCadastro = !opDisp;
+  const faltasOp = opDisp ? (DISPONIB.faltas||[]).filter(f => f.operadorId === opDisp.operadorId) : [];
+  const absDays  = faltasOp.map(f => f.data);
+  const tAbs     = faltasOp.reduce((s,f) => s+f.horas, 0) * 60;
   const tTotal   = tProd + tPara + tRet + tAbs;
   const eff      = tTotal > 0 ? Math.round(tProd / tTotal * 100) : 0;
 
@@ -5975,7 +5970,12 @@ function renderAudit2() {
   html += '</tbody></table></div>';
 
   // Show absence days
-  if (absDays.length) {
+  if (semCadastro) {
+    html += `<div style="margin-top:14px;padding:10px;background:rgba(240,180,41,.08);border:1px solid rgba(240,180,41,.3);border-radius:8px">
+      <div style="font-size:11px;font-weight:700;color:var(--warn);margin-bottom:4px">⚠ Sem cadastro de pessoas para ${name}</div>
+      <div style="font-size:11px;color:var(--text2)">Ausência e eficiência não calculadas — falta admissão/setor no Cadastro de Pessoas para saber quais dias contam.</div>
+    </div>`;
+  } else if (absDays.length) {
     html += `<div style="margin-top:14px;padding:10px;background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.3);border-radius:8px">
       <div style="font-size:11px;font-weight:700;color:var(--danger);margin-bottom:6px">📅 ${absDays.length} DIA(S) SEM APONTAMENTO (ausência imputada)</div>
       <div style="font-size:11px;color:var(--text2)">${absDays.map(d=>{const dt=new Date(d+'T12:00:00');return dt.toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit',month:'2-digit'});}).join(' · ')}</div>
